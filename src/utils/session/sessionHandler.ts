@@ -84,7 +84,7 @@ const loadSession = async (id: string): Promise<Session | undefined> => {
   try {
     // Send a GET request to Directus to retrieve the session data
     const response = await fetch(`${DIRECTUS_URL}/items/shopify_sessions`, {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json", // Set content type to JSON
         Authorization: `Bearer ${DIRECTUS_TOKEN}`, // Use Directus token for authorization
@@ -133,7 +133,7 @@ const deleteSession = async (id: string): Promise<boolean> => {
   try {
     // Send a DELETE request to Directus to remove the session data
     const response = await fetch(`${DIRECTUS_URL}/items/shopify_sessions`, {
-      method: "DELETE",
+      method: "POST",
       headers: {
         "Content-Type": "application/json", // Set content type to JSON
         Authorization: `Bearer ${DIRECTUS_TOKEN}`, // Use Directus token for authorization

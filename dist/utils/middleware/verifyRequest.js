@@ -1,16 +1,3 @@
-/**
- * This file sets up middleware to verify incoming requests for your Shopify application.
- * It ensures that the requests have valid authentication, retrieves the appropriate session data,
- * and attaches this information to the request object for further processing by subsequent handlers.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required modules such as session handlers, Shopify client, JWT validator, and types from `@shopify/shopify-api`.
- * 2. Defines Middleware for Request Verification: It defines an asynchronous middleware function `verifyRequest` to verify the incoming API requests.
- * 3. Extracts and Validates Authorization Header: It checks for the presence of the authorization header and validates the JWT token.
- * 4. Retrieves or Creates a Shopify Session: It retrieves the current session or creates a new one if necessary.
- * 5. Attaches Session and Shop Data to Request: It adds the session and shop data to the request object for use in subsequent handlers.
- * 6. Exports the Middleware Function: Finally, it exports the `verifyRequest` middleware function for use in your application.
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -130,13 +117,14 @@ export default verifyRequest; // Export the middleware function
  */
 function getSession(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
-        var sessionToken, onlineSession, offlineSession, e_2;
+        var sessionToken, userId, onlineSession, offlineSession, e_2;
         var shop = _b.shop, authHeader = _b.authHeader;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    _c.trys.push([0, 3, , 4]);
+                    _c.trys.push([0, 5, , 6]);
                     sessionToken = authHeader.split(" ")[1];
+                    userId = "defaultUserId";
                     return [4 /*yield*/, shopify.auth.tokenExchange({
                             sessionToken: sessionToken,
                             shop: shop,
@@ -144,21 +132,25 @@ function getSession(_a) {
                         })];
                 case 1:
                     onlineSession = (_c.sent()).session;
-                    sessionHandler.storeSession(onlineSession); // Store the online session
+                    return [4 /*yield*/, sessionHandler.storeSession(onlineSession, userId)];
+                case 2:
+                    _c.sent(); // Store the online session with userId
                     return [4 /*yield*/, shopify.auth.tokenExchange({
                             sessionToken: sessionToken,
                             shop: shop,
                             requestedTokenType: RequestedTokenType.OfflineAccessToken,
                         })];
-                case 2:
-                    offlineSession = (_c.sent()).session;
-                    sessionHandler.storeSession(offlineSession); // Store the offline session
-                    return [2 /*return*/, new Session(onlineSession)]; // Return the online session as a new Session object
                 case 3:
+                    offlineSession = (_c.sent()).session;
+                    return [4 /*yield*/, sessionHandler.storeSession(offlineSession, userId)];
+                case 4:
+                    _c.sent(); // Store the offline session with userId
+                    return [2 /*return*/, new Session(onlineSession)]; // Return the online session as a new Session object
+                case 5:
                     e_2 = _c.sent();
                     console.error("---> Error happened while pulling session from Shopify: ".concat(e_2.message)); // Log any errors that occur
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
     });

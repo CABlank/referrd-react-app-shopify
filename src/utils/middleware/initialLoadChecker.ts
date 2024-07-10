@@ -1,17 +1,3 @@
-/**
- * This file defines a function to handle the initial load checking for a Shopify application using Next.js.
- * It verifies and exchanges tokens, stores session data, registers webhooks, and checks for fresh installs.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required modules such as session handlers, Shopify client, and fresh install checker.
- * 2. Defines Environment Variables: It sets up environment variables for Directus URL and token.
- * 3. Defines Context Interface: It defines a custom interface extending GetServerSidePropsContext to include specific query parameters.
- * 4. Checks Initial Load: It defines an asynchronous function `initialLoadChecker` to handle initial load checking and processing.
- * 5. Token Exchange and Session Handling: It exchanges tokens, stores session data, and registers webhooks.
- * 6. Fresh Install Checking: It checks if the current install is fresh or a reinstall and handles accordingly.
- * 7. Exports the Function: Finally, it exports the `initialLoadChecker` function for use in your application.
- */
-
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next"; // Import Next.js API types
 import { RequestedTokenType } from "@shopify/shopify-api"; // Import necessary types from Shopify API
 import sessionHandler from "../session/sessionHandler"; // Import session handler functions
@@ -19,8 +5,8 @@ import shopify from "../shopify/shopifyClient"; // Import configured Shopify cli
 import freshInstallChecker from "../install/freshInstallChecker"; // Import fresh install checker function
 
 // Set up environment variables for Directus URL and token
-const DIRECTUS_URL = process.env.DIRECTUS_URL || "http://localhost:8055";
-const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "your_directus_token";
+const DIRECTUS_URL = "https://api.referrd.com.au";
+const DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
 
 // Define a custom interface extending GetServerSidePropsContext to include specific query parameters
 interface Context extends GetServerSidePropsContext {
@@ -46,6 +32,9 @@ const initialLoadChecker = async (
     const shop = context.query.shop;
     const idToken = context.query.id_token;
 
+    // Define the userId, you might want to retrieve this from context or another source
+    const userId = "defaultUserId"; // Replace with the actual userId logic
+
     // Initial Load
     if (idToken && shop) {
       const { session: offlineSession } = await shopify.auth.tokenExchange({
@@ -60,8 +49,8 @@ const initialLoadChecker = async (
         requestedTokenType: RequestedTokenType.OnlineAccessToken,
       });
 
-      sessionHandler.storeSession(offlineSession);
-      sessionHandler.storeSession(onlineSession);
+      await sessionHandler.storeSession(offlineSession, userId); // Provide userId
+      await sessionHandler.storeSession(onlineSession, userId); // Provide userId
 
       const webhookRegisterResponse = await shopify.webhooks.register({
         session: offlineSession,

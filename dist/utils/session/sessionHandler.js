@@ -4,7 +4,7 @@
  * This ensures that session data is securely managed and easily retrievable.
  *
  * What This File Does:
- * 1. Imports Necessary Modules: It imports the required modules from the `@shopify/shopify-api` package and your custom encryption handler.
+ * 1. Imports Necessary Modules: It imports the required modules from the @shopify/shopify-api package and your custom encryption handler.
  * 2. Extracts and Validates Environment Variables: It retrieves essential environment variables needed for Directus API configuration and validates their presence.
  * 3. Encrypts Session Data: It uses a custom encryption module to encrypt session data before storing it.
  * 4. Stores Session Data: It defines a function to store session data into the Directus database.
@@ -50,40 +50,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import { Session } from "@shopify/shopify-api"; // Import the Session object from Shopify API
 import encryption from "../security/encryption"; // Import custom encryption module
+import fetch from "node-fetch"; // Import fetch for API calls
 // Extract necessary environment variables with default values for Directus URL and token
-var DIRECTUS_URL = process.env.DIRECTUS_URL || "http://localhost:8055";
-var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "your_directus_token";
-/**
- * Helper function to handle connection errors.
- * Logs specific errors for connection refusal and other errors.
- *
- * @param {unknown} error - The error object.
- * @param {string} action - The action being performed (store, load, delete).
- * @returns {boolean | undefined} - Returns false for store/delete errors, and undefined for load errors.
- */
-var handleConnectionError = function (error, action) {
-    if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
-        console.error("Connection refused when trying to ".concat(action, " session in Directus"));
-        // Return fallback values
-        return action === "load" ? undefined : false;
-    }
-    console.error("Error ".concat(action, " session:"), error);
-    throw error;
-};
+var DIRECTUS_URL = "https://api.referrd.com.au";
+var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
 /**
  * Stores the session data into the Directus database.
  *
  * @param {Session} session - The Shopify session object to be stored.
+ * @param {string} userId - The ID of the user associated with the session.
  * @returns {Promise<boolean>} - Returns true if the operation was successful, otherwise returns false.
  */
-var storeSession = function (session) { return __awaiter(void 0, void 0, void 0, function () {
+var storeSession = function (session, userId) { return __awaiter(void 0, void 0, void 0, function () {
     var encryptedContent, response, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
                 encryptedContent = encryption.encrypt(JSON.stringify(session));
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/session/upsert"), {
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions/upsert"), {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json", // Set content type to JSON
@@ -94,11 +79,13 @@ var storeSession = function (session) { return __awaiter(void 0, void 0, void 0,
                             update: {
                                 content: encryptedContent, // Encrypted session data
                                 shop: session.shop, // Associated shop information
+                                user_id: userId, // Associated user ID
                             },
                             create: {
                                 id: session.id, // Session ID
                                 content: encryptedContent, // Encrypted session data
                                 shop: session.shop, // Associated shop information
+                                user_id: userId, // Associated user ID
                             },
                         }),
                     })];
@@ -111,7 +98,8 @@ var storeSession = function (session) { return __awaiter(void 0, void 0, void 0,
                 return [2 /*return*/, true]; // Return true if the session is successfully stored
             case 2:
                 error_1 = _a.sent();
-                return [2 /*return*/, handleConnectionError(error_1, "store")]; // Handle connection errors
+                console.error("Error storing session: ".concat(error_1));
+                return [2 /*return*/, false]; // Return false if there was an error
             case 3: return [2 /*return*/];
         }
     });
@@ -128,8 +116,8 @@ var loadSession = function (id) { return __awaiter(void 0, void 0, void 0, funct
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 3, , 4]);
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/session"), {
-                        method: "GET",
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
+                        method: "POST",
                         headers: {
                             "Content-Type": "application/json", // Set content type to JSON
                             Authorization: "Bearer ".concat(DIRECTUS_TOKEN), // Use Directus token for authorization
@@ -146,7 +134,7 @@ var loadSession = function (id) { return __awaiter(void 0, void 0, void 0, funct
                 }
                 return [4 /*yield*/, response.json()];
             case 2:
-                sessionResult = _a.sent();
+                sessionResult = (_a.sent());
                 // Return undefined if no session data is found
                 if (!sessionResult.data.length || !sessionResult.data[0].content) {
                     return [2 /*return*/, undefined];
@@ -159,7 +147,8 @@ var loadSession = function (id) { return __awaiter(void 0, void 0, void 0, funct
                 return [2 /*return*/, undefined]; // Return undefined if decryption fails
             case 3:
                 error_2 = _a.sent();
-                return [2 /*return*/, handleConnectionError(error_2, "load")]; // Handle connection errors
+                console.error("Error loading session: ".concat(error_2));
+                return [2 /*return*/, undefined]; // Return undefined if there was an error
             case 4: return [2 /*return*/];
         }
     });
@@ -176,8 +165,8 @@ var deleteSession = function (id) { return __awaiter(void 0, void 0, void 0, fun
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/session"), {
-                        method: "DELETE",
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
+                        method: "POST",
                         headers: {
                             "Content-Type": "application/json", // Set content type to JSON
                             Authorization: "Bearer ".concat(DIRECTUS_TOKEN), // Use Directus token for authorization
@@ -195,7 +184,8 @@ var deleteSession = function (id) { return __awaiter(void 0, void 0, void 0, fun
                 return [2 /*return*/, true]; // Return true if the session is successfully deleted
             case 2:
                 error_3 = _a.sent();
-                return [2 /*return*/, handleConnectionError(error_3, "delete")]; // Handle connection errors
+                console.error("Error deleting session: ".concat(error_3));
+                return [2 /*return*/, false]; // Return false if there was an error
             case 3: return [2 /*return*/];
         }
     });
@@ -204,4 +194,4 @@ var deleteSession = function (id) { return __awaiter(void 0, void 0, void 0, fun
  * Session handler object containing storeSession, loadSession, and deleteSession functions.
  */
 var sessionHandler = { storeSession: storeSession, loadSession: loadSession, deleteSession: deleteSession };
-export default sessionHandler; // Export the session handler functions
+export default sessionHandler;

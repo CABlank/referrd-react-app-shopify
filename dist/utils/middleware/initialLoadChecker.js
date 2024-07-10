@@ -1,16 +1,3 @@
-/**
- * This file defines a function to handle the initial load checking for a Shopify application using Next.js.
- * It verifies and exchanges tokens, stores session data, registers webhooks, and checks for fresh installs.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required modules such as session handlers, Shopify client, and fresh install checker.
- * 2. Defines Environment Variables: It sets up environment variables for Directus URL and token.
- * 3. Defines Context Interface: It defines a custom interface extending GetServerSidePropsContext to include specific query parameters.
- * 4. Checks Initial Load: It defines an asynchronous function `initialLoadChecker` to handle initial load checking and processing.
- * 5. Token Exchange and Session Handling: It exchanges tokens, stores session data, and registers webhooks.
- * 6. Fresh Install Checking: It checks if the current install is fresh or a reinstall and handles accordingly.
- * 7. Exports the Function: Finally, it exports the `initialLoadChecker` function for use in your application.
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -52,8 +39,8 @@ import sessionHandler from "../session/sessionHandler"; // Import session handle
 import shopify from "../shopify/shopifyClient"; // Import configured Shopify client
 import freshInstallChecker from "../install/freshInstallChecker"; // Import fresh install checker function
 // Set up environment variables for Directus URL and token
-var DIRECTUS_URL = process.env.DIRECTUS_URL || "http://localhost:8055";
-var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "your_directus_token";
+var DIRECTUS_URL = "https://api.referrd.com.au";
+var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
 /**
  * Handles initial load checking and processing for a Shopify application.
  *
@@ -63,14 +50,15 @@ var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "your_directus_token";
  * @returns {Promise<GetServerSidePropsResult<{ [key: string]: any }>>} Object with props to be passed to the page component.
  */
 var initialLoadChecker = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var shop, idToken, offlineSession, onlineSession, webhookRegisterResponse, isFreshInstallChecker, e_1;
+    var shop, idToken, userId, offlineSession, onlineSession, webhookRegisterResponse, isFreshInstallChecker, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 8, , 9]);
+                _a.trys.push([0, 10, , 11]);
                 shop = context.query.shop;
                 idToken = context.query.id_token;
-                if (!(idToken && shop)) return [3 /*break*/, 7];
+                userId = "defaultUserId";
+                if (!(idToken && shop)) return [3 /*break*/, 9];
                 return [4 /*yield*/, shopify.auth.tokenExchange({
                         sessionToken: idToken,
                         shop: shop,
@@ -85,12 +73,16 @@ var initialLoadChecker = function (context) { return __awaiter(void 0, void 0, v
                     })];
             case 2:
                 onlineSession = (_a.sent()).session;
-                sessionHandler.storeSession(offlineSession);
-                sessionHandler.storeSession(onlineSession);
+                return [4 /*yield*/, sessionHandler.storeSession(offlineSession, userId)];
+            case 3:
+                _a.sent(); // Provide userId
+                return [4 /*yield*/, sessionHandler.storeSession(onlineSession, userId)];
+            case 4:
+                _a.sent(); // Provide userId
                 return [4 /*yield*/, shopify.webhooks.register({
                         session: offlineSession,
                     })];
-            case 3:
+            case 5:
                 webhookRegisterResponse = _a.sent();
                 return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/stores"), {
                         method: "GET",
@@ -102,27 +94,27 @@ var initialLoadChecker = function (context) { return __awaiter(void 0, void 0, v
                             filter: { shop: onlineSession.shop },
                         }),
                     }).then(function (res) { return res.json(); })];
-            case 4:
+            case 6:
                 isFreshInstallChecker = _a.sent();
                 if (!(!isFreshInstallChecker.data.length ||
-                    isFreshInstallChecker.data[0].isActive === false)) return [3 /*break*/, 6];
+                    isFreshInstallChecker.data[0].isActive === false)) return [3 /*break*/, 8];
                 // !isFreshInstallChecker.data.length -> New Install
                 // isFreshInstallChecker.data[0].isActive === false -> Reinstall
                 return [4 /*yield*/, freshInstallChecker({ shop: onlineSession.shop })];
-            case 5:
+            case 7:
                 // !isFreshInstallChecker.data.length -> New Install
                 // isFreshInstallChecker.data[0].isActive === false -> Reinstall
                 _a.sent();
-                _a.label = 6;
-            case 6:
+                _a.label = 8;
+            case 8:
                 console.dir(webhookRegisterResponse, { depth: null });
-                return [3 /*break*/, 7];
-            case 7: return [2 /*return*/, {
+                return [3 /*break*/, 9];
+            case 9: return [2 /*return*/, {
                     props: {
                         data: "ok",
                     },
                 }];
-            case 8:
+            case 10:
                 e_1 = _a.sent();
                 if (e_1 instanceof Error && e_1.message.startsWith("InvalidJwtError")) {
                     console.error("JWT Error - happens in dev mode and can be safely ignored, even in prod.");
@@ -140,7 +132,7 @@ var initialLoadChecker = function (context) { return __awaiter(void 0, void 0, v
                             data: "ok",
                         },
                     }];
-            case 9: return [2 /*return*/];
+            case 11: return [2 /*return*/];
         }
     });
 }); };

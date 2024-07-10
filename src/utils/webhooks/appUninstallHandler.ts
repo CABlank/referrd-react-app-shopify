@@ -12,10 +12,11 @@
  * 7. Exports the Handler Function: Finally, it exports the `appUninstallHandler` function for use in the application.
  */
 
+import fetch from "node-fetch";
 import { APP_UNINSTALLED } from "../../_developer/types/2023-10/webhooks"; // Import the APP_UNINSTALLED type
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL || "http://localhost:8055"; // Set up Directus URL environment variable
-const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "your_directus_token"; // Set up Directus token environment variable
+const DIRECTUS_URL = "https://api.referrd.com.au";
+const DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
 
 /**
  * Handler function for the APP_UNINSTALLED webhook.
@@ -43,7 +44,7 @@ const appUninstallHandler = async (
 
     // Perform database operations
     const sessionDeleteResponse = await fetch(
-      `${DIRECTUS_URL}/items/sessions`,
+      `${DIRECTUS_URL}/items/shopify_sessions`,
       {
         method: "DELETE",
         headers: {
@@ -55,7 +56,7 @@ const appUninstallHandler = async (
     );
 
     const storeUpsertResponse = await fetch(
-      `${DIRECTUS_URL}/items/stores/upsert`,
+      `${DIRECTUS_URL}/items/shopify_sessions/upsert`,
       {
         method: "POST",
         headers: {
@@ -64,8 +65,8 @@ const appUninstallHandler = async (
         },
         body: JSON.stringify({
           filter: { shop },
-          update: { isActive: false },
-          create: { shop, isActive: false },
+          update: { is_active: false },
+          create: { shop, is_active: false },
         }),
       }
     );
@@ -75,12 +76,12 @@ const appUninstallHandler = async (
     }
 
     console.log(`Successfully handled APP_UNINSTALLED for shop: ${shop}`);
-  } catch (error) {
+  } catch (error: any) {
     // Improved error logging
     console.error(`Error handling APP_UNINSTALLED for shop: ${shop}`);
     console.error(`Webhook Request Body: ${webhookRequestBody}`);
-    console.error(`Error: ${(error as Error).message}`);
+    console.error(`Error: ${error.message}`);
   }
 };
 
-export default appUninstallHandler; // Export the handler function
+export default appUninstallHandler;

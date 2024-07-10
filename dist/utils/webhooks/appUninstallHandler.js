@@ -47,8 +47,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var DIRECTUS_URL = process.env.DIRECTUS_URL || "http://localhost:8055"; // Set up Directus URL environment variable
-var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "your_directus_token"; // Set up Directus token environment variable
+import fetch from "node-fetch";
+var DIRECTUS_URL = "https://api.referrd.com.au";
+var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
 /**
  * Handler function for the APP_UNINSTALLED webhook.
  *
@@ -73,7 +74,7 @@ var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __
                 _a.trys.push([1, 4, , 5]);
                 // Ensure the request body is a valid APP_UNINSTALLED type
                 JSON.parse(webhookRequestBody);
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/sessions"), {
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
                         method: "DELETE",
                         headers: {
                             "Content-Type": "application/json",
@@ -83,7 +84,7 @@ var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __
                     })];
             case 2:
                 sessionDeleteResponse = _a.sent();
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/stores/upsert"), {
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions/upsert"), {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -91,8 +92,8 @@ var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __
                         },
                         body: JSON.stringify({
                             filter: { shop: shop },
-                            update: { isActive: false },
-                            create: { shop: shop, isActive: false },
+                            update: { is_active: false },
+                            create: { shop: shop, is_active: false },
                         }),
                     })];
             case 3:
@@ -113,4 +114,4 @@ var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __
         }
     });
 }); };
-export default appUninstallHandler; // Export the handler function
+export default appUninstallHandler;

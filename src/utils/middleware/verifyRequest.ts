@@ -1,17 +1,3 @@
-/**
- * This file sets up middleware to verify incoming requests for your Shopify application.
- * It ensures that the requests have valid authentication, retrieves the appropriate session data,
- * and attaches this information to the request object for further processing by subsequent handlers.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required modules such as session handlers, Shopify client, JWT validator, and types from `@shopify/shopify-api`.
- * 2. Defines Middleware for Request Verification: It defines an asynchronous middleware function `verifyRequest` to verify the incoming API requests.
- * 3. Extracts and Validates Authorization Header: It checks for the presence of the authorization header and validates the JWT token.
- * 4. Retrieves or Creates a Shopify Session: It retrieves the current session or creates a new one if necessary.
- * 5. Attaches Session and Shop Data to Request: It adds the session and shop data to the request object for use in subsequent handlers.
- * 6. Exports the Middleware Function: Finally, it exports the `verifyRequest` middleware function for use in your application.
- */
-
 import sessionHandler from "../session/sessionHandler.js"; // Import session handler functions
 import shopify from "../shopify/shopifyClient"; // Import configured Shopify client
 import { RequestedTokenType, Session } from "@shopify/shopify-api"; // Import necessary types from Shopify API
@@ -106,6 +92,9 @@ async function getSession({
   try {
     const sessionToken = authHeader.split(" ")[1]; // Extract session token from the authorization header
 
+    // Define the userId, you might want to retrieve this from context or another source
+    const userId = "defaultUserId"; // Replace with the actual userId logic
+
     // Exchange the session token for an online access token
     const { session: onlineSession } = await shopify.auth.tokenExchange({
       sessionToken,
@@ -113,7 +102,7 @@ async function getSession({
       requestedTokenType: RequestedTokenType.OnlineAccessToken,
     });
 
-    sessionHandler.storeSession(onlineSession); // Store the online session
+    await sessionHandler.storeSession(onlineSession, userId); // Store the online session with userId
 
     // Exchange the session token for an offline access token
     const { session: offlineSession } = await shopify.auth.tokenExchange({
@@ -122,7 +111,7 @@ async function getSession({
       requestedTokenType: RequestedTokenType.OfflineAccessToken,
     });
 
-    sessionHandler.storeSession(offlineSession); // Store the offline session
+    await sessionHandler.storeSession(offlineSession, userId); // Store the offline session with userId
 
     return new Session(onlineSession); // Return the online session as a new Session object
   } catch (e: any) {
