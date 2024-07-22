@@ -76,7 +76,7 @@ var handler = function (req, res) { return __awaiter(void 0, void 0, void 0, fun
                     })];
             case 2:
                 sessionId = _a.sent();
-                return [4 /*yield*/, sessionHandler.loadSession(sessionId)];
+                return [4 /*yield*/, sessionHandler.loadSession(Number(sessionId))];
             case 3:
                 session = _a.sent();
                 return [4 /*yield*/, shopify.clients.graphqlProxy({

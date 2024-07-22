@@ -3,14 +3,14 @@
 name = "Staging Referrd App"
 handle = "staging-referrd-app"
 client_id = "5c8e8b211dab8be3d06c888e36df66a0"
-application_url = "https://fe83-2a0c-5a81-60d-c800-b1c7-bf27-40d-e7f6.ngrok-free.app"
+application_url = "https://9826-2a0c-5a81-60d-c800-2062-3b3c-c1b5-a15f.ngrok-free.app"
 embedded = true
 extension_directories = [ "../extension/extensions/*" ]
 
 [auth]
 redirect_urls = [
-  "https://fe83-2a0c-5a81-60d-c800-b1c7-bf27-40d-e7f6.ngrok-free.app/api/auth/tokens",
-  "https://fe83-2a0c-5a81-60d-c800-b1c7-bf27-40d-e7f6.ngrok-free.app/api/auth/callback"
+  "https://9826-2a0c-5a81-60d-c800-2062-3b3c-c1b5-a15f.ngrok-free.app/api/auth/tokens",
+  "https://9826-2a0c-5a81-60d-c800-2062-3b3c-c1b5-a15f.ngrok-free.app/api/auth/callback"
 ]
 
 [access_scopes]
@@ -21,9 +21,9 @@ use_legacy_install_flow = false
 api_version = "2024-01"
 
   [webhooks.privacy_compliance]
-  customer_data_request_url = "https://fe83-2a0c-5a81-60d-c800-b1c7-bf27-40d-e7f6.ngrok-free.app/api/shopify/compliance/customerDataRequest"
-  customer_deletion_url = "https://fe83-2a0c-5a81-60d-c800-b1c7-bf27-40d-e7f6.ngrok-free.app/api/shopify/compliance/customerRedact"
-  shop_deletion_url = "https://fe83-2a0c-5a81-60d-c800-b1c7-bf27-40d-e7f6.ngrok-free.app/api/shopify/compliance/shopRedact"
+  customer_data_request_url = "https://9826-2a0c-5a81-60d-c800-2062-3b3c-c1b5-a15f.ngrok-free.app/api/shopify/compliance/customerDataRequest"
+  customer_deletion_url = "https://9826-2a0c-5a81-60d-c800-2062-3b3c-c1b5-a15f.ngrok-free.app/api/shopify/compliance/customerRedact"
+  shop_deletion_url = "https://9826-2a0c-5a81-60d-c800-2062-3b3c-c1b5-a15f.ngrok-free.app/api/shopify/compliance/shopRedact"
 
 [pos]
 embedded = false

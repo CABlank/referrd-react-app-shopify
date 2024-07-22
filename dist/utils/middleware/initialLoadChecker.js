@@ -34,106 +34,259 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { RequestedTokenType } from "@shopify/shopify-api"; // Import necessary types from Shopify API
-import sessionHandler from "../session/sessionHandler"; // Import session handler functions
-import shopify from "../shopify/shopifyClient"; // Import configured Shopify client
-import freshInstallChecker from "../install/freshInstallChecker"; // Import fresh install checker function
-// Set up environment variables for Directus URL and token
-var DIRECTUS_URL = "https://api.referrd.com.au";
-var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
-/**
- * Handles initial load checking and processing for a Shopify application.
- *
- * @async
- * @function initialLoadChecker
- * @param {Context} context - The context object containing various parameters.
- * @returns {Promise<GetServerSidePropsResult<{ [key: string]: any }>>} Object with props to be passed to the page component.
- */
-var initialLoadChecker = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var shop, idToken, userId, offlineSession, onlineSession, webhookRegisterResponse, isFreshInstallChecker, e_1;
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import { RequestedTokenType } from "@shopify/shopify-api";
+import shopify from "../shopify/shopifyClient";
+import prisma from "../database/prismaClient";
+import authService from "../../services/auth/auth";
+var decodeAndVerifyToken = function (token) {
+    var decoded = jwt.decode(token, { complete: true });
+    if (!decoded || !decoded.payload) {
+        throw new Error("Invalid token");
+    }
+    var currentTime = Math.floor(Date.now() / 1000);
+    if (currentTime > decoded.payload.exp) {
+        throw new Error("Token has expired");
+    }
+    return decoded;
+};
+var upsertSession = function (session, shop) { return __awaiter(void 0, void 0, void 0, function () {
+    var error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 10, , 11]);
-                shop = context.query.shop;
-                idToken = context.query.id_token;
-                userId = "defaultUserId";
-                if (!(idToken && shop)) return [3 /*break*/, 9];
-                return [4 /*yield*/, shopify.auth.tokenExchange({
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, prisma.session.upsert({
+                        where: { sessionId: session.id },
+                        update: { updatedAt: new Date() },
+                        create: {
+                            shop: {
+                                connectOrCreate: {
+                                    where: { domain: shop },
+                                    create: { domain: shop, isActive: true },
+                                },
+                            },
+                            sessionId: session.id,
+                        },
+                    })];
+            case 1:
+                _a.sent();
+                console.log("Stored ".concat(session.type, " session for shop:"), session.shop);
+                return [3 /*break*/, 3];
+            case 2:
+                error_1 = _a.sent();
+                console.error("Error storing ".concat(session.type, " session:"), error_1);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+var handleError = function (message, error) {
+    if (error instanceof Error) {
+        console.error(message, error);
+    }
+    else {
+        console.error(message);
+    }
+    return {
+        props: {
+            serverError: true,
+        },
+    };
+};
+var upsertUser = function (ownerEmail, ownerFirstName, ownerLastName) { return __awaiter(void 0, void 0, void 0, function () {
+    var existingUser, hashedPassword, error_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 7, , 8]);
+                return [4 /*yield*/, prisma.user.findUnique({
+                        where: { email: ownerEmail },
+                    })];
+            case 1:
+                existingUser = _a.sent();
+                if (!!existingUser) return [3 /*break*/, 4];
+                return [4 /*yield*/, bcrypt.hash(ownerEmail, 10)];
+            case 2:
+                hashedPassword = _a.sent();
+                return [4 /*yield*/, prisma.user.create({
+                        data: {
+                            email: ownerEmail,
+                            firstName: ownerFirstName,
+                            lastName: ownerLastName,
+                            password: hashedPassword,
+                            directusId: "1637e8a5-22f9-4e1b-b378-97828291ef8a",
+                        },
+                    })];
+            case 3:
+                existingUser = _a.sent();
+                console.log("User created in Prisma.");
+                return [3 /*break*/, 6];
+            case 4: return [4 /*yield*/, prisma.user.update({
+                    where: { email: ownerEmail },
+                    data: {
+                        firstName: ownerFirstName,
+                        lastName: ownerLastName,
+                        updatedAt: new Date(),
+                    },
+                })];
+            case 5:
+                _a.sent();
+                console.log("User details updated in Prisma.");
+                _a.label = 6;
+            case 6: return [3 /*break*/, 8];
+            case 7:
+                error_2 = _a.sent();
+                return [2 /*return*/, handleError("Error registering user in Prisma:", error_2)];
+            case 8: return [2 /*return*/];
+        }
+    });
+}); };
+var handleDirectusUser = function (ownerEmail, ownerFirstName, ownerLastName) { return __awaiter(void 0, void 0, void 0, function () {
+    var credentials, accessToken, refreshToken, directusUser, error_3, loginData, error_4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                credentials = { email: ownerEmail, password: ownerEmail };
+                accessToken = null;
+                refreshToken = null;
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 8, , 9]);
+                directusUser = void 0;
+                _a.label = 2;
+            case 2:
+                _a.trys.push([2, 4, , 6]);
+                return [4 /*yield*/, authService.login(credentials)];
+            case 3:
+                directusUser = _a.sent();
+                console.log("User already exists in Directus, logging in...");
+                return [3 /*break*/, 6];
+            case 4:
+                error_3 = _a.sent();
+                return [4 /*yield*/, authService.createUser({
+                        email: ownerEmail,
+                        password: ownerEmail,
+                        first_name: ownerFirstName,
+                        last_name: ownerLastName,
+                    })];
+            case 5:
+                directusUser = _a.sent();
+                console.log("User created in Directus.");
+                return [3 /*break*/, 6];
+            case 6: return [4 /*yield*/, authService.login(credentials)];
+            case 7:
+                loginData = _a.sent();
+                console.log("User logged in Directus:", loginData);
+                accessToken = loginData.data.access_token;
+                refreshToken = loginData.data.refresh_token;
+                return [3 /*break*/, 9];
+            case 8:
+                error_4 = _a.sent();
+                handleError("Error creating user, logging into Directus or storing tokens:", error_4);
+                return [3 /*break*/, 9];
+            case 9: return [2 /*return*/, { accessToken: accessToken, refreshToken: refreshToken }];
+        }
+    });
+}); };
+var initialLoadChecker = function (context) { return __awaiter(void 0, void 0, void 0, function () {
+    var accessToken, refreshToken, _a, shop, idToken, decodedToken, userId, tokenExchange, offlineSession, onlineSession, client, QUERY, response, shopDetails, _b, ownerEmail, ownerName, _c, ownerFirstName, ownerLastNameParts, ownerLastName, directusTokens, error_5;
+    var _d;
+    return __generator(this, function (_e) {
+        switch (_e.label) {
+            case 0:
+                accessToken = null;
+                refreshToken = null;
+                _e.label = 1;
+            case 1:
+                _e.trys.push([1, 9, , 10]);
+                _a = context.query, shop = _a.shop, idToken = _a.id_token;
+                // Check if we are running inside a Shopify app
+                if (!shop) {
+                    console.log("Not a Shopify app, skipping Shopify-specific logic.");
+                    return [2 /*return*/, {
+                            props: {
+                                data: "not_shopify",
+                            },
+                        }];
+                }
+                if (!idToken) {
+                    console.log("Missing idToken, redirecting...");
+                    return [2 /*return*/, {
+                            redirect: {
+                                destination: "/your-error-page?error=missing_id_token",
+                                permanent: false,
+                            },
+                        }];
+                }
+                console.log("Shop:", shop);
+                console.log("ID Token:", idToken);
+                decodedToken = decodeAndVerifyToken(idToken);
+                userId = ((_d = context.req.cookies) === null || _d === void 0 ? void 0 : _d.userId) || "some_logic_to_get_user_id";
+                if (!userId) {
+                    throw new Error("User ID is required and could not be determined.");
+                }
+                console.log("User ID:", userId);
+                console.log("Performing token exchange...");
+                tokenExchange = shopify.auth.tokenExchange;
+                return [4 /*yield*/, tokenExchange({
                         sessionToken: idToken,
                         shop: shop,
                         requestedTokenType: RequestedTokenType.OfflineAccessToken,
                     })];
-            case 1:
-                offlineSession = (_a.sent()).session;
-                return [4 /*yield*/, shopify.auth.tokenExchange({
+            case 2:
+                offlineSession = (_e.sent()).session;
+                console.log("Offline session obtained:", offlineSession);
+                return [4 /*yield*/, tokenExchange({
                         sessionToken: idToken,
                         shop: shop,
                         requestedTokenType: RequestedTokenType.OnlineAccessToken,
                     })];
-            case 2:
-                onlineSession = (_a.sent()).session;
-                return [4 /*yield*/, sessionHandler.storeSession(offlineSession, userId)];
             case 3:
-                _a.sent(); // Provide userId
-                return [4 /*yield*/, sessionHandler.storeSession(onlineSession, userId)];
+                onlineSession = (_e.sent()).session;
+                console.log("Online session obtained:", onlineSession);
+                return [4 /*yield*/, upsertSession(offlineSession, shop)];
             case 4:
-                _a.sent(); // Provide userId
-                return [4 /*yield*/, shopify.webhooks.register({
-                        session: offlineSession,
-                    })];
+                _e.sent();
+                return [4 /*yield*/, upsertSession(onlineSession, shop)];
             case 5:
-                webhookRegisterResponse = _a.sent();
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/stores"), {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
-                        },
-                        body: JSON.stringify({
-                            filter: { shop: onlineSession.shop },
-                        }),
-                    }).then(function (res) { return res.json(); })];
+                _e.sent();
+                console.log("Fetching shop details to get the owner's email...");
+                client = new shopify.clients.Graphql({ session: onlineSession });
+                QUERY = "{\n      shop {\n        email\n        name\n      }\n    }";
+                return [4 /*yield*/, client.request(QUERY)];
             case 6:
-                isFreshInstallChecker = _a.sent();
-                if (!(!isFreshInstallChecker.data.length ||
-                    isFreshInstallChecker.data[0].isActive === false)) return [3 /*break*/, 8];
-                // !isFreshInstallChecker.data.length -> New Install
-                // isFreshInstallChecker.data[0].isActive === false -> Reinstall
-                return [4 /*yield*/, freshInstallChecker({ shop: onlineSession.shop })];
+                response = _e.sent();
+                shopDetails = response.data;
+                if (!shopDetails || !shopDetails.shop) {
+                    throw new Error("Failed to fetch shop details.");
+                }
+                _b = shopDetails.shop, ownerEmail = _b.email, ownerName = _b.name;
+                _c = ownerName.split(" "), ownerFirstName = _c[0], ownerLastNameParts = _c.slice(1);
+                ownerLastName = ownerLastNameParts.join(" ");
+                console.log("Shop owner's email:", ownerEmail);
+                return [4 /*yield*/, upsertUser(ownerEmail, ownerFirstName, ownerLastName)];
             case 7:
-                // !isFreshInstallChecker.data.length -> New Install
-                // isFreshInstallChecker.data[0].isActive === false -> Reinstall
-                _a.sent();
-                _a.label = 8;
+                _e.sent();
+                return [4 /*yield*/, handleDirectusUser(ownerEmail, ownerFirstName, ownerLastName)];
             case 8:
-                console.dir(webhookRegisterResponse, { depth: null });
-                return [3 /*break*/, 9];
-            case 9: return [2 /*return*/, {
+                directusTokens = _e.sent();
+                accessToken = directusTokens.accessToken;
+                refreshToken = directusTokens.refreshToken;
+                console.log("Process completed successfully.");
+                return [3 /*break*/, 10];
+            case 9:
+                error_5 = _e.sent();
+                return [2 /*return*/, handleError("An error occurred at initialLoadChecker: ".concat(error_5 instanceof Error ? error_5.message : "Unknown error"), error_5)];
+            case 10: return [2 /*return*/, {
                     props: {
                         data: "ok",
+                        accessToken: accessToken,
+                        refreshToken: refreshToken,
                     },
                 }];
-            case 10:
-                e_1 = _a.sent();
-                if (e_1 instanceof Error && e_1.message.startsWith("InvalidJwtError")) {
-                    console.error("JWT Error - happens in dev mode and can be safely ignored, even in prod.");
-                }
-                else {
-                    console.error("---> An error occurred at initialLoadChecker: ".concat(e_1.message), e_1);
-                    return [2 /*return*/, {
-                            props: {
-                                serverError: true,
-                            },
-                        }];
-                }
-                return [2 /*return*/, {
-                        props: {
-                            data: "ok",
-                        },
-                    }];
-            case 11: return [2 /*return*/];
         }
     });
 }); };
-export default initialLoadChecker; // Export the function
+export default initialLoadChecker;

@@ -40,7 +40,7 @@ const verifyRequest = async (
       rawResponse: res,
     }); // Retrieve the current session ID
 
-    let session = await sessionHandler.loadSession(sessionId as string); // Load session data using the session ID
+    let session = await sessionHandler.loadSession(Number(sessionId)); // Load session data using the session ID
     if (!session) {
       session = await getSession({ shop, authHeader }); // Create a new session if one does not exist
     }

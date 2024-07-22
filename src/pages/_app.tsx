@@ -1,26 +1,16 @@
-/**
- * This file defines the custom App component for a Next.js application.
- * It integrates the Shopify Polaris design system, AppBridge provider, and additional global styles.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required components from Polaris, hooks from React and Next.js, and global styles.
- * 2. Extends JSX Intrinsic Elements: It extends JSX intrinsic elements for custom HTML elements.
- * 3. Defines the Custom App Component: It defines the `MyApp` component which wraps the application with necessary providers.
- * 4. Fetches Initial Props: It defines a static method to fetch initial props for the app.
- * 5. Renders the Component: It renders the Next.js component with pageProps within the providers.
- * 6. Exports the Custom App Component: Finally, it exports the `MyApp` component for use in the application.
- */
+import AppBridgeProvider from "../components/providers/AppBridgeProvider";
+import { AppProvider as PolarisProvider, AppProvider } from "@shopify/polaris";
+import "@shopify/polaris/build/esm/styles.css";
+import translations from "@shopify/polaris/locales/en.json";
+import Link from "next/link";
+import App, { AppProps, AppContext } from "next/app";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { SessionProvider, useSession } from "../contexts/SessionContext";
+import "../styles/globals.css";
+import BrandLayout from "./layouts/BrandLayout";
+import LoadingOverlay from "../components/common/LoadingOverlay";
 
-import AppBridgeProvider from "../components/providers/AppBridgeProvider"; // Import custom AppBridgeProvider component
-import { AppProvider as PolarisProvider } from "@shopify/polaris"; // Import Polaris AppProvider
-import "@shopify/polaris/build/esm/styles.css"; // Import Polaris styles
-import translations from "@shopify/polaris/locales/en.json"; // Import English translations for Polaris
-import Link from "next/link"; // Import Link component from Next.js
-import App, { AppProps, AppContext } from "next/app"; // Import App component and types from Next.js
-import Head from "next/head"; // Import Head component from Next.js
-import React from "react"; // Import React
-
-// Extend JSX IntrinsicElements for the ui-nav-menu element
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -49,8 +39,33 @@ class MyApp extends App<AppProps> {
    * @returns {Promise<any>} The initial props for the app.
    */
   static async getInitialProps(appContext: AppContext) {
-    const appProps = await App.getInitialProps(appContext);
-    return { ...appProps };
+    try {
+      const appProps = await App.getInitialProps(appContext);
+
+      // Retrieve shop and host from the query parameters if available
+      const { ctx } = appContext;
+      const { shop, host } = ctx.query;
+
+      return { ...appProps, pageProps: { ...appProps.pageProps, shop, host } };
+    } catch (error) {
+      console.error("Error in getInitialProps:", error);
+      return { pageProps: {} }; // Return an empty pageProps object to avoid breaking the app
+    }
+  }
+
+  /**
+   * Checks if the app is running inside Shopify.
+   *
+   * @function isShopify
+   * @returns {boolean} True if running inside Shopify, false otherwise.
+   */
+  isShopify() {
+    const { pageProps } = this.props;
+    // Ensure both 'shop' and 'host' are string types to avoid falsy values such as empty strings
+    return (
+      (typeof pageProps.shop === "string" && pageProps.shop.length > 0) ||
+      (typeof pageProps.host === "string" && pageProps.host.length > 0)
+    );
   }
 
   /**
@@ -61,30 +76,95 @@ class MyApp extends App<AppProps> {
    */
   render() {
     const { Component, pageProps } = this.props;
+    const isShopify = this.isShopify();
+
     return (
-      <>
-        <Head>
-          <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
-            rel="stylesheet"
-          />
-        </Head>
+      <SessionProvider>
+        <ContentWrapper
+          isShopify={isShopify}
+          Component={Component}
+          pageProps={pageProps}
+        />
+      </SessionProvider>
+    );
+  }
+}
+
+const ContentWrapper: React.FC<{
+  isShopify: boolean;
+  Component: React.ComponentType<any> & { noLayout?: boolean };
+  pageProps: any;
+}> = ({ isShopify, Component, pageProps }) => {
+  const { session, loading } = useSession();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleStart = () => setPageLoading(true);
+    const handleComplete = () => setPageLoading(false);
+
+    router.events.on("routeChangeStart", handleStart);
+    router.events.on("routeChangeComplete", handleComplete);
+    router.events.on("routeChangeError", handleComplete);
+
+    return () => {
+      router.events.off("routeChangeStart", handleStart);
+      router.events.off("routeChangeComplete", handleComplete);
+      router.events.off("routeChangeError", handleComplete);
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (!loading && session && session.user.role === "Brand") {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, [loading, session]);
+
+  if (loading || pageLoading) {
+    return <LoadingOverlay />;
+  }
+
+  if (isShopify) {
+    return (
+      <AppProvider i18n={translations}>
         <PolarisProvider i18n={translations}>
           <AppBridgeProvider>
             <ui-nav-menu>
               <Link href="/" rel="home">
                 Home
               </Link>
-              <Link href="/admin">Debug Cards</Link>
-              <Link href="/templates">Templates</Link>
-              <Link href="/settings">Settings</Link>
+              <Link href="/brand/dashboard">Dashboard</Link>
+              <Link href="/brand/campaigns">Campaigns</Link>
+              <Link href="/brand/support">Support</Link>
+              <Link href="/brand/referrals">Referrals</Link>
+              <Link href="/brand/settings">Settings</Link>
+              <Link href="/brand/payments">Payments</Link>
+              <Link href="/brand/faqs">FAQS</Link>
             </ui-nav-menu>
-            <Component {...pageProps} />
+            <div className="flex-1 overflow-y-auto">
+              <main className="p-12">
+                <Component {...pageProps} />
+              </main>
+            </div>
           </AppBridgeProvider>
         </PolarisProvider>
-      </>
+      </AppProvider>
+    );
+  } else if (Component.noLayout) {
+    // If the page has noLayout property, render the component directly
+    return <Component {...pageProps} />;
+  } else {
+    return isAuthenticated ? (
+      <BrandLayout>
+        <Component {...pageProps} />
+      </BrandLayout>
+    ) : (
+      <Component {...pageProps} />
     );
   }
-}
+};
 
-export default MyApp; // Export the MyApp component
+export default MyApp;

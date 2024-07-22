@@ -1,16 +1,3 @@
-/**
- * This file defines a handler function for the APP_UNINSTALLED webhook.
- * It performs necessary database operations to clean up data when an app is uninstalled from a Shopify store.
- *
- * What This File Does:
- * 1. Defines Environment Variables: It sets up environment variables for Directus URL and token.
- * 2. Imports Necessary Types: It imports the APP_UNINSTALLED type.
- * 3. Defines the App Uninstall Handler Function: It defines an asynchronous function to handle the APP_UNINSTALLED webhook.
- * 4. Validates Webhook Topic: It checks if the webhook topic is "APP_UNINSTALLED".
- * 5. Performs Database Operations: It deletes session data and updates store status in the Directus database.
- * 6. Logs Success and Errors: It logs success and error messages for debugging purposes.
- * 7. Exports the Handler Function: Finally, it exports the `appUninstallHandler` function for use in the application.
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -48,8 +35,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import fetch from "node-fetch";
-var DIRECTUS_URL = "https://api.referrd.com.au";
-var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
+import prisma from "../database/prismaClient";
+var DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";
+var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Ensure Directus token is set in environment variables
 /**
  * Handler function for the APP_UNINSTALLED webhook.
  *
@@ -61,7 +49,7 @@ var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus toke
  * @returns {Promise<void>} A promise that resolves when the handler completes.
  */
 var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __awaiter(void 0, void 0, void 0, function () {
-    var sessionDeleteResponse, storeUpsertResponse, error_1;
+    var shopRecord, sessionDeleteResponse, storeUpsertResponse, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -71,18 +59,40 @@ var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __
                 }
                 _a.label = 1;
             case 1:
-                _a.trys.push([1, 4, , 5]);
+                _a.trys.push([1, 8, , 9]);
                 // Ensure the request body is a valid APP_UNINSTALLED type
                 JSON.parse(webhookRequestBody);
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
-                        },
-                        body: JSON.stringify({ filter: { shop: shop } }),
+                return [4 /*yield*/, prisma.shop.findUnique({
+                        where: { domain: shop },
                     })];
             case 2:
+                shopRecord = _a.sent();
+                if (!shopRecord) return [3 /*break*/, 5];
+                // Delete all related sessions
+                return [4 /*yield*/, prisma.session.deleteMany({
+                        where: { shopId: shopRecord.id },
+                    })];
+            case 3:
+                // Delete all related sessions
+                _a.sent();
+                // Mark the store as inactive
+                return [4 /*yield*/, prisma.shop.update({
+                        where: { domain: shop },
+                        data: { isActive: false },
+                    })];
+            case 4:
+                // Mark the store as inactive
+                _a.sent();
+                _a.label = 5;
+            case 5: return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
+                    },
+                    body: JSON.stringify({ filter: { shop: shop } }),
+                })];
+            case 6:
                 sessionDeleteResponse = _a.sent();
                 return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions/upsert"), {
                         method: "POST",
@@ -96,21 +106,21 @@ var appUninstallHandler = function (topic, shop, webhookRequestBody) { return __
                             create: { shop: shop, is_active: false },
                         }),
                     })];
-            case 3:
+            case 7:
                 storeUpsertResponse = _a.sent();
                 if (!sessionDeleteResponse.ok || !storeUpsertResponse.ok) {
-                    throw new Error("Failed to perform database operations");
+                    throw new Error("Failed to perform database operations in Directus");
                 }
                 console.log("Successfully handled APP_UNINSTALLED for shop: ".concat(shop));
-                return [3 /*break*/, 5];
-            case 4:
+                return [3 /*break*/, 9];
+            case 8:
                 error_1 = _a.sent();
                 // Improved error logging
                 console.error("Error handling APP_UNINSTALLED for shop: ".concat(shop));
                 console.error("Webhook Request Body: ".concat(webhookRequestBody));
                 console.error("Error: ".concat(error_1.message));
-                return [3 /*break*/, 5];
-            case 5: return [2 /*return*/];
+                return [3 /*break*/, 9];
+            case 9: return [2 /*return*/];
         }
     });
 }); };

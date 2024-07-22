@@ -1,22 +1,10 @@
-/**
- * This file defines a handler function for the APP_UNINSTALLED webhook.
- * It performs necessary database operations to clean up data when an app is uninstalled from a Shopify store.
- *
- * What This File Does:
- * 1. Defines Environment Variables: It sets up environment variables for Directus URL and token.
- * 2. Imports Necessary Types: It imports the APP_UNINSTALLED type.
- * 3. Defines the App Uninstall Handler Function: It defines an asynchronous function to handle the APP_UNINSTALLED webhook.
- * 4. Validates Webhook Topic: It checks if the webhook topic is "APP_UNINSTALLED".
- * 5. Performs Database Operations: It deletes session data and updates store status in the Directus database.
- * 6. Logs Success and Errors: It logs success and error messages for debugging purposes.
- * 7. Exports the Handler Function: Finally, it exports the `appUninstallHandler` function for use in the application.
- */
-
 import fetch from "node-fetch";
+import prisma from "../database/prismaClient";
 import { APP_UNINSTALLED } from "../../_developer/types/2023-10/webhooks"; // Import the APP_UNINSTALLED type
 
-const DIRECTUS_URL = "https://api.referrd.com.au";
-const DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
+const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";
+const DIRECTUS_TOKEN =
+  process.env.DIRECTUS_TOKEN || "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Ensure Directus token is set in environment variables
 
 /**
  * Handler function for the APP_UNINSTALLED webhook.
@@ -42,7 +30,25 @@ const appUninstallHandler = async (
     // Ensure the request body is a valid APP_UNINSTALLED type
     JSON.parse(webhookRequestBody) as APP_UNINSTALLED;
 
-    // Perform database operations
+    // Perform database operations in Prisma
+    const shopRecord = await prisma.shop.findUnique({
+      where: { domain: shop },
+    });
+
+    if (shopRecord) {
+      // Delete all related sessions
+      await prisma.session.deleteMany({
+        where: { shopId: shopRecord.id },
+      });
+
+      // Mark the store as inactive
+      await prisma.shop.update({
+        where: { domain: shop },
+        data: { isActive: false },
+      });
+    }
+
+    // Perform database operations in Directus
     const sessionDeleteResponse = await fetch(
       `${DIRECTUS_URL}/items/shopify_sessions`,
       {
@@ -72,7 +78,7 @@ const appUninstallHandler = async (
     );
 
     if (!sessionDeleteResponse.ok || !storeUpsertResponse.ok) {
-      throw new Error("Failed to perform database operations");
+      throw new Error("Failed to perform database operations in Directus");
     }
 
     console.log(`Successfully handled APP_UNINSTALLED for shop: ${shop}`);

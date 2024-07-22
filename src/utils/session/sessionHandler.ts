@@ -4,160 +4,165 @@
  * This ensures that session data is securely managed and easily retrievable.
  *
  * What This File Does:
- * 1. Imports Necessary Modules: It imports the required modules from the @shopify/shopify-api package and your custom encryption handler.
+ * 1. Imports Necessary Modules: It imports the required modules from the @shopify/shopify-api package and your custom cryption handler.
  * 2. Extracts and Validates Environment Variables: It retrieves essential environment variables needed for Directus API configuration and validates their presence.
- * 3. Encrypts Session Data: It uses a custom encryption module to encrypt session data before storing it.
+ * 3. Encrypts Session Data: It uses a custom cryption module to encrypt session data before storing it.
  * 4. Stores Session Data: It defines a function to store session data into the Directus database.
  * 5. Loads Session Data: It defines a function to load session data from the Directus database.
  * 6. Deletes Session Data: It defines a function to delete session data from the Directus database.
  * 7. Exports Session Handler: Finally, it exports the session handler functions so they can be used throughout your application.
  */
 
-import { Session } from "@shopify/shopify-api"; // Import the Session object from Shopify API
-import encryption from "../security/encryption"; // Import custom encryption module
-import fetch from "node-fetch"; // Import fetch for API calls
+import { Session } from "@shopify/shopify-api";
+import { encrypt, decrypt } from "../security/encryption";
+import fetch from "node-fetch";
+import prisma from "../database/prismaClient";
+import { getTokensFromShopify } from "../shopify/shopifyClient"; // Importing getTokensFromShopify
 
-// Extract necessary environment variables with default values for Directus URL and token
-const DIRECTUS_URL = "https://api.referrd.com.au";
-const DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
+const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";
+const DIRECTUS_TOKEN =
+  process.env.DIRECTUS_TOKEN || "po4uje7gIaooHBbh7EAncPd2aBSH5wwL";
 
-/**
- * Stores the session data into the Directus database.
- *
- * @param {Session} session - The Shopify session object to be stored.
- * @param {string} userId - The ID of the user associated with the session.
- * @returns {Promise<boolean>} - Returns true if the operation was successful, otherwise returns false.
- */
-const storeSession = async (
-  session: Session,
-  userId: string
-): Promise<boolean> => {
-  try {
-    // Encrypt the session data to ensure security
-    const encryptedContent = encryption.encrypt(JSON.stringify(session));
+// Function to get shop owner's email from Shopify API
+const getShopOwnerEmail = async (
+  shop: string,
+  accessToken: string
+): Promise<string> => {
+  console.log(`Fetching shop owner email for shop: ${shop}`);
 
-    // Send a POST request to Directus to upsert (update or insert) the session data
-    const response = await fetch(
-      `${DIRECTUS_URL}/items/shopify_sessions/upsert`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Set content type to JSON
-          Authorization: `Bearer ${DIRECTUS_TOKEN}`, // Use Directus token for authorization
-        },
-        body: JSON.stringify({
-          filter: { id: session.id }, // Filter to check if session exists
-          update: {
-            content: encryptedContent, // Encrypted session data
-            shop: session.shop, // Associated shop information
-            user_id: userId, // Associated user ID
-          },
-          create: {
-            id: session.id, // Session ID
-            content: encryptedContent, // Encrypted session data
-            shop: session.shop, // Associated shop information
-            user_id: userId, // Associated user ID
-          },
-        }),
-      }
-    );
+  const response = await fetch(`https://${shop}/admin/api/2023-07/shop.json`, {
+    method: "GET",
+    headers: {
+      "X-Shopify-Access-Token": accessToken,
+      "Content-Type": "application/json",
+    },
+  });
 
-    // Check if the response is not OK and throw an error
-    if (!response.ok) {
-      throw new Error("Failed to store the session in Directus");
-    }
-
-    return true; // Return true if the session is successfully stored
-  } catch (error) {
-    console.error(`Error storing session: ${error}`);
-    return false; // Return false if there was an error
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch shop details from Shopify: ${errorText}`);
   }
+
+  const shopData: any = await response.json();
+  console.log(`Shop owner email fetched: ${shopData.shop.email}`);
+  return shopData.shop.email;
 };
 
-/**
- * Loads the session data from the Directus database.
- *
- * @param {string} id - The session ID to be loaded.
- * @returns {Promise<Session | undefined>} - Returns the Shopify session object or undefined if not found.
- */
-const loadSession = async (id: string): Promise<Session | undefined> => {
+const storeSession = async (
+  session: Session,
+  authCode: string // Accepting authCode as a parameter to use it in getTokensFromShopify
+): Promise<number | null> => {
   try {
-    // Send a GET request to Directus to retrieve the session data
-    const response = await fetch(`${DIRECTUS_URL}/items/shopify_sessions`, {
+    console.log(`Storing session for shop: ${session.shop}`);
+
+    // Retrieve the access token using the auth code
+    const tokens = await getTokensFromShopify(session.shop, authCode);
+    console.log(`Access tokens retrieved: ${JSON.stringify(tokens)}`);
+
+    const email = await getShopOwnerEmail(session.shop, tokens.accessToken); // Fetch the shop owner's email
+    console.log(`Shop owner email: ${email}`);
+
+    const encryptedContent = encrypt(JSON.stringify(session));
+    console.log(`Encrypted session content: ${encryptedContent}`);
+
+    const response = await fetch(`${DIRECTUS_URL}/items/sessions`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json", // Set content type to JSON
-        Authorization: `Bearer ${DIRECTUS_TOKEN}`, // Use Directus token for authorization
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DIRECTUS_TOKEN}`,
       },
       body: JSON.stringify({
-        filter: { id }, // Filter to retrieve session by ID
+        content: encryptedContent,
+        shop: session.shop,
+        is_active: "true",
+        email: email, // Using the shop owner's email
       }),
     });
 
-    // Check if the response is not OK and throw an error
     if (!response.ok) {
-      throw new Error("Failed to load the session from Directus");
+      const errorText = await response.text();
+      throw new Error(`Failed to store the session in Directus: ${errorText}`);
     }
 
-    // Parse the response JSON data
-    const sessionResult: { data: { content: string }[] } =
-      (await response.json()) as { data: { content: string }[] };
+    const responseData: any = await response.json();
+    const sessionId = responseData.data.id;
+    console.log(`Session stored successfully with ID: ${sessionId}`);
+    return sessionId;
+  } catch (error) {
+    console.error(`Error storing session: ${error}`);
+    return null;
+  }
+};
 
-    // Return undefined if no session data is found
-    if (!sessionResult.data.length || !sessionResult.data[0].content) {
+const loadSession = async (id: number): Promise<Session | undefined> => {
+  try {
+    console.log(`Loading session for session ID: ${id}`);
+
+    const response = await fetch(`${DIRECTUS_URL}/items/sessions/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DIRECTUS_TOKEN}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to load the session from Directus: ${errorText}`);
+    }
+
+    const sessionResult: any = await response.json();
+    console.log(`Session data fetched: ${JSON.stringify(sessionResult)}`);
+
+    if (!sessionResult.data.content) {
+      console.log(`No session found for session ID: ${id}`);
       return undefined;
     }
 
-    // Decrypt the session content
-    const decryptedContent = encryption.decrypt(sessionResult.data[0].content);
+    const decryptedContent = decrypt(sessionResult.data.content);
+    console.log(`Decrypted session content: ${decryptedContent}`);
+
     if (decryptedContent) {
-      // Parse the decrypted content into a session object and return it
       const sessionObj = JSON.parse(decryptedContent);
+      console.log(`Session loaded successfully for session ID: ${id}`);
       return new Session(sessionObj);
     }
 
-    return undefined; // Return undefined if decryption fails
+    console.log(`Failed to decrypt session content for session ID: ${id}`);
+    return undefined;
   } catch (error) {
     console.error(`Error loading session: ${error}`);
-    return undefined; // Return undefined if there was an error
+    return undefined;
   }
 };
 
-/**
- * Deletes the session data from the Directus database.
- *
- * @param {string} id - The session ID to be deleted.
- * @returns {Promise<boolean>} - Returns true if the operation was successful, otherwise returns false.
- */
-const deleteSession = async (id: string): Promise<boolean> => {
+const deleteSession = async (id: number): Promise<boolean> => {
   try {
-    // Send a DELETE request to Directus to remove the session data
-    const response = await fetch(`${DIRECTUS_URL}/items/shopify_sessions`, {
-      method: "POST",
+    console.log(`Deleting session for session ID: ${id}`);
+
+    const response = await fetch(`${DIRECTUS_URL}/items/sessions/${id}`, {
+      method: "DELETE",
       headers: {
-        "Content-Type": "application/json", // Set content type to JSON
-        Authorization: `Bearer ${DIRECTUS_TOKEN}`, // Use Directus token for authorization
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DIRECTUS_TOKEN}`,
       },
-      body: JSON.stringify({
-        filter: { id }, // Filter to delete session by ID
-      }),
     });
 
-    // Check if the response is not OK and throw an error
     if (!response.ok) {
-      throw new Error("Failed to delete the session from Directus");
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to delete the session from Directus: ${errorText}`
+      );
     }
 
-    return true; // Return true if the session is successfully deleted
+    console.log(`Session deleted successfully for session ID: ${id}`);
+    return true;
   } catch (error) {
     console.error(`Error deleting session: ${error}`);
-    return false; // Return false if there was an error
+    return false;
   }
 };
 
-/**
- * Session handler object containing storeSession, loadSession, and deleteSession functions.
- */
 const sessionHandler = { storeSession, loadSession, deleteSession };
 
 export default sessionHandler;

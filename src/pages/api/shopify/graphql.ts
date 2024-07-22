@@ -36,7 +36,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       rawRequest: req,
       rawResponse: res,
     }); // Get the current session ID
-    const session = await sessionHandler.loadSession(sessionId as string); // Load the session using the session handler
+    const session = await sessionHandler.loadSession(Number(sessionId)); // Load the session using the session handler
     const response = await shopify.clients.graphqlProxy({
       session: session!,
       rawBody: req.body,

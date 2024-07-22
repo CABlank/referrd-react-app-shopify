@@ -1,14 +1,3 @@
-/**
- * This file defines a function to handle fresh installations for a Shopify application.
- * It ensures that the shop is properly set up in the Directus database by upserting the store information.
- *
- * What This File Does:
- * 1. Defines Environment Variables: It sets up environment variables for Directus URL and token.
- * 2. Defines Interface for Function Parameters: It defines an interface for the function parameters to ensure type safety.
- * 3. Handles Fresh Installations: It defines an asynchronous function `freshInstallChecker` to handle the fresh installation process.
- * 4. Upserts Store Information: It upserts the store information in the Directus database, ensuring the shop is marked as active.
- * 5. Exports the Function: Finally, it exports the `freshInstallChecker` function for use in your application.
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -46,93 +35,169 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import fetch from "node-fetch";
-var DIRECTUS_URL = "https://api.referrd.com.au"; // Set up Directus URL environment variable
-var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
-/**
- * Creates a new user in the Directus database.
- *
- * @async
- * @function createUser
- * @param {string} email - The email of the user.
- * @param {string} password - The password of the user.
- * @returns {Promise<string>} The ID of the created user.
- * @throws {Error} If the user creation fails.
- */
+import bcrypt from "bcrypt";
+import Cookies from "js-cookie";
+import { getTokensFromShopify } from "../shopify/shopifyClient";
+import prisma from "../database/prismaClient";
+var DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";
+var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "po4uje7gIaooHBbh7EAncPd2aBSH5wwL";
+var DIRECTUS_ROLE_ID = "1637e8a5-22f9-4e1b-b378-97828291ef8a";
 var createUser = function (email, password) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, userData;
+    var response, userData, user;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/users"), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        role: "brand", // Ensure this matches the correct role ID or key
-                        status: "active",
-                    }),
-                })];
-            case 1:
-                response = _a.sent();
-                if (!response.ok) {
-                    throw new Error("Failed to create the user in Directus");
-                }
-                return [4 /*yield*/, response.json()];
-            case 2:
-                userData = _a.sent();
-                return [2 /*return*/, userData.data.id];
-        }
-    });
-}); };
-/**
- * Handles fresh installations by upserting store information in the Directus database.
- *
- * @async
- * @function freshInstallChecker
- * @param {FreshInstallCheckerParams} params - The function parameters container.
- * @param {string} params.shop - The shop URL in the format '*.myshopify.com'.
- * @returns {Promise<void>} A promise that resolves when the function completes.
- */
-var freshInstallChecker = function (_a) { return __awaiter(void 0, [_a], void 0, function (_b) {
-    var email, password, userId, response, e_1;
-    var shop = _b.shop;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
             case 0:
-                _c.trys.push([0, 3, , 4]);
-                console.log("This is a fresh install, running onboarding functions");
-                email = "".concat(shop.replace(".myshopify.com", ""), "@example.com");
-                password = Math.random().toString(36).slice(-8);
-                return [4 /*yield*/, createUser(email, password)];
-            case 1:
-                userId = _c.sent();
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions/upsert"), {
+                console.log("Creating user with email: ".concat(email));
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/users"), {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                             Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
                         },
                         body: JSON.stringify({
-                            filter: { shop: shop },
-                            update: { is_active: true, user_id: userId },
-                            create: { shop: shop, is_active: true, user_id: userId },
+                            email: email,
+                            password: password,
+                            role: DIRECTUS_ROLE_ID,
+                            status: "active",
                         }),
                     })];
-            case 2:
-                response = _c.sent();
+            case 1:
+                response = _a.sent();
                 if (!response.ok) {
-                    throw new Error("Failed to upsert the store in Directus");
+                    console.error("Failed to create the user in Directus", response.status, response.statusText);
+                    throw new Error("Failed to create the user in Directus");
                 }
-                console.log("Successfully upserted store for shop: ".concat(shop));
-                return [3 /*break*/, 4];
+                return [4 /*yield*/, response.json()];
+            case 2:
+                userData = _a.sent();
+                console.log("User created with Directus ID: ".concat(userData.data.id));
+                return [4 /*yield*/, prisma.user.create({
+                        data: {
+                            email: email,
+                            directusId: userData.data.id,
+                        },
+                    })];
             case 3:
-                e_1 = _c.sent();
+                user = _a.sent();
+                return [2 /*return*/, user.id];
+        }
+    });
+}); };
+var getDirectusTokens = function (email, password) { return __awaiter(void 0, void 0, void 0, function () {
+    var response, tokenData;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("Fetching Directus tokens for email: ".concat(email));
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/auth/login"), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password,
+                        }),
+                    })];
+            case 1:
+                response = _a.sent();
+                if (!response.ok) {
+                    console.error("Failed to login and get tokens from Directus", response.status, response.statusText);
+                    throw new Error("Failed to login and get tokens from Directus");
+                }
+                return [4 /*yield*/, response.json()];
+            case 2:
+                tokenData = _a.sent();
+                console.log("Directus tokens fetched successfully");
+                return [2 /*return*/, {
+                        accessToken: tokenData.data.access_token,
+                        refreshToken: tokenData.data.refresh_token,
+                        expiresIn: tokenData.data.expires_in,
+                    }];
+        }
+    });
+}); };
+var freshInstallChecker = function (_a) { return __awaiter(void 0, [_a], void 0, function (_b) {
+    var email, password, hashedPassword, userId, tokensFromShopify, _c, directusAccessToken, directusRefreshToken, expiresIn, e_1;
+    var shop = _b.shop, userEmail = _b.userEmail;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
+            case 0:
+                _d.trys.push([0, 7, , 8]);
+                console.log("This is a fresh install, running onboarding functions");
+                email = userEmail;
+                password = Math.random().toString(36).slice(-8);
+                console.log("Generated email: ".concat(email, " and password: ").concat(password));
+                return [4 /*yield*/, bcrypt.hash(password, 10)];
+            case 1:
+                hashedPassword = _d.sent();
+                return [4 /*yield*/, createUser(email, hashedPassword)];
+            case 2:
+                userId = _d.sent();
+                console.log("Upserting shop data for domain: ".concat(shop));
+                return [4 /*yield*/, prisma.shop.upsert({
+                        where: { domain: shop },
+                        update: { isActive: true, updatedAt: new Date() },
+                        create: { domain: shop, isActive: true },
+                    })];
+            case 3:
+                _d.sent();
+                console.log("Fetching tokens from Shopify for shop: ".concat(shop));
+                return [4 /*yield*/, getTokensFromShopify(shop, "authorization_code")];
+            case 4:
+                tokensFromShopify = _d.sent();
+                if (!tokensFromShopify.accessToken || !tokensFromShopify.refreshToken) {
+                    console.error("Tokens from Shopify are undefined", tokensFromShopify);
+                    throw new Error("Tokens from Shopify are undefined");
+                }
+                console.log("Saving Shopify tokens");
+                return [4 /*yield*/, saveToken(userId, tokensFromShopify.accessToken, tokensFromShopify.refreshToken, tokensFromShopify.expiresAt)];
+            case 5:
+                _d.sent();
+                console.log("Shopify tokens saved successfully");
+                console.log("Fetching Directus tokens");
+                return [4 /*yield*/, getDirectusTokens(email, password)];
+            case 6:
+                _c = _d.sent(), directusAccessToken = _c.accessToken, directusRefreshToken = _c.refreshToken, expiresIn = _c.expiresIn;
+                console.log("Saving Directus tokens in cookies");
+                Cookies.set("directus_access_token", directusAccessToken, {
+                    secure: true,
+                    sameSite: "Strict",
+                });
+                Cookies.set("directus_refresh_token", directusRefreshToken, {
+                    secure: true,
+                    sameSite: "Strict",
+                });
+                Cookies.set("token_expiration", String(Date.now() + expiresIn * 1000), {
+                    secure: true,
+                    sameSite: "Strict",
+                });
+                return [3 /*break*/, 8];
+            case 7:
+                e_1 = _d.sent();
                 console.error("An error occurred in freshInstallChecker function: ".concat(e_1.message), e_1);
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
+                return [3 /*break*/, 8];
+            case 8: return [2 /*return*/];
+        }
+    });
+}); };
+var saveToken = function (userId, accessToken, refreshToken, expiresAt) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("Saving token for userId: ".concat(userId));
+                return [4 /*yield*/, prisma.token.create({
+                        data: {
+                            userId: userId,
+                            accessToken: accessToken,
+                            refreshToken: refreshToken,
+                            expiresAt: expiresAt,
+                        },
+                    })];
+            case 1:
+                _a.sent();
+                console.log("Token saved in database");
+                return [2 /*return*/];
         }
     });
 }); };

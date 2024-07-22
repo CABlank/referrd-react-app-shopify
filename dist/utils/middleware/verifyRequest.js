@@ -71,7 +71,7 @@ var verifyRequest = function (req, res, next) { return __awaiter(void 0, void 0,
                     })];
             case 1:
                 sessionId = _b.sent();
-                return [4 /*yield*/, sessionHandler.loadSession(sessionId)];
+                return [4 /*yield*/, sessionHandler.loadSession(Number(sessionId))];
             case 2:
                 session = _b.sent();
                 if (!!session) return [3 /*break*/, 4];

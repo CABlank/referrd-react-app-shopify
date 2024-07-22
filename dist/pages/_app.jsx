@@ -1,15 +1,3 @@
-/**
- * This file defines the custom App component for a Next.js application.
- * It integrates the Shopify Polaris design system, AppBridge provider, and additional global styles.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required components from Polaris, hooks from React and Next.js, and global styles.
- * 2. Extends JSX Intrinsic Elements: It extends JSX intrinsic elements for custom HTML elements.
- * 3. Defines the Custom App Component: It defines the `MyApp` component which wraps the application with necessary providers.
- * 4. Fetches Initial Props: It defines a static method to fetch initial props for the app.
- * 5. Renders the Component: It renders the Next.js component with pageProps within the providers.
- * 6. Exports the Custom App Component: Finally, it exports the `MyApp` component for use in the application.
- */
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -72,14 +60,18 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import AppBridgeProvider from "../components/providers/AppBridgeProvider"; // Import custom AppBridgeProvider component
-import { AppProvider as PolarisProvider } from "@shopify/polaris"; // Import Polaris AppProvider
-import "@shopify/polaris/build/esm/styles.css"; // Import Polaris styles
-import translations from "@shopify/polaris/locales/en.json"; // Import English translations for Polaris
-import Link from "next/link"; // Import Link component from Next.js
-import App from "next/app"; // Import App component and types from Next.js
-import Head from "next/head"; // Import Head component from Next.js
-import React from "react"; // Import React
+import AppBridgeProvider from "../components/providers/AppBridgeProvider";
+import { AppProvider as PolarisProvider } from "@shopify/polaris";
+import "@shopify/polaris/build/esm/styles.css";
+import translations from "@shopify/polaris/locales/en.json";
+import Link from "next/link";
+import App from "next/app";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { SessionProvider, useSession } from "../contexts/SessionContext";
+import "../styles/globals.css";
+import BrandLayout from "./layouts/BrandLayout";
+import LoadingOverlay from "../components/common/LoadingOverlay";
 /**
  * Custom App component for the Next.js application.
  *
@@ -102,16 +94,37 @@ var MyApp = /** @class */ (function (_super) {
      */
     MyApp.getInitialProps = function (appContext) {
         return __awaiter(this, void 0, void 0, function () {
-            var appProps;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, App.getInitialProps(appContext)];
+            var appProps, ctx, _a, shop, host, error_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, App.getInitialProps(appContext)];
                     case 1:
-                        appProps = _a.sent();
-                        return [2 /*return*/, __assign({}, appProps)];
+                        appProps = _b.sent();
+                        ctx = appContext.ctx;
+                        _a = ctx.query, shop = _a.shop, host = _a.host;
+                        return [2 /*return*/, __assign(__assign({}, appProps), { pageProps: __assign(__assign({}, appProps.pageProps), { shop: shop, host: host }) })];
+                    case 2:
+                        error_1 = _b.sent();
+                        console.error("Error in getInitialProps:", error_1);
+                        return [2 /*return*/, { pageProps: {} }]; // Return an empty pageProps object to avoid breaking the app
+                    case 3: return [2 /*return*/];
                 }
             });
         });
+    };
+    /**
+     * Checks if the app is running inside Shopify.
+     *
+     * @function isShopify
+     * @returns {boolean} True if running inside Shopify, false otherwise.
+     */
+    MyApp.prototype.isShopify = function () {
+        var pageProps = this.props.pageProps;
+        // Ensure both 'shop' and 'host' are string types to avoid falsy values such as empty strings
+        return ((typeof pageProps.shop === "string" && pageProps.shop.length > 0) ||
+            (typeof pageProps.host === "string" && pageProps.host.length > 0));
     };
     /**
      * Renders the App component.
@@ -121,25 +134,73 @@ var MyApp = /** @class */ (function (_super) {
      */
     MyApp.prototype.render = function () {
         var _a = this.props, Component = _a.Component, pageProps = _a.pageProps;
-        return (<>
-        <Head>
-          <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet"/>
-        </Head>
-        <PolarisProvider i18n={translations}>
-          <AppBridgeProvider>
-            <ui-nav-menu>
-              <Link href="/" rel="home">
-                Home
-              </Link>
-              <Link href="/admin">Debug Cards</Link>
-              <Link href="/templates">Templates</Link>
-              <Link href="/settings">Settings</Link>
-            </ui-nav-menu>
-            <Component {...pageProps}/>
-          </AppBridgeProvider>
-        </PolarisProvider>
-      </>);
+        var isShopify = this.isShopify();
+        return (<SessionProvider>
+        <ContentWrapper isShopify={isShopify} Component={Component} pageProps={pageProps}/>
+      </SessionProvider>);
     };
     return MyApp;
 }(App));
-export default MyApp; // Export the MyApp component
+var ContentWrapper = function (_a) {
+    var isShopify = _a.isShopify, Component = _a.Component, pageProps = _a.pageProps;
+    var _b = useSession(), session = _b.session, loading = _b.loading;
+    var _c = useState(false), isAuthenticated = _c[0], setIsAuthenticated = _c[1];
+    var _d = useState(false), pageLoading = _d[0], setPageLoading = _d[1];
+    var router = useRouter();
+    useEffect(function () {
+        var handleStart = function () { return setPageLoading(true); };
+        var handleComplete = function () { return setPageLoading(false); };
+        router.events.on("routeChangeStart", handleStart);
+        router.events.on("routeChangeComplete", handleComplete);
+        router.events.on("routeChangeError", handleComplete);
+        return function () {
+            router.events.off("routeChangeStart", handleStart);
+            router.events.off("routeChangeComplete", handleComplete);
+            router.events.off("routeChangeError", handleComplete);
+        };
+    }, [router]);
+    useEffect(function () {
+        if (!loading && session && session.user.role === "Brand") {
+            setIsAuthenticated(true);
+        }
+        else {
+            setIsAuthenticated(false);
+        }
+    }, [loading, session]);
+    if (loading || pageLoading) {
+        return <LoadingOverlay />;
+    }
+    if (isShopify) {
+        return (<PolarisProvider i18n={translations}>
+        <AppBridgeProvider>
+          <ui-nav-menu>
+            <Link href="/" rel="home">
+              Home
+            </Link>
+            <Link href="/brand/dashboard">Dashboard</Link>
+            <Link href="/brand/campaigns">Campaigns</Link>
+            <Link href="/brand/support">Support</Link>
+            <Link href="/brand/referrals">Referrals</Link>
+            <Link href="/brand/settings">Settings</Link>
+            <Link href="/brand/payments">Payments</Link>
+            <Link href="/brand/faqs">FAQS</Link>
+          </ui-nav-menu>
+          <div className="flex-1 overflow-y-auto">
+            <main className="p-12">
+              <Component {...pageProps}/>
+            </main>
+          </div>
+        </AppBridgeProvider>
+      </PolarisProvider>);
+    }
+    else if (Component.noLayout) {
+        // If the page has noLayout property, render the component directly
+        return <Component {...pageProps}/>;
+    }
+    else {
+        return isAuthenticated ? (<BrandLayout>
+        <Component {...pageProps}/>
+      </BrandLayout>) : (<Component {...pageProps}/>);
+    }
+};
+export default MyApp;

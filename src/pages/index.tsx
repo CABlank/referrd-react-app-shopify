@@ -79,7 +79,7 @@ const HomePage: React.FC<HomePageProps> = () => {
                   <Button
                     variant="primary"
                     onClick={() => {
-                      router.push("/admin");
+                      router.push("/brand");
                     }}
                   >
                     Debug Cards

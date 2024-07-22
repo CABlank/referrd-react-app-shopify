@@ -92,7 +92,7 @@ var HomePage = function () {
                 </Text>
                 <InlineStack wrap={false} align="end">
                   <Button variant="primary" onClick={function () {
-                router.push("/admin");
+                router.push("/brand");
             }}>
                     Debug Cards
                   </Button>

@@ -1,0 +1,133 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6% 4% 0;
+  position: relative;
+  gap: 20px;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  background-color: #f3f3f3;
+  background-image: url("/first-background-image.svg"), url("/second-background-image.svg");
+  background-size: 100% auto, 100% cover;
+  background-position: center top, center bottom;
+  background-repeat: no-repeat;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  position: relative;
+}
+
+.titleBlock {
+  text-align: left;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 500;
+  color: #10ad1b;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.formContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .container {
+    padding: 10% 3%;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .formContainer {
+    width: 100%;
+  }
+
+  .logo {
+    position: relative;
+    top: 0;
+    left: 0;
+  }
+}
+
+@media (max-width: 460px) {
+  .body {
+    background-size: 100% 50vh, 100% cover;
+    background-position: center top, center bottom;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 1120px) {
+  .container {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 970px) {
+  .logo {
+    position: absolute;
+    top: 40px;
+    left: 50px;
+  }
+
+  .container {
+    padding: 120px 50px 0;
+  }
+}
+
+@media (min-width: 1121px) {
+  .formContainer {
+    width: 50%;
+  }
+
+  .container {
+    max-width: 1500px;
+    margin: auto;
+  }
+}
+
+@media (min-width: 1440px),
+(min-width: 1920px) {
+  .body {
+    background-size: 100% auto, 100% cover;
+    background-position: center top, center bottom;
+  }
+}

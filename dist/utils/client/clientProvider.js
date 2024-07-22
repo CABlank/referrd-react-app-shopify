@@ -63,13 +63,17 @@ var fetchOfflineSession = function (shop) { return __awaiter(void 0, void 0, voi
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                console.log("Fetching offline session for shop: ".concat(shop));
                 sessionID = shopify.session.getOfflineId(shop);
-                return [4 /*yield*/, sessionHandler.loadSession(sessionID)];
+                console.log("Offline session ID for shop ".concat(shop, ": ").concat(sessionID));
+                return [4 /*yield*/, sessionHandler.loadSession(Number(sessionID))];
             case 1:
                 session = _a.sent();
                 if (!session) {
+                    console.error("No session found for shop ".concat(shop));
                     throw new Error("No session found for shop ".concat(shop)); // Throw an error if no session is found
                 }
+                console.log("Offline session fetched for shop ".concat(shop, ":"), session);
                 return [2 /*return*/, session]; // Return the session
         }
     });
@@ -92,10 +96,13 @@ var offline = {
         var shop = _b.shop;
         return __generator(this, function (_c) {
             switch (_c.label) {
-                case 0: return [4 /*yield*/, fetchOfflineSession(shop)];
+                case 0:
+                    console.log("Creating offline GraphQL client for shop: ".concat(shop));
+                    return [4 /*yield*/, fetchOfflineSession(shop)];
                 case 1:
                     session = _c.sent();
                     client = new shopify.clients.Graphql({ session: session });
+                    console.log("Offline GraphQL client created for shop ".concat(shop));
                     return [2 /*return*/, { client: client, shop: shop, session: session }]; // Return the client, shop, and session
             }
         });
@@ -113,13 +120,16 @@ var offline = {
         var shop = _b.shop;
         return __generator(this, function (_c) {
             switch (_c.label) {
-                case 0: return [4 /*yield*/, fetchOfflineSession(shop)];
+                case 0:
+                    console.log("Creating offline REST client for shop: ".concat(shop));
+                    return [4 /*yield*/, fetchOfflineSession(shop)];
                 case 1:
                     session = _c.sent();
                     client = new shopify.clients.Rest({
                         session: session,
                         apiVersion: process.env.SHOPIFY_API_VERSION,
                     });
+                    console.log("Offline REST client created for shop ".concat(shop));
                     return [2 /*return*/, { client: client, shop: shop, session: session }]; // Return the client, shop, and session
             }
         });
@@ -139,22 +149,28 @@ var fetchOnlineSession = function (_a) { return __awaiter(void 0, [_a], void 0, 
     var req = _b.req, res = _b.res;
     return __generator(this, function (_c) {
         switch (_c.label) {
-            case 0: return [4 /*yield*/, shopify.session.getCurrentId({
-                    isOnline: true,
-                    rawRequest: req,
-                    rawResponse: res,
-                })];
+            case 0:
+                console.log("Fetching online session for request");
+                return [4 /*yield*/, shopify.session.getCurrentId({
+                        isOnline: true,
+                        rawRequest: req,
+                        rawResponse: res,
+                    })];
             case 1:
                 sessionID = _c.sent();
+                console.log("Online session ID: ".concat(sessionID));
                 if (!sessionID) {
+                    console.error("Invalid session ID");
                     throw new Error("Invalid session ID"); // Throw an error if no session ID is found
                 }
-                return [4 /*yield*/, sessionHandler.loadSession(sessionID)];
+                return [4 /*yield*/, sessionHandler.loadSession(Number(sessionID))];
             case 2:
                 session = _c.sent();
                 if (!session) {
+                    console.error("No session found for request");
                     throw new Error("No session found for request"); // Throw an error if no session is found
                 }
+                console.log("Online session fetched:", session);
                 return [2 /*return*/, session]; // Return the session
         }
     });
@@ -177,11 +193,14 @@ var online = {
         var req = _b.req, res = _b.res;
         return __generator(this, function (_c) {
             switch (_c.label) {
-                case 0: return [4 /*yield*/, fetchOnlineSession({ req: req, res: res })];
+                case 0:
+                    console.log("Creating online GraphQL client");
+                    return [4 /*yield*/, fetchOnlineSession({ req: req, res: res })];
                 case 1:
                     session = _c.sent();
                     client = new shopify.clients.Graphql({ session: session });
                     shop = session.shop;
+                    console.log("Online GraphQL client created for shop ".concat(shop));
                     return [2 /*return*/, { client: client, shop: shop, session: session }]; // Return the client, shop, and session
             }
         });
@@ -199,7 +218,9 @@ var online = {
         var req = _b.req, res = _b.res;
         return __generator(this, function (_c) {
             switch (_c.label) {
-                case 0: return [4 /*yield*/, fetchOnlineSession({ req: req, res: res })];
+                case 0:
+                    console.log("Creating online REST client");
+                    return [4 /*yield*/, fetchOnlineSession({ req: req, res: res })];
                 case 1:
                     session = _c.sent();
                     shop = session.shop;
@@ -207,6 +228,7 @@ var online = {
                         session: session,
                         apiVersion: process.env.SHOPIFY_API_VERSION,
                     });
+                    console.log("Online REST client created for shop ".concat(shop));
                     return [2 /*return*/, { client: client, shop: shop, session: session }]; // Return the client, shop, and session
             }
         });

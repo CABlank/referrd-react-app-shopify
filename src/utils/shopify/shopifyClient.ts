@@ -1,17 +1,3 @@
-/**
- * This file sets up and configures the Shopify API client for your application.
- * It ensures that your application can interact with Shopify, handle webhooks,
- * and use the necessary credentials and configurations required for Shopify operations.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports the required modules from the `@shopify/shopify-api` package and your custom webhook handler.
- * 2. Determines Development Mode: It checks if the app is running in development mode.
- * 3. Extracts and Validates Environment Variables: It retrieves essential environment variables needed for Shopify API configuration and validates their presence.
- * 4. Configures the Shopify API Client: It sets up the Shopify API client with the provided credentials and settings, including API keys, scopes, hostname, and logging configuration.
- * 5. Registers Webhook Handlers: It defines and registers webhook handlers, specifying how to handle specific Shopify webhook events.
- * 6. Exports the Configured Shopify Client: Finally, it exports the configured Shopify client so that it can be used throughout your application.
- */
-
 import {
   ApiVersion,
   DeliveryMethod,
@@ -19,7 +5,7 @@ import {
   shopifyApi,
 } from "@shopify/shopify-api";
 import "@shopify/shopify-api/adapters/node";
-import appUninstalledHandler from "../webhooks/appUninstallHandler";
+import appUninstalledHandler from "../webhooks/appUninstallHandler"; // Corrected import path
 
 // Determine if the app is running in development mode
 const isDev = process.env.NODE_ENV === "development";
@@ -82,6 +68,45 @@ shopify.webhooks.addHandlers({
     callback: appUninstalledHandler, // The function to handle the webhook
   },
 });
+
+/**
+ * Get tokens from Shopify after OAuth callback.
+ * @param shopDomain - The shop domain to get tokens for.
+ * @param code - The authorization code provided by Shopify.
+ * @returns {Promise<{ accessToken: string, refreshToken: string, expiresAt: Date }>} The access token, refresh token along with the expiration date.
+ */
+export interface Session {
+  accessToken?: string;
+  refreshToken?: string; // Add the refreshToken property
+  expires?: string;
+}
+
+export const getTokensFromShopify = async (
+  shopDomain: string,
+  code: string
+): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> => {
+  // Simulate raw request and response objects
+  const rawRequest = {
+    url: `https://${shopDomain}/admin/oauth/access_token`,
+    headers: { "Content-Type": "application/json" },
+  };
+  const rawResponse = {
+    statusCode: 200,
+  };
+
+  const response = await shopify.auth.callback({
+    rawRequest: rawRequest as any, // Cast to any to bypass type errors
+    rawResponse: rawResponse as any, // Cast to any to bypass type errors
+  });
+
+  const session = response.session as Session;
+
+  return {
+    accessToken: session.accessToken!,
+    refreshToken: session.refreshToken!,
+    expiresAt: session.expires ? new Date(session.expires) : new Date(),
+  };
+};
 
 // Export the configured Shopify API client
 export default shopify;

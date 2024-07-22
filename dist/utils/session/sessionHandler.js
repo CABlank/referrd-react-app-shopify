@@ -4,9 +4,9 @@
  * This ensures that session data is securely managed and easily retrievable.
  *
  * What This File Does:
- * 1. Imports Necessary Modules: It imports the required modules from the @shopify/shopify-api package and your custom encryption handler.
+ * 1. Imports Necessary Modules: It imports the required modules from the @shopify/shopify-api package and your custom cryption handler.
  * 2. Extracts and Validates Environment Variables: It retrieves essential environment variables needed for Directus API configuration and validates their presence.
- * 3. Encrypts Session Data: It uses a custom encryption module to encrypt session data before storing it.
+ * 3. Encrypts Session Data: It uses a custom cryption module to encrypt session data before storing it.
  * 4. Stores Session Data: It defines a function to store session data into the Directus database.
  * 5. Loads Session Data: It defines a function to load session data from the Directus database.
  * 6. Deletes Session Data: It defines a function to delete session data from the Directus database.
@@ -48,150 +48,170 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { Session } from "@shopify/shopify-api"; // Import the Session object from Shopify API
-import encryption from "../security/encryption"; // Import custom encryption module
-import fetch from "node-fetch"; // Import fetch for API calls
-// Extract necessary environment variables with default values for Directus URL and token
-var DIRECTUS_URL = "https://api.referrd.com.au";
-var DIRECTUS_TOKEN = "1zXm5k0Ii_wyWEXWxZWG9ZIxzzpTwzZs"; // Set up Directus token environment variable
-/**
- * Stores the session data into the Directus database.
- *
- * @param {Session} session - The Shopify session object to be stored.
- * @param {string} userId - The ID of the user associated with the session.
- * @returns {Promise<boolean>} - Returns true if the operation was successful, otherwise returns false.
- */
-var storeSession = function (session, userId) { return __awaiter(void 0, void 0, void 0, function () {
-    var encryptedContent, response, error_1;
+import { Session } from "@shopify/shopify-api";
+import { encrypt, decrypt } from "../security/encryption";
+import fetch from "node-fetch";
+import { getTokensFromShopify } from "../shopify/shopifyClient"; // Importing getTokensFromShopify
+var DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";
+var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "po4uje7gIaooHBbh7EAncPd2aBSH5wwL";
+// Function to get shop owner's email from Shopify API
+var getShopOwnerEmail = function (shop, accessToken) { return __awaiter(void 0, void 0, void 0, function () {
+    var response, errorText, shopData;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 2, , 3]);
-                encryptedContent = encryption.encrypt(JSON.stringify(session));
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions/upsert"), {
-                        method: "POST",
+                console.log("Fetching shop owner email for shop: ".concat(shop));
+                return [4 /*yield*/, fetch("https://".concat(shop, "/admin/api/2023-07/shop.json"), {
+                        method: "GET",
                         headers: {
-                            "Content-Type": "application/json", // Set content type to JSON
-                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN), // Use Directus token for authorization
+                            "X-Shopify-Access-Token": accessToken,
+                            "Content-Type": "application/json",
                         },
-                        body: JSON.stringify({
-                            filter: { id: session.id }, // Filter to check if session exists
-                            update: {
-                                content: encryptedContent, // Encrypted session data
-                                shop: session.shop, // Associated shop information
-                                user_id: userId, // Associated user ID
-                            },
-                            create: {
-                                id: session.id, // Session ID
-                                content: encryptedContent, // Encrypted session data
-                                shop: session.shop, // Associated shop information
-                                user_id: userId, // Associated user ID
-                            },
-                        }),
                     })];
             case 1:
                 response = _a.sent();
-                // Check if the response is not OK and throw an error
-                if (!response.ok) {
-                    throw new Error("Failed to store the session in Directus");
-                }
-                return [2 /*return*/, true]; // Return true if the session is successfully stored
+                if (!!response.ok) return [3 /*break*/, 3];
+                return [4 /*yield*/, response.text()];
             case 2:
+                errorText = _a.sent();
+                throw new Error("Failed to fetch shop details from Shopify: ".concat(errorText));
+            case 3: return [4 /*yield*/, response.json()];
+            case 4:
+                shopData = _a.sent();
+                console.log("Shop owner email fetched: ".concat(shopData.shop.email));
+                return [2 /*return*/, shopData.shop.email];
+        }
+    });
+}); };
+var storeSession = function (session, authCode // Accepting authCode as a parameter to use it in getTokensFromShopify
+) { return __awaiter(void 0, void 0, void 0, function () {
+    var tokens, email, encryptedContent, response, errorText, responseData, sessionId, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 7, , 8]);
+                console.log("Storing session for shop: ".concat(session.shop));
+                return [4 /*yield*/, getTokensFromShopify(session.shop, authCode)];
+            case 1:
+                tokens = _a.sent();
+                console.log("Access tokens retrieved: ".concat(JSON.stringify(tokens)));
+                return [4 /*yield*/, getShopOwnerEmail(session.shop, tokens.accessToken)];
+            case 2:
+                email = _a.sent();
+                console.log("Shop owner email: ".concat(email));
+                encryptedContent = encrypt(JSON.stringify(session));
+                console.log("Encrypted session content: ".concat(encryptedContent));
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/sessions"), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
+                        },
+                        body: JSON.stringify({
+                            content: encryptedContent,
+                            shop: session.shop,
+                            is_active: "true",
+                            email: email, // Using the shop owner's email
+                        }),
+                    })];
+            case 3:
+                response = _a.sent();
+                if (!!response.ok) return [3 /*break*/, 5];
+                return [4 /*yield*/, response.text()];
+            case 4:
+                errorText = _a.sent();
+                throw new Error("Failed to store the session in Directus: ".concat(errorText));
+            case 5: return [4 /*yield*/, response.json()];
+            case 6:
+                responseData = _a.sent();
+                sessionId = responseData.data.id;
+                console.log("Session stored successfully with ID: ".concat(sessionId));
+                return [2 /*return*/, sessionId];
+            case 7:
                 error_1 = _a.sent();
                 console.error("Error storing session: ".concat(error_1));
-                return [2 /*return*/, false]; // Return false if there was an error
-            case 3: return [2 /*return*/];
+                return [2 /*return*/, null];
+            case 8: return [2 /*return*/];
         }
     });
 }); };
-/**
- * Loads the session data from the Directus database.
- *
- * @param {string} id - The session ID to be loaded.
- * @returns {Promise<Session | undefined>} - Returns the Shopify session object or undefined if not found.
- */
 var loadSession = function (id) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, sessionResult, decryptedContent, sessionObj, error_2;
+    var response, errorText, sessionResult, decryptedContent, sessionObj, error_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 3, , 4]);
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
-                        method: "POST",
+                _a.trys.push([0, 5, , 6]);
+                console.log("Loading session for session ID: ".concat(id));
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/sessions/").concat(id), {
+                        method: "GET",
                         headers: {
-                            "Content-Type": "application/json", // Set content type to JSON
-                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN), // Use Directus token for authorization
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
                         },
-                        body: JSON.stringify({
-                            filter: { id: id }, // Filter to retrieve session by ID
-                        }),
                     })];
             case 1:
                 response = _a.sent();
-                // Check if the response is not OK and throw an error
-                if (!response.ok) {
-                    throw new Error("Failed to load the session from Directus");
-                }
-                return [4 /*yield*/, response.json()];
+                if (!!response.ok) return [3 /*break*/, 3];
+                return [4 /*yield*/, response.text()];
             case 2:
-                sessionResult = (_a.sent());
-                // Return undefined if no session data is found
-                if (!sessionResult.data.length || !sessionResult.data[0].content) {
+                errorText = _a.sent();
+                throw new Error("Failed to load the session from Directus: ".concat(errorText));
+            case 3: return [4 /*yield*/, response.json()];
+            case 4:
+                sessionResult = _a.sent();
+                console.log("Session data fetched: ".concat(JSON.stringify(sessionResult)));
+                if (!sessionResult.data.content) {
+                    console.log("No session found for session ID: ".concat(id));
                     return [2 /*return*/, undefined];
                 }
-                decryptedContent = encryption.decrypt(sessionResult.data[0].content);
+                decryptedContent = decrypt(sessionResult.data.content);
+                console.log("Decrypted session content: ".concat(decryptedContent));
                 if (decryptedContent) {
                     sessionObj = JSON.parse(decryptedContent);
+                    console.log("Session loaded successfully for session ID: ".concat(id));
                     return [2 /*return*/, new Session(sessionObj)];
                 }
-                return [2 /*return*/, undefined]; // Return undefined if decryption fails
-            case 3:
+                console.log("Failed to decrypt session content for session ID: ".concat(id));
+                return [2 /*return*/, undefined];
+            case 5:
                 error_2 = _a.sent();
                 console.error("Error loading session: ".concat(error_2));
-                return [2 /*return*/, undefined]; // Return undefined if there was an error
-            case 4: return [2 /*return*/];
+                return [2 /*return*/, undefined];
+            case 6: return [2 /*return*/];
         }
     });
 }); };
-/**
- * Deletes the session data from the Directus database.
- *
- * @param {string} id - The session ID to be deleted.
- * @returns {Promise<boolean>} - Returns true if the operation was successful, otherwise returns false.
- */
 var deleteSession = function (id) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, error_3;
+    var response, errorText, error_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/shopify_sessions"), {
-                        method: "POST",
+                _a.trys.push([0, 4, , 5]);
+                console.log("Deleting session for session ID: ".concat(id));
+                return [4 /*yield*/, fetch("".concat(DIRECTUS_URL, "/items/sessions/").concat(id), {
+                        method: "DELETE",
                         headers: {
-                            "Content-Type": "application/json", // Set content type to JSON
-                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN), // Use Directus token for authorization
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer ".concat(DIRECTUS_TOKEN),
                         },
-                        body: JSON.stringify({
-                            filter: { id: id }, // Filter to delete session by ID
-                        }),
                     })];
             case 1:
                 response = _a.sent();
-                // Check if the response is not OK and throw an error
-                if (!response.ok) {
-                    throw new Error("Failed to delete the session from Directus");
-                }
-                return [2 /*return*/, true]; // Return true if the session is successfully deleted
+                if (!!response.ok) return [3 /*break*/, 3];
+                return [4 /*yield*/, response.text()];
             case 2:
+                errorText = _a.sent();
+                throw new Error("Failed to delete the session from Directus: ".concat(errorText));
+            case 3:
+                console.log("Session deleted successfully for session ID: ".concat(id));
+                return [2 /*return*/, true];
+            case 4:
                 error_3 = _a.sent();
                 console.error("Error deleting session: ".concat(error_3));
-                return [2 /*return*/, false]; // Return false if there was an error
-            case 3: return [2 /*return*/];
+                return [2 /*return*/, false];
+            case 5: return [2 /*return*/];
         }
     });
 }); };
-/**
- * Session handler object containing storeSession, loadSession, and deleteSession functions.
- */
 var sessionHandler = { storeSession: storeSession, loadSession: loadSession, deleteSession: deleteSession };
 export default sessionHandler;

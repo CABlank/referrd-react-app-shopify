@@ -1,7 +1,5 @@
 import Cryptr from "cryptr";
 
-console.log(`ENCRYPTION_STRING: ${process.env.ENCRYPTION_STRING}`);
-
 const encryptionString = process.env.ENCRYPTION_STRING;
 if (!encryptionString) {
   throw new Error(
@@ -9,6 +7,12 @@ if (!encryptionString) {
   );
 }
 
-const cryption = new Cryptr(encryptionString);
+export const cryption = new Cryptr(encryptionString);
 
-export default cryption;
+export const encrypt = (text: string) => {
+  return cryption.encrypt(text);
+};
+
+export const decrypt = (hash: string) => {
+  return cryption.decrypt(hash);
+};
