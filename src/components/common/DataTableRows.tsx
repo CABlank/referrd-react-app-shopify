@@ -17,7 +17,7 @@ const DataTableRows = ({
           {columns.map((column, colIndex) => (
             <div
               key={colIndex}
-              className={`w-[10rem] lg:max-w-[135px] lg:flex-1 ${column.className || ""}`}
+              className={`w-[10rem] lg:max-w-[140px] lg:flex-1 ${column.className || ""}`}
             >
               {column.customRender ? (
                 column.customRender(row[column.dataIndex], row)

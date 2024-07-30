@@ -159,10 +159,10 @@ const Sidebar: React.FC = () => {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex flex-col items-start w-[301px] h-full px-10 py-20 bg-white inset-y-0 desktop-sidebar">
+      <div className="hidden lg:flex flex-col items-start w-[280px] h-full px-5 py-10 pb-20 bg-white inset-y-0 desktop-sidebar">
         <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 h-[800px] relative gap-14">
           <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 gap-4">
-            <div className="flex justify-center w-full h-[58px] object-cover mb-[30px]">
+            <div className="flex justify-start w-full h-[58px] object-cover mb-[50px] ml-[10px]">
               <Image
                 src="/images/logo.png"
                 alt="Logo"

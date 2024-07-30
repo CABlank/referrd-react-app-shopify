@@ -177,5 +177,11 @@
       "name": "height",
       "type": "number"
     }
+  ],
+  "input": [
+    { "name": "bordercolor", "label": "Border Color", "type": "color" },
+    { "name": "textcolor", "label": "Text Color", "type": "color" },
+    { "name": "borderwidth", "label": "Border Width", "type": "number" },
+    { "name": "borderradius", "label": "Border Radius", "type": "number" }
   ]
 }

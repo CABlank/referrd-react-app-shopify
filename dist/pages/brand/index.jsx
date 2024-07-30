@@ -30,7 +30,7 @@ var DebugIndex = function () {
                   Data Fetching
                 </Text>
                 <Text>
-                  Send GET, POST and GraphQL queries to your app's backend.
+                  Send GET, POST and GraphQL queries to your app&apos;s backend.
                 </Text>
                 <InlineStack wrap={false} align="end">
                   <Button variant="primary" onClick={function () {
@@ -48,7 +48,7 @@ var DebugIndex = function () {
                 <Text as="h2" variant="headingMd">
                   Resource Picker
                 </Text>
-                <Text>See how to use AppBridge CDN's Resource Picker</Text>
+                <Text>See how to use AppBridge CDN&apos;s Resource Picker</Text>
                 <InlineStack wrap={false} align="end">
                   <Button variant="primary" onClick={function () {
             router.push("/brand/resourcePicker");
@@ -65,7 +65,7 @@ var DebugIndex = function () {
                 <Text as="h2" variant="headingMd">
                   Another Custom Page
                 </Text>
-                <Text>See how to look another Referrd</Text>
+                <Text>See how to look another Referred</Text>
                 <InlineStack wrap={false} align="end">
                   <Button variant="primary" onClick={function () {
             router.push("/brand/customPage");

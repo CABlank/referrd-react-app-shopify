@@ -40,9 +40,37 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [name, setName] = useState<string | undefined>(undefined);
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
+  const hasInitialized = useRef(false);
+
+  const saveTokensToCookies = (
+    token: string,
+    refreshToken: string,
+    expires: number
+  ) => {
+    const expirationTime = Date.now() + expires * 1000;
+    Cookies.set("token_expiration", String(expirationTime), {
+      secure: true,
+      sameSite: "Strict",
+    });
+    Cookies.set("access_token", token, { secure: true, sameSite: "Strict" });
+    Cookies.set("refresh_token", refreshToken, {
+      secure: true,
+      sameSite: "Strict",
+    });
+  };
+
+  const clearSession = () => {
+    setSession(null);
+    setName(undefined);
+    Cookies.remove("access_token");
+    Cookies.remove("refresh_token");
+    Cookies.remove("token_expiration");
+    Cookies.remove("__stripe_mid");
+    Cookies.remove("__stripe_sid");
+  };
 
   const login = async (credentials: { email: string; password: string }) => {
     setLoading(true);
@@ -53,27 +81,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         refresh_token: refreshToken,
         expires,
       } = data;
-
-      const expirationTime = Date.now() + expires * 1000;
-
-      Cookies.set("token_expiration", String(expirationTime), {
-        secure: true,
-        sameSite: "Strict",
-      });
-
-      Cookies.set("access_token", token, {
-        secure: true,
-        sameSite: "Strict",
-      });
-
-      Cookies.set("refresh_token", refreshToken, {
-        secure: true,
-        sameSite: "Strict",
-      });
+      saveTokensToCookies(token, refreshToken, expires);
 
       const user = await authService.fetchUserData(token);
       const role = await authService.fetchUserRole(token, user.role);
-
       setSession({
         user: { name: user.first_name, email: user.email, role: role.name },
         token,
@@ -90,54 +101,41 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      if (session) {
-        const refreshToken =
-          Cookies.get("refresh_token") || session.refreshToken;
-        if (refreshToken) {
-          await authService.logout(refreshToken);
-        } else {
-          console.error("No refresh token available for logout.");
-        }
-      }
+      const refreshToken =
+        Cookies.get("refresh_token") || session?.refreshToken;
+      if (refreshToken) await authService.logout(refreshToken);
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      setSession(null);
-      setName(undefined);
-      Cookies.remove("access_token");
-      Cookies.remove("refresh_token");
-      Cookies.remove("token_expiration");
+      clearSession();
     }
   };
 
   const refreshAccessToken = async (
     propsRefreshToken?: string
   ): Promise<string | null> => {
-    if (refreshPromiseRef.current) {
-      return refreshPromiseRef.current;
-    }
+    if (refreshPromiseRef.current) return refreshPromiseRef.current;
 
     const refreshPromise = (async () => {
-      try {
-        const refreshTokenToUse =
-          propsRefreshToken ||
-          Cookies.get("refresh_token") ||
-          session?.refreshToken;
-        if (!refreshTokenToUse) throw new Error("No refresh token found");
+      const refreshTokenToUse =
+        propsRefreshToken ||
+        Cookies.get("refresh_token") ||
+        session?.refreshToken;
+      if (!refreshTokenToUse) {
+        console.error("No refresh token found");
+        return null;
+      }
 
+      try {
         const { data } = await authService.refreshToken(refreshTokenToUse);
         const {
           access_token: token,
           refresh_token: newRefreshToken,
           expires,
         } = data;
-        const newExpirationTime = Date.now() + expires * 1000;
 
-        // Fetch user data with the new token
         const user = await authService.fetchUserData(token);
         const role = await authService.fetchUserRole(token, user.role);
-
-        // Update session state with user data
         setSession((prev) =>
           prev
             ? {
@@ -163,20 +161,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
               }
         );
         setName(user.first_name);
-
-        // Update cookies
-        Cookies.set("token_expiration", String(newExpirationTime), {
-          secure: true,
-          sameSite: "Strict",
-        });
-        Cookies.set("access_token", token, {
-          secure: true,
-          sameSite: "Strict",
-        });
-        Cookies.set("refresh_token", newRefreshToken, {
-          secure: true,
-          sameSite: "Strict",
-        });
+        saveTokensToCookies(token, newRefreshToken, expires);
 
         return token;
       } catch (error) {
@@ -197,9 +182,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     propsRefreshToken?: string
   ) => {
     const token = await refreshAccessToken(propsRefreshToken);
-    if (!token) {
-      throw new Error("Failed to refresh token");
-    }
+    if (!token) throw new Error("Failed to refresh token");
     return await apiCall(token);
   };
 
@@ -231,7 +214,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initializeSession = async () => {
-      const token = session?.token || Cookies.get("access_token");
+      if (hasInitialized.current) return;
+
+      setLoading(true);
+      const token = Cookies.get("access_token");
+      const refreshToken = Cookies.get("refresh_token");
       if (token) {
         try {
           const user = await authService.fetchUserData(token);
@@ -239,28 +226,20 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           setSession({
             user: { name: user.first_name, email: user.email, role: role.name },
             token,
-            refreshToken:
-              session?.refreshToken || Cookies.get("refresh_token") || "",
-            expires:
-              session?.expires || Number(Cookies.get("token_expiration")) || 0,
+            refreshToken: refreshToken || "",
+            expires: Number(Cookies.get("token_expiration")) || 0,
           });
           setName(user.first_name);
         } catch (error) {
           await handleFetchUserDataError(error);
         }
-      } else {
-        setLoading(false);
       }
+      setLoading(false);
+      hasInitialized.current = true;
     };
 
     initializeSession();
-  }, [session?.token]); // Depend on session?.token to ensure it runs on session token change
-
-  useEffect(() => {
-    if (session) {
-      setLoading(false);
-    }
-  }, [session]);
+  }, []);
 
   return (
     <SessionContext.Provider
@@ -282,8 +261,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
 export const useSession = () => {
   const context = useContext(SessionContext);
-  if (!context) {
+  if (!context)
     throw new Error("useSession must be used within a SessionProvider");
-  }
   return context;
 };

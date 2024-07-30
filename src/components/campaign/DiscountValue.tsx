@@ -1,11 +1,21 @@
 import React, { useState } from "react";
-import ResourcePicker from "./ResourcePicker"; // Adjust the import path accordingly
+import ResourcePicker from "./ResourcePicker";
 
-const DiscountValue: React.FC<{
+interface DiscountValueProps {
   discount: any;
   className?: string;
-  handleChange: any;
-}> = ({ discount, className, handleChange }) => {
+  handleChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => void;
+}
+
+const DiscountValue: React.FC<DiscountValueProps> = ({
+  discount,
+  className,
+  handleChange,
+}) => {
   const [resourceType, setResourceType] = useState("product");
   const [selectedResources, setSelectedResources] = useState<any[]>([]);
 
@@ -21,43 +31,49 @@ const DiscountValue: React.FC<{
         <h2 className="text-xl font-semibold text-green-500">
           3. Discount Details
         </h2>
-        <div className="grid grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-2 ">
           <div className="space-y-4">
             <label className="block font-medium text-gray-700 inline-flex">
               Discount Type <span className="ml-1 text-red-500">*</span>
             </label>
             <select
               name="discountType"
-              value={discount.type}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              value={discount.type || ""}
+              className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700"
               onChange={handleChange}
             >
               <option value="fixed">Fixed amount</option>
               <option value="percentage">Percentage</option>
             </select>
           </div>
+
           <div className="space-y-4">
-            <label className="block font-medium text-gray-700 inline-flex">
-              Discount Value <span className="ml-1 text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="discountValue"
-              value={discount.value}
-              placeholder="Enter discount value"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-              onChange={handleChange}
-            />
+            <label className="block font-medium text-gray-700 inline-flex items-center"></label>
+            <div className="flex items-center h-10 border border-gray-300 bg-white px-2.5">
+              <span className="text-gray-700">
+                {discount.type === "percentage" ? "%" : "$"}
+              </span>
+              <input
+                type="text"
+                name="discountValue"
+                value={discount.value || ""}
+                placeholder="Enter discount value"
+                className="flex-1 px-2 py-2 bg-transparent text-gray-700 border-0 focus:outline-none"
+                onChange={handleChange}
+              />
+            </div>
           </div>
         </div>
+
         <div className="space-y-4">
           <label className="block font-medium text-gray-700 inline-flex">
             Applies to <span className="ml-1 text-red-500">*</span>
           </label>
           <select
             name="appliesTo"
-            value={discount.appliesTo}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+            value={discount.appliesTo || ""}
+            className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md"
             onChange={(e) => {
               handleChange(e);
               setResourceType(
@@ -75,6 +91,7 @@ const DiscountValue: React.FC<{
             <option value="specific_products">Specific products</option>
           </select>
         </div>
+
         {["specific_collections", "specific_products"].includes(
           discount.appliesTo
         ) && (
@@ -87,6 +104,7 @@ const DiscountValue: React.FC<{
             />
           </div>
         )}
+
         <div className="space-y-4">
           <label className="block font-medium text-gray-700 inline-flex">
             Minimum Purchase Requirements{" "}
@@ -137,6 +155,7 @@ const DiscountValue: React.FC<{
             </div>
           </div>
         </div>
+
         {discount.minimumRequirementType !== "none" && (
           <div className="space-y-4">
             <label className="block font-medium text-gray-700 inline-flex">
@@ -146,9 +165,9 @@ const DiscountValue: React.FC<{
             <input
               type="text"
               name="minimumRequirementValue"
-              value={discount.minimumRequirementValue}
+              value={discount.minimumRequirementValue || ""}
               placeholder="Enter minimum requirement value"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md"
               onChange={handleChange}
             />
           </div>

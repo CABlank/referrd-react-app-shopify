@@ -1,11 +1,10 @@
 import React, { useEffect, useImperativeHandle, useState, forwardRef, } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import Frame from "react-frame-component";
 import PopupPreview from "./PopupPreview";
 import { compress, decompress } from "compress-json";
 var RealPopup = forwardRef(function (_a, ref) {
-    var serializedState = _a.serializedState, settingsState = _a.settingsState, _b = _a.stepOneElements, initialStepOneElements = _b === void 0 ? [] : _b, _c = _a.stepTwoElements, initialStepTwoElements = _c === void 0 ? [] : _c, setStepOneElements = _a.setStepOneElements, setStepTwoElements = _a.setStepTwoElements, _d = _a.view, initialView = _d === void 0 ? "desktop" : _d, _e = _a.step, initialStep = _e === void 0 ? 1 : _e, setStep = _a.setStep, _f = _a.url, initialUrl = _f === void 0 ? "" : _f, setUrl = _a.setUrl, setIsStepTwoAvailable = _a.setIsStepTwoAvailable, _g = _a.enableDragAndDrop, enableDragAndDrop = _g === void 0 ? false : _g;
+    var serializedState = _a.serializedState, settingsState = _a.settingsState, _b = _a.stepOneElements, initialStepOneElements = _b === void 0 ? [] : _b, _c = _a.stepTwoElements, initialStepTwoElements = _c === void 0 ? [] : _c, setStepOneElements = _a.setStepOneElements, setStepTwoElements = _a.setStepTwoElements, _d = _a.view, initialView = _d === void 0 ? "desktop" : _d, _e = _a.step, initialStep = _e === void 0 ? 1 : _e, setStep = _a.setStep, _f = _a.url, initialUrl = _f === void 0 ? "" : _f, setUrl = _a.setUrl, setIsStepTwoAvailable = _a.setIsStepTwoAvailable, _g = _a.enableDragAndDrop, enableDragAndDrop = _g === void 0 ? false : _g, onLoad = _a.onLoad;
     var _h = useState(initialStepOneElements), desktopStepOneElements = _h[0], setDesktopStepOneElementsState = _h[1];
     var _j = useState(initialStepTwoElements), desktopStepTwoElements = _j[0], setDesktopStepTwoElementsState = _j[1];
     var _k = useState(initialStepOneElements), mobileStepOneElements = _k[0], setMobileStepOneElementsState = _k[1];
@@ -36,6 +35,9 @@ var RealPopup = forwardRef(function (_a, ref) {
             setIsStepTwoAvailableState(deserializedState.isStepTwoAvailable);
             setConfig(deserializedState.config || null);
             setView(deserializedState.view || "desktop");
+            if (onLoad) {
+                onLoad(); // Call onLoad after deserializing the state
+            }
         }
         catch (error) {
             console.error("Failed to deserialize state:", error);
@@ -76,6 +78,9 @@ var RealPopup = forwardRef(function (_a, ref) {
                 setStepState(deserializedState.step || 1);
                 setIsStepTwoAvailableState(deserializedState.isStepTwoAvailable || false);
                 setView(deserializedState.view || "desktop");
+                if (onLoad) {
+                    onLoad(); // Call onLoad after setting the state
+                }
             }
         }
         if (settingsState) {
@@ -86,6 +91,9 @@ var RealPopup = forwardRef(function (_a, ref) {
                 var currentConfig = getConfig(deserializedSettings, initialView, initialStep);
                 setConfig(currentConfig);
                 console.log("Current config:", currentConfig);
+                if (onLoad) {
+                    onLoad(); // Call onLoad after deserializing the settings
+                }
             }
             catch (error) {
                 console.error("Failed to initialize with settings state:", error);
@@ -95,11 +103,14 @@ var RealPopup = forwardRef(function (_a, ref) {
     useEffect(function () {
         var handleResize = function () {
             if (!manualViewChange) {
-                var newView = window.innerWidth <= 768 ? "mobile" : "desktop";
+                var deserializedSettings = JSON.parse(settingsState !== null && settingsState !== void 0 ? settingsState : "");
+                var desktopStep1 = parseInt(deserializedSettings.desktopStep2.width.replace("px", ""), 10) - 1;
+                console.log("Mobile width:", desktopStep1);
+                var newView = window.innerWidth <= desktopStep1 ? "mobile" : "desktop";
                 setView(newView);
                 if (settingsState) {
-                    var deserializedSettings = JSON.parse(settingsState);
-                    var newConfig = getConfig(deserializedSettings, newView, step);
+                    var deserializedSettings_1 = JSON.parse(settingsState);
+                    var newConfig = getConfig(deserializedSettings_1, newView, step);
                     setConfig(newConfig);
                     console.log("New config after resize:", newConfig);
                 }
@@ -140,12 +151,14 @@ var RealPopup = forwardRef(function (_a, ref) {
         }
     }, [view, step, settingsState]);
     return (<DndProvider backend={HTML5Backend}>
-        <Frame style={{ width: "100%", border: "none", height: "100%" }} initialContent={"<!DOCTYPE html><html lang=\"en\"><head><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css\"><style>body, html, #__next { height: 100%; margin: 0; } .real-popup-container, .frame-root { height: 100%; display: flex; justify-content: center; align-items: center; } @media print { body, html, #__next, .real-popup-container, .frame-root { display: flex; justify-content: center; align-items: center; height: 100% !important; width: 100% !important; } }</style></head><body><div class=\"frame-root\"></div></body></html>"} mountTarget=".frame-root">
-          <div className="frame-root real-popup-container" style={{
+        <div className="real-popup-container" style={{
             width: (config === null || config === void 0 ? void 0 : config.width) || "100%",
             height: (config === null || config === void 0 ? void 0 : config.height) || "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
         }}>
-            {config && (<PopupPreview stepOneElements={view === "desktop"
+          {config && (<PopupPreview stepOneElements={view === "desktop"
                 ? desktopStepOneElements
                 : mobileStepOneElements} setStepOneElements={view === "desktop"
                 ? setDesktopStepOneElementsState
@@ -155,8 +168,7 @@ var RealPopup = forwardRef(function (_a, ref) {
                 ? setDesktopStepTwoElementsState
                 : setMobileStepTwoElementsState} view={view} config={config} step={step} onImageAdd={function () { }} // Define the function or remove it if not necessary
          setStep={setStepState}/>)}
-          </div>
-        </Frame>
+        </div>
       </DndProvider>);
 });
 RealPopup.displayName = "RealPopup";

@@ -38,7 +38,11 @@ const StepOne: React.FC<StepOneProps> = ({
     (element): element is ImageElementProps => element.type === "image"
   );
 
-  const handleSubmit = (name: string, email: string, number: string) => {
+  const handleSubmit = async (
+    name: string,
+    email: string,
+    number: string
+  ): Promise<boolean> => {
     const uniqueUrl = `https://example.com/?name=${name}&email=${email}&number=${number}`;
     setUrl(uniqueUrl);
 
@@ -64,6 +68,9 @@ const StepOne: React.FC<StepOneProps> = ({
     if (allowStepChange) {
       setStep(2);
     }
+
+    // Simulate an asynchronous operation and return true
+    return Promise.resolve(true);
   };
 
   return (
@@ -97,6 +104,17 @@ const StepOne: React.FC<StepOneProps> = ({
               onRemove={onRemove}
               showRemoveButton={false}
               enableDragAndDrop={true}
+              view={"desktop"}
+              expandedId={undefined}
+              onExpand={function (id: string): void {
+                throw new Error("Function not implemented.");
+              }}
+              handleChange={function (
+                setter: React.Dispatch<React.SetStateAction<string>>,
+                type: string
+              ): (e: React.ChangeEvent<HTMLInputElement>) => void {
+                throw new Error("Function not implemented.");
+              }}
             />
           ))}
         {hoverIndex === elements.length && (

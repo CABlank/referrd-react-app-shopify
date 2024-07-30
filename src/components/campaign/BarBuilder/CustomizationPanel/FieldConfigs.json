@@ -56,7 +56,6 @@
       "name": "buttonLink",
       "type": "text"
     },
-
     {
       "label": "Background Color",
       "name": "buttonBackgroundColor",
@@ -142,5 +141,11 @@
       "type": "select",
       "options": ["normal", "1", "1.5", "2", "2.5"]
     }
+  ],
+  "input": [
+    { "name": "bordercolor", "label": "Border Color", "type": "color" },
+    { "name": "textcolor", "label": "Text Color", "type": "color" },
+    { "name": "borderwidth", "label": "Border Width", "type": "number" },
+    { "name": "borderradius", "label": "Border Radius", "type": "number" }
   ]
 }

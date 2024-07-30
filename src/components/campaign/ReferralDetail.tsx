@@ -1,12 +1,20 @@
 import React, { useState } from "react";
 
-const ReferralDetail: React.FC<{
+interface ReferralDetailProps {
   campaign: any;
   className?: string;
-  handleChange: any;
-}> = ({ campaign, className, handleChange }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  handleChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => void;
+}
 
+const ReferralDetail: React.FC<ReferralDetailProps> = ({
+  campaign,
+  className,
+  handleChange,
+}) => {
   return (
     <div
       className={`bg-white p-4 shadow rounded-lg border border-gray-200 ${className}`}
@@ -15,15 +23,16 @@ const ReferralDetail: React.FC<{
         <h2 className="text-xl font-semibold text-green-500">
           2. Referral Details
         </h2>
-        <div className="grid grid-cols-2 gap-8">
-          <div className="space-y-4">
+
+        <div className="grid grid-cols-2">
+          <div className="space-y-4 ">
             <label className="block font-medium text-gray-700 inline-flex items-center">
               Commission type <span className="ml-1 text-red-500">*</span>
             </label>
             <select
               name="commissionType"
               value={campaign.commissionType || ""}
-              className="w-full h-10 px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
+              className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700 "
               onChange={handleChange}
             >
               <option value="">Select one</option>
@@ -31,23 +40,25 @@ const ReferralDetail: React.FC<{
               <option value="Percentage">Percentage</option>
             </select>
           </div>
+
           <div className="space-y-4">
-            <label className="block font-medium text-gray-700 inline-flex items-center">
-              Commission <span className="ml-1 text-red-500">*</span>
-            </label>
-            <div className="flex items-center h-10 border border-gray-300 rounded-md bg-white">
-              <span className="ml-4 text-gray-700">$</span>
+            <label className="block font-medium text-gray-700 inline-flex items-center"></label>
+            <div className="flex items-center h-10 border border-gray-300 bg-white px-2.5">
+              <span className="text-gray-700">
+                {campaign.commissionType === "Percentage" ? "%" : "$"}
+              </span>
               <input
                 type="text"
                 name="commission"
                 value={campaign.commission || ""}
                 placeholder="Commission"
-                className="flex-1 px-2 py-2 bg-transparent text-gray-700"
+                className="flex-1 px-2 py-2 bg-transparent text-gray-700 border-0 focus:outline-none"
                 onChange={handleChange}
               />
             </div>
           </div>
         </div>
+
         <div className="space-y-4 mt-4">
           <label className="block font-medium text-gray-700 inline-flex">
             Campaign terms <span className="ml-1 text-red-500">*</span>
@@ -60,6 +71,7 @@ const ReferralDetail: React.FC<{
             onChange={handleChange}
           ></textarea>
         </div>
+
         <div className="space-y-4 mt-4">
           <label className="block font-medium text-gray-700 inline-flex">
             Campaign URL <span className="ml-1 text-red-500">*</span>

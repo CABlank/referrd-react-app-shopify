@@ -13,6 +13,7 @@ import { defaultTextProps } from "./TextElement";
 import { moveElement } from "./MoveElement";
 
 export const useDropWrapper = (
+  enableDragAndDrop: boolean,
   step: number,
   stepOneElements: ElementProps[],
   setStepOneElements: React.Dispatch<React.SetStateAction<ElementProps[]>>,
@@ -26,7 +27,7 @@ export const useDropWrapper = (
   const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>({
     accept: [ItemTypes.TEXT_ELEMENT, ItemTypes.BUTTON_ELEMENT],
     hover: (item, monitor) => {
-      if (!containerRef.current) return;
+      if (!enableDragAndDrop || !containerRef.current) return;
 
       const hoverBoundingRect = containerRef.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
@@ -50,6 +51,8 @@ export const useDropWrapper = (
       setHoverIndex(newHoverIndex);
     },
     drop: (item: DragItem) => {
+      if (!enableDragAndDrop) return;
+
       const elements = step === 1 ? [...stepOneElements] : [...stepTwoElements];
       const setElements = step === 1 ? setStepOneElements : setStepTwoElements;
 
@@ -91,9 +94,9 @@ export const useDropWrapper = (
       setHoverIndex(null);
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver(),
+      isOver: enableDragAndDrop && monitor.isOver(),
     }),
   });
 
-  return { isOver, drop, containerRef };
+  return { isOver, drop: enableDragAndDrop ? drop : null, containerRef };
 };

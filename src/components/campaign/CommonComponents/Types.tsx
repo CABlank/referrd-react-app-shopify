@@ -1,5 +1,9 @@
-export interface TextElementProps {
+interface BaseElementProps {
   id: string;
+  type: string;
+}
+
+export interface TextElementProps extends BaseElementProps {
   type: "text";
   text: string;
   fontFamily: string;
@@ -14,8 +18,19 @@ export interface TextElementProps {
   marginLeft: string;
 }
 
-export interface ButtonElementProps {
+export interface InputElementProps {
   id: string;
+  type: "input";
+  placeholder: string;
+  value: string;
+  bordercolor?: string;
+  textcolor?: string;
+  borderradius?: number;
+  borderwidth?: number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+export interface ButtonElementProps extends BaseElementProps {
   type: "button";
   buttonText: string;
   buttonLink: string;
@@ -43,12 +58,13 @@ export interface ButtonElementProps {
   hoverTextColor: string;
   hoverBorderColor: string;
   buttonAlign: "flex-start" | "center" | "flex-end";
+  onClick?: () => void;
+  isPreloaded?: boolean;
 }
 
-export interface ImageElementProps {
-  imageUrl?: string;
-  id: string;
+export interface ImageElementProps extends BaseElementProps {
   type: "image";
+  imageUrl?: string;
   imageWidth?: string;
   imageHeight?: string;
   borderRadius?: string;
@@ -56,9 +72,8 @@ export interface ImageElementProps {
   centerImage?: boolean;
 }
 
-export interface DividerElementProps {
+export interface DividerElementProps extends BaseElementProps {
   type: "divider";
-  id: string;
   color?: string;
   height?: number;
   width?: string;
@@ -72,6 +87,7 @@ export type ElementProps =
   | TextElementProps
   | ButtonElementProps
   | DividerElementProps
+  | InputElementProps
   | ImageElementProps;
 
 export interface FormFieldProps {
@@ -102,6 +118,7 @@ export const ItemTypes = {
   ELEMENT: "element",
   IMAGE: "imageElement",
   DIVIDER_ELEMENT: "dividerElement",
+  INPUT_ELEMENT: "inputElement",
 };
 
 export interface DragItem {

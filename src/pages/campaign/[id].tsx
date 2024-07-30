@@ -25,6 +25,7 @@ const CampaignPage: React.FC & { noLayout?: boolean } = () => {
   );
   const [format, setFormat] = useState<"Topbar" | "Popup" | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isComponentLoaded, setIsComponentLoaded] = useState<boolean>(false); // New state to track component loading
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +40,7 @@ const CampaignPage: React.FC & { noLayout?: boolean } = () => {
             {
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${bot_token_harcoded}`,
+                Authorization: `Bearer ${BOT_TOKEN}`,
               },
             }
           );
@@ -129,6 +130,13 @@ const CampaignPage: React.FC & { noLayout?: boolean } = () => {
     }
   }, [settingsTopbarState]);
 
+  useEffect(() => {
+    if (!isLoading && format) {
+      window.parent.postMessage("componentLoaded", "*"); // Notify parent window that the component has loaded
+      setIsComponentLoaded(true); // Set the component as loaded when the format is determined and not loading
+    }
+  }, [isLoading, format]);
+
   if (isLoading || !format) {
     return null;
   }
@@ -141,6 +149,7 @@ const CampaignPage: React.FC & { noLayout?: boolean } = () => {
           settingsState={settingsTopbarState}
           enableDragAndDrop={false}
           view={"desktop"}
+          onLoad={() => setIsComponentLoaded(true)} // Set the component as loaded when RealTopBar has loaded
         />
       </div>
     );
@@ -151,6 +160,7 @@ const CampaignPage: React.FC & { noLayout?: boolean } = () => {
         settingsState={settingsPopupState}
         enableDragAndDrop={false}
         view={"desktop"}
+        onLoad={() => setIsComponentLoaded(true)} // Set the component as loaded when RealPopup has loaded
       />
     );
   }

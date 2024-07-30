@@ -242,22 +242,27 @@ const Payments: React.FC = () => {
             <PerformanceSummary
               metricName="Accepted Payments"
               value={metrics.acceptedPayments.toString()}
+              iconName="MouseClickIcon"
             />
             <PerformanceSummary
               metricName="Declined Payments"
               value={metrics.declinedPayments.toString()}
+              iconName="Conversions"
             />
             <PerformanceSummary
               metricName="Pending Payments"
               value={metrics.pendingPayments.toString()}
+              iconName="ConversionRate"
             />
             <PerformanceSummary
               metricName="Total Ref Cashback"
               value={`$${metrics.totalReferralCashback}`}
+              iconName="TotalSpends"
             />
             <PerformanceSummary
               metricName="Avg Ref Cashback"
               value={`$${metrics.averageReferralCashback}`}
+              iconName="MouseClickedIcon"
             />
           </ScrollableContainer>
         </div>
@@ -289,6 +294,14 @@ const Payments: React.FC = () => {
       </div>
     </div>
   );
+};
+
+export const getStaticProps = async () => {
+  return {
+    props: {
+      title: "Payments",
+    },
+  };
 };
 
 export default Payments;

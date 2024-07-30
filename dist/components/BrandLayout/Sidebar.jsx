@@ -106,10 +106,10 @@ var Sidebar = function () {
       {isSidebarOpen && (<div onClick={toggleSidebar} className="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 z-[21] ease-in-out lg:hidden"></div>)}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex flex-col items-start w-[301px] h-full px-10 py-20 bg-white inset-y-0 desktop-sidebar">
+      <div className="hidden lg:flex flex-col items-start w-[301px] h-full px-10 py-14 pb-20 bg-white inset-y-0 desktop-sidebar">
         <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 h-[800px] relative gap-14">
           <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 gap-4">
-            <div className="flex justify-center w-full h-[58px] object-cover mb-[30px]">
+            <div className="flex justify-center w-full h-[58px] object-cover mb-[50px]">
               <Image src="/images/logo.png" alt="Logo" width={150} height={90}/>
             </div>
             {SidebarContent(menuItems)}

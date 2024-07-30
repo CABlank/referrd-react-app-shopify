@@ -226,13 +226,11 @@ const CampaignIndex: React.FC = () => {
           </div>
         </div>
       )}
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] mb-10">
-        Campaigns
-      </p>
+
       {error && <p className="text-red-600">{error}</p>}
       <button
         onClick={handleCreateCampaign}
-        className="h-12 px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 mb-4"
+        className="h-12 px-6 py-2 rounded-lg bg-[#47B775] text-white font-medium hover:bg-[#47B775] mb-8"
       >
         Create Campaign
       </button>
@@ -348,6 +346,14 @@ const CampaignIndex: React.FC = () => {
       )}
     </div>
   );
+};
+
+export const getStaticProps = async () => {
+  return {
+    props: {
+      title: "Campaigns",
+    },
+  };
 };
 
 export default CampaignIndex;

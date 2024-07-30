@@ -4,7 +4,7 @@ import { ItemTypes } from "../../CommonComponents/Types";
 import ImageElement from "../ImageElement";
 import ExpandableInput from "./ExpandableInput";
 var ReferAndEarn = function (_a) {
-    var imagePosition = _a.imagePosition, children = _a.children, imageUrl = _a.imageUrl, _b = _a.imageProps, imageProps = _b === void 0 ? {} : _b, view = _a.view, onSubmit = _a.onSubmit, onClose = _a.onClose;
+    var imagePosition = _a.imagePosition, children = _a.children, imageUrl = _a.imageUrl, _b = _a.imageProps, imageProps = _b === void 0 ? {} : _b, view = _a.view, onSubmit = _a.onSubmit;
     var _c = useState(""), name = _c[0], setName = _c[1];
     var _d = useState(""), email = _d[0], setEmail = _d[1];
     var _e = useState(""), number = _e[0], setNumber = _e[1];
@@ -17,6 +17,7 @@ var ReferAndEarn = function (_a) {
     };
     var handleFormSubmit = function () {
         onSubmit(name, email, number);
+        window.parent.postMessage("goToStep2", "*");
     };
     var _g = useDrop({
         accept: ItemTypes.IMAGE,
@@ -43,18 +44,6 @@ var ReferAndEarn = function (_a) {
             overflow: "hidden",
             borderRadius: "1rem",
         }}>
-      <button onClick={onClose} style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.5rem",
-            color: "black",
-            fontSize: "1.25rem",
-            fontWeight: "bold",
-            zIndex: 50,
-        }}>
-        ✕
-      </button>
-
       {imagePosition !== "None" && (<div ref={drop} // Correctly cast ref
          style={{
                 display: "flex",

@@ -8,9 +8,9 @@ import SmsIcon from "@/components/Icons/IconsSocialMedia/SmsIcon";
 import XIcon from "@/components/Icons/IconsSocialMedia/XIcon";
 import LinkedinIcon from "@/components/Icons/IconsSocialMedia/LinkedinIcon";
 import RedditIcon from "@/components/Icons/IconsSocialMedia/RedditIcon";
-import QRCode from "qrcode.react"; // Ensure you have this package installed
+import QRCode from "qrcode.react";
 var StepTwo = function (_a) {
-    var elements = _a.elements, setElements = _a.setElements, moveElement = _a.moveElement, hoverIndex = _a.hoverIndex, elementWidth = _a.elementWidth, onRemove = _a.onRemove, view = _a.view, url = _a.url, onClose = _a.onClose;
+    var elements = _a.elements, setElements = _a.setElements, moveElement = _a.moveElement, hoverIndex = _a.hoverIndex, elementWidth = _a.elementWidth, onRemove = _a.onRemove, view = _a.view, url = _a.url;
     var truncateUrl = function (url, maxLength) {
         var placeholderUrl = "https://example.com/?name=test&email=test@gmail.com&number=151414";
         var effectiveUrl = url || placeholderUrl;
@@ -20,7 +20,7 @@ var StepTwo = function (_a) {
     };
     var truncatedUrl = truncateUrl(url, 30);
     var renderIcon = function (IconComponent, bgColor, boxShadow) {
-        var iconSize = view === "mobile" ? "1.5rem" : "2rem"; // Smaller size for mobile
+        var iconSize = view === "mobile" ? "1.5rem" : "2rem";
         return (<div style={{
                 cursor: "pointer",
                 display: "flex",
@@ -47,18 +47,6 @@ var StepTwo = function (_a) {
                 gap: "1rem",
                 position: "relative",
             }}>
-          <button onClick={onClose} style={{
-                position: "absolute",
-                top: "0",
-                right: "0",
-                margin: "1rem",
-                color: "black",
-                fontSize: "1.25rem",
-                fontWeight: "bold",
-                zIndex: 50,
-            }}>
-            ✕
-          </button>
           <div style={{
                 display: "flex",
                 flexDirection: "column",
@@ -220,8 +208,7 @@ var StepTwo = function (_a) {
                 width: "100%",
                 marginTop: "1rem",
             }}>
-            {elements.map(function (element, index) { return (<ElementWrapper key={element.id} index={index} element={element} moveElement={moveElement} elementWidth={elementWidth} hoverIndex={hoverIndex} onRemove={onRemove} showRemoveButton={false} // Hide remove button
-            />); })}
+            {elements.map(function (element, index) { return (<ElementWrapper key={element.id} index={index} element={element} moveElement={moveElement} elementWidth={elementWidth} hoverIndex={hoverIndex} onRemove={onRemove} showRemoveButton={false}/>); })}
             {hoverIndex === elements.length && (<div style={{
                     width: elementWidth,
                     borderRight: "0px solid red",
@@ -239,18 +226,6 @@ var StepTwo = function (_a) {
                 gap: "1rem",
                 position: "relative",
             }}>
-          <button onClick={onClose} style={{
-                position: "absolute",
-                top: "0",
-                right: "0",
-                margin: "0.5rem",
-                color: "black",
-                fontSize: "0.875rem",
-                fontWeight: "bold",
-                zIndex: 50,
-            }}>
-            ✕
-          </button>
           <div style={{
                 display: "flex",
                 flexDirection: "column",
@@ -411,8 +386,7 @@ var StepTwo = function (_a) {
                 width: "100%",
                 marginTop: "1rem",
             }}>
-            {elements.map(function (element, index) { return (<ElementWrapper key={element.id} index={index} element={element} moveElement={moveElement} elementWidth={elementWidth} hoverIndex={hoverIndex} onRemove={onRemove} showRemoveButton={false} // Hide remove button
-            />); })}
+            {elements.map(function (element, index) { return (<ElementWrapper key={element.id} index={index} element={element} moveElement={moveElement} elementWidth={elementWidth} hoverIndex={hoverIndex} onRemove={onRemove} showRemoveButton={false}/>); })}
             {hoverIndex === elements.length && (<div style={{
                     width: elementWidth,
                     borderRight: "0px solid red",

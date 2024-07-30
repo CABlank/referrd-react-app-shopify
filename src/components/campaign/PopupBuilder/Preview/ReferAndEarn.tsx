@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDrop } from "react-dnd";
 import { ItemTypes } from "../../CommonComponents/Types";
-import ImageElement from "../ImageElement";
+import ImageElement from "../../CommonComponents/ImageElement";
 import ExpandableInput from "./ExpandableInput";
 
 interface ReferAndEarnProps {
@@ -16,8 +16,8 @@ interface ReferAndEarnProps {
     centerImage?: boolean;
   };
   view: "desktop" | "mobile";
-  onSubmit: (name: string, email: string, number: string) => void;
-  onClose: () => void; // Add onClose prop
+  onSubmit: (name: string, email: string, number: string) => Promise<boolean>;
+  onClose: () => void;
 }
 
 const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
@@ -27,7 +27,6 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
   imageProps = {},
   view,
   onSubmit,
-  onClose, // Add onClose prop
 }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -44,6 +43,8 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
 
   const handleFormSubmit = () => {
     onSubmit(name, email, number);
+
+    window.parent.postMessage("goToStep2", "*");
   };
 
   const [{ isOver }, drop] = useDrop({
@@ -76,21 +77,6 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
         borderRadius: "1rem",
       }}
     >
-      <button
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          top: "0.5rem",
-          right: "0.5rem",
-          color: "black",
-          fontSize: "1.25rem",
-          fontWeight: "bold",
-          zIndex: 50,
-        }}
-      >
-        ✕
-      </button>
-
       {imagePosition !== "None" && (
         <div
           ref={drop as unknown as React.RefObject<HTMLDivElement>} // Correctly cast ref
@@ -108,8 +94,8 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
                   ? 1
                   : 2
                 : imagePosition === "Left"
-                ? 1
-                : 2,
+                  ? 1
+                  : 2,
             border: isOver ? "2px dashed #ccc" : "0px solid transparent",
           }}
         >
@@ -135,8 +121,8 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
             view === "mobile"
               ? "100%"
               : imagePosition === "None"
-              ? "100%"
-              : "50%",
+                ? "100%"
+                : "50%",
           justifyContent: "center",
           alignItems: "center",
           order: 1,

@@ -65,14 +65,11 @@ const CompanyIndex: React.FC = () => {
     <div className={`relative ${loading ? "blur" : ""}`}>
       {loading && <LoadingOverlay />}
 
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] mb-10">
-        Company
-      </p>
       {error && <p className="text-red-600">{error}</p>}
       {companies.length === 0 ? (
         <button
           onClick={() => router.push("/brand/company/edit")}
-          className="h-12 px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 mb-4"
+          className="h-12 px-6 py-2 rounded-lg bg-[#47B775] text-white font-medium hover:bg-green-700 mb-4"
         >
           Create Company
         </button>
@@ -149,4 +146,11 @@ const CompanyIndex: React.FC = () => {
   );
 };
 
+export const getStaticProps = async () => {
+  return {
+    props: {
+      title: "Company",
+    },
+  };
+};
 export default CompanyIndex;

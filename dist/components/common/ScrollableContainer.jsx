@@ -39,7 +39,7 @@ var ScrollableContainer = function (_a) {
       {canScrollLeft && (<button className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow cursor-pointer" onClick={function () { return scroll(-1); }}>
           <FaArrowLeft />
         </button>)}
-      <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 py-4" ref={scrollRef}>
+      <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 pb-4" ref={scrollRef}>
         {children}
       </div>
       {canScrollRight && (<button className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow cursor-pointer" onClick={function () { return scroll(1); }}>

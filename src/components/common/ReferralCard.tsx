@@ -1,6 +1,7 @@
 import React from "react";
 import ArrowSeeMoreIcon from "../Icons/ArrowSeeMoreIcon";
 import MoneyIconReferrals from "../Icons/MoneyIconReferrals";
+import Link from "next/link";
 
 interface ReferralItemProps {
   name: string;
@@ -18,10 +19,12 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ data }) => {
     <div className="flex flex-col overflow-hidden gap-4 rounded-2xl bg-white w-full">
       <div className="flex justify-between items-start w-full">
         <p className="text-2xl font-medium text-[#10ad1b]">Referrals</p>
-        <div className="flex items-center gap-2">
-          <p className="text-base font-medium text-[#851087]/80">See More</p>
-          <ArrowSeeMoreIcon />
-        </div>
+        <Link href="/brand/referrals" passHref>
+          <div className="flex items-center gap-1 cursor-pointer">
+            <p className="text-base font-medium text-[#851087]/80">See More</p>
+            <ArrowSeeMoreIcon />
+          </div>
+        </Link>
       </div>
       <hr className="w-full border-t border-black/15" />
       {data.map((item, index) => (

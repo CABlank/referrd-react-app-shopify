@@ -8,6 +8,7 @@ import ScrollableContainer from "../../../components/common/ScrollableContainer"
 import DetailSection from "@/components/Referrals/DetailSection";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import useReferralDetails from "../../../hooks/useReferralDetails";
+import { GetStaticPaths, GetStaticProps } from "next";
 
 // Define an interface for the row data structure
 interface RowData {
@@ -128,30 +129,34 @@ const ReferralDetails: React.FC = () => {
 
   return (
     <div className="relative">
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] mx-auto">
-        Referrals
-      </p>
-
       <div className="flex flex-col justify-center items-center mx-auto gap-4 sm:p-4">
         {/* Performance Metrics */}
         <ScrollableContainer>
           <PerformanceSummary
             metricName="Clicks"
             value={metrics.clicks.toString()}
+            iconName="MouseClickIcon"
           />
           <PerformanceSummary
             metricName="Conversions"
             value={metrics.conversions.toString()}
+            iconName="Conversions"
           />
           <PerformanceSummary
             metricName="Conversion Rate"
             value={`${metrics.conversionRate}%`}
+            iconName="ConversionRate"
           />
           <PerformanceSummary
             metricName="Total Spends"
             value={`$${metrics.totalSpends}`}
+            iconName="TotalSpends"
           />
-          <PerformanceSummary metricName="CPA" value={`$${metrics.cpa}`} />
+          <PerformanceSummary
+            metricName="CPA"
+            value={`$${metrics.cpa}`}
+            iconName="MouseClickedIcon"
+          />
         </ScrollableContainer>
         <div className="flex flex-col w-full overflow-hidden rounded-2xl bg-[#f3f3f3]">
           {/* Container for the two side-by-side tables */}

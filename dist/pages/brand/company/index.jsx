@@ -116,11 +116,8 @@ var CompanyIndex = function () {
     return (<div className={"relative ".concat(loading ? "blur" : "")}>
       {loading && <LoadingOverlay />}
 
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] mb-10">
-        Company
-      </p>
       {error && <p className="text-red-600">{error}</p>}
-      {companies.length === 0 ? (<button onClick={function () { return router.push("/brand/company/edit"); }} className="h-12 px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 mb-4">
+      {companies.length === 0 ? (<button onClick={function () { return router.push("/brand/company/edit"); }} className="h-12 px-6 py-2 rounded-lg bg-[#47B775] text-white font-medium hover:bg-green-700 mb-4">
           Create Company
         </button>) : (<div className="flex flex-col justify-start gap-8">
           {companies.map(function (company) { return (<div key={company.id} className="flex flex-col items-start p-8 gap-4 w-full rounded-2xl bg-white shadow-lg overflow-hidden">
@@ -167,4 +164,13 @@ var CompanyIndex = function () {
         </div>)}
     </div>);
 };
+export var getStaticProps = function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, {
+                props: {
+                    title: "Company",
+                },
+            }];
+    });
+}); };
 export default CompanyIndex;

@@ -33,6 +33,7 @@ const ExpandableInput: React.FC<ExpandableInputProps> = ({
         onFocus={onFocus}
         onBlur={onBlur}
         className="flex-grow text-sm text-left text-black placeholder-black/50 p-2 outline-none"
+        required
       />
     </div>
   );

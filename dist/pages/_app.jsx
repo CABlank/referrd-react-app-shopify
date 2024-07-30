@@ -61,7 +61,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import AppBridgeProvider from "../components/providers/AppBridgeProvider";
-import { AppProvider as PolarisProvider } from "@shopify/polaris";
+import { AppProvider as PolarisProvider, AppProvider } from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
 import Link from "next/link";
@@ -170,35 +170,38 @@ var ContentWrapper = function (_a) {
     if (loading || pageLoading) {
         return <LoadingOverlay />;
     }
+    var isBrandRoute = router.pathname.startsWith("/brand");
     if (isShopify) {
-        return (<PolarisProvider i18n={translations}>
-        <AppBridgeProvider>
-          <ui-nav-menu>
-            <Link href="/" rel="home">
-              Home
-            </Link>
-            <Link href="/brand/dashboard">Dashboard</Link>
-            <Link href="/brand/campaigns">Campaigns</Link>
-            <Link href="/brand/support">Support</Link>
-            <Link href="/brand/referrals">Referrals</Link>
-            <Link href="/brand/settings">Settings</Link>
-            <Link href="/brand/payments">Payments</Link>
-            <Link href="/brand/faqs">FAQS</Link>
-          </ui-nav-menu>
-          <div className="flex-1 overflow-y-auto">
-            <main className="p-12">
-              <Component {...pageProps}/>
-            </main>
-          </div>
-        </AppBridgeProvider>
-      </PolarisProvider>);
+        return (<AppProvider i18n={translations}>
+        <PolarisProvider i18n={translations}>
+          <AppBridgeProvider>
+            <ui-nav-menu>
+              <Link href="/" rel="home">
+                Home
+              </Link>
+              <Link href="/brand/dashboard">Dashboard</Link>
+              <Link href="/brand/campaigns">Campaigns</Link>
+              <Link href="/brand/support">Support</Link>
+              <Link href="/brand/referrals">Referrals</Link>
+              <Link href="/brand/settings">Settings</Link>
+              <Link href="/brand/payments">Payments</Link>
+              <Link href="/brand/faqs">FAQS</Link>
+            </ui-nav-menu>
+            <div className="flex-1 overflow-y-auto">
+              <main className="p-12">
+                <Component {...pageProps}/>
+              </main>
+            </div>
+          </AppBridgeProvider>
+        </PolarisProvider>
+      </AppProvider>);
     }
     else if (Component.noLayout) {
         // If the page has noLayout property, render the component directly
         return <Component {...pageProps}/>;
     }
     else {
-        return isAuthenticated ? (<BrandLayout>
+        return isAuthenticated && isBrandRoute ? (<BrandLayout title={pageProps.title}>
         <Component {...pageProps}/>
       </BrandLayout>) : (<Component {...pageProps}/>);
     }

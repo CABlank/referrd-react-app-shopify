@@ -1,14 +1,3 @@
-/**
- * This file defines the HomePage component for a Shopify app using Next.js and Polaris.
- * It includes a server-side props function to handle initial load checks and renders the home page with various sections and buttons.
- *
- * What This File Does:
- * 1. Imports Necessary Modules: It imports required components from Polaris, hooks from React and Next.js, and the initial load checker.
- * 2. Defines Server-Side Props Function: It defines a function to fetch server-side props using the initial load checker.
- * 3. Defines the HomePage Component: It defines the HomePage component to render the home page.
- * 4. Renders Sections with Conditional Debug Section: It renders various sections with cards, including a conditional debug section in development mode.
- * 5. Exports the HomePage Component: Finally, it exports the HomePage component for use in the application.
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -124,8 +113,8 @@ var HomePage = function () {
                 Course
               </Text>
               <Text as="p">
-                [BETA] I'm building course as a live service on How To Build
-                Shopify Apps
+                [BETA] I&apos;m building course as a live service on How To
+                Build Shopify Apps
               </Text>
               <InlineStack wrap={false} align="end">
                 <Button external variant="primary" icon={ExternalIcon} onClick={function () {

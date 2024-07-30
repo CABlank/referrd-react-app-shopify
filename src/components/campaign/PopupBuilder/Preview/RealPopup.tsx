@@ -7,7 +7,6 @@ import React, {
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ElementProps, PopupConfig } from "../../CommonComponents/Types";
-import Frame from "react-frame-component";
 import PopupPreview from "./PopupPreview";
 import { compress, decompress } from "compress-json";
 
@@ -25,6 +24,7 @@ interface RealPopupProps {
   setUrl?: React.Dispatch<React.SetStateAction<string>>;
   setIsStepTwoAvailable?: React.Dispatch<React.SetStateAction<boolean>>;
   enableDragAndDrop?: boolean;
+  onLoad?: () => void; // Add the onLoad prop
 }
 
 const RealPopup = forwardRef<unknown, RealPopupProps>(
@@ -43,6 +43,7 @@ const RealPopup = forwardRef<unknown, RealPopupProps>(
       setUrl,
       setIsStepTwoAvailable,
       enableDragAndDrop = false,
+      onLoad, // Destructure the onLoad prop
     },
     ref
   ) => {
@@ -101,6 +102,10 @@ const RealPopup = forwardRef<unknown, RealPopupProps>(
         setIsStepTwoAvailableState(deserializedState.isStepTwoAvailable);
         setConfig(deserializedState.config || null);
         setView(deserializedState.view || "desktop");
+
+        if (onLoad) {
+          onLoad(); // Call onLoad after deserializing the state
+        }
       } catch (error) {
         console.error("Failed to deserialize state:", error);
       }
@@ -151,6 +156,10 @@ const RealPopup = forwardRef<unknown, RealPopupProps>(
             deserializedState.isStepTwoAvailable || false
           );
           setView(deserializedState.view || "desktop");
+
+          if (onLoad) {
+            onLoad(); // Call onLoad after setting the state
+          }
         }
       }
 
@@ -166,6 +175,10 @@ const RealPopup = forwardRef<unknown, RealPopupProps>(
           );
           setConfig(currentConfig);
           console.log("Current config:", currentConfig);
+
+          if (onLoad) {
+            onLoad(); // Call onLoad after deserializing the settings
+          }
         } catch (error) {
           console.error("Failed to initialize with settings state:", error);
         }
@@ -175,7 +188,16 @@ const RealPopup = forwardRef<unknown, RealPopupProps>(
     useEffect(() => {
       const handleResize = () => {
         if (!manualViewChange) {
-          const newView = window.innerWidth <= 768 ? "mobile" : "desktop";
+          const deserializedSettings = JSON.parse(settingsState ?? "");
+          const desktopStep1 =
+            parseInt(
+              deserializedSettings.desktopStep2.width.replace("px", ""),
+              10
+            ) - 1;
+
+          console.log("Mobile width:", desktopStep1);
+          const newView =
+            window.innerWidth <= desktopStep1 ? "mobile" : "desktop";
           setView(newView);
           if (settingsState) {
             const deserializedSettings = JSON.parse(settingsState);
@@ -232,49 +254,46 @@ const RealPopup = forwardRef<unknown, RealPopupProps>(
 
     return (
       <DndProvider backend={HTML5Backend}>
-        <Frame
-          style={{ width: "100%", border: "none", height: "100%" }}
-          initialContent={`<!DOCTYPE html><html lang="en"><head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"><style>body, html, #__next { height: 100%; margin: 0; } .real-popup-container, .frame-root { height: 100%; display: flex; justify-content: center; align-items: center; } @media print { body, html, #__next, .real-popup-container, .frame-root { display: flex; justify-content: center; align-items: center; height: 100% !important; width: 100% !important; } }</style></head><body><div class="frame-root"></div></body></html>`}
-          mountTarget=".frame-root"
+        <div
+          className="real-popup-container"
+          style={{
+            width: config?.width || "100%",
+            height: config?.height || "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
-          <div
-            className="frame-root real-popup-container"
-            style={{
-              width: config?.width || "100%",
-              height: config?.height || "100%",
-            }}
-          >
-            {config && (
-              <PopupPreview
-                stepOneElements={
-                  view === "desktop"
-                    ? desktopStepOneElements
-                    : mobileStepOneElements
-                }
-                setStepOneElements={
-                  view === "desktop"
-                    ? setDesktopStepOneElementsState
-                    : setMobileStepOneElementsState
-                }
-                stepTwoElements={
-                  view === "desktop"
-                    ? desktopStepTwoElements
-                    : mobileStepTwoElements
-                }
-                setStepTwoElements={
-                  view === "desktop"
-                    ? setDesktopStepTwoElementsState
-                    : setMobileStepTwoElementsState
-                }
-                view={view}
-                config={config}
-                step={step}
-                onImageAdd={() => {}} // Define the function or remove it if not necessary
-                setStep={setStepState}
-              />
-            )}
-          </div>
-        </Frame>
+          {config && (
+            <PopupPreview
+              stepOneElements={
+                view === "desktop"
+                  ? desktopStepOneElements
+                  : mobileStepOneElements
+              }
+              setStepOneElements={
+                view === "desktop"
+                  ? setDesktopStepOneElementsState
+                  : setMobileStepOneElementsState
+              }
+              stepTwoElements={
+                view === "desktop"
+                  ? desktopStepTwoElements
+                  : mobileStepTwoElements
+              }
+              setStepTwoElements={
+                view === "desktop"
+                  ? setDesktopStepTwoElementsState
+                  : setMobileStepTwoElementsState
+              }
+              view={view}
+              config={config}
+              step={step}
+              onImageAdd={() => {}} // Define the function or remove it if not necessary
+              setStep={setStepState}
+            />
+          )}
+        </div>
       </DndProvider>
     );
   }

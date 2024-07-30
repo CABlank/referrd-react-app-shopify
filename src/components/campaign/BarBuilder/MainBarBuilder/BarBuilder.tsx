@@ -7,8 +7,7 @@ import React, {
 } from "react";
 import { ElementProps, TopBarConfig } from "../../CommonComponents/Types";
 import DragAndDropSection from "../DragAndDropSection";
-import DesktopCustomizationPanel from "../CustomizationPanel/DesktopCustomizationPanel";
-import MobileCustomizationPanel from "../CustomizationPanel/MobileCustomizationPanel";
+import CustomizationPanel from "../CustomizationPanel/CustomizationPanel";
 import TopBarPreview from "../Preview/TopBarPreview";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -22,7 +21,6 @@ import SettingsPanel, {
 } from "./SettingsPanel";
 import { PopupConfig } from "../../CommonComponents/Types";
 
-// Utility functions to convert between TopBarConfig and PopupConfig
 const convertToTopBarConfig = (config: PopupConfig): TopBarConfig => {
   const { borderWidth, ImagePosition, width, ...rest } = config;
   return rest as TopBarConfig;
@@ -56,7 +54,6 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
   ({ campaign, className }, ref) => {
     const realTopBarRef = useRef<any>(null);
 
-    // States for preview component
     const [desktopStepOneElements, setDesktopStepOneElements] =
       useState<ElementProps[]>(initialElements);
     const [desktopStepTwoElements, setDesktopStepTwoElements] =
@@ -148,16 +145,16 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
             ? desktopStepOneElements
             : mobileStepOneElements
           : view === "desktop"
-          ? desktopStepTwoElements
-          : mobileStepTwoElements;
+            ? desktopStepTwoElements
+            : mobileStepTwoElements;
       const setElements =
         previewStep === 1
           ? view === "desktop"
             ? setDesktopStepOneElements
             : setMobileStepOneElements
           : view === "desktop"
-          ? setDesktopStepTwoElements
-          : setMobileStepTwoElements;
+            ? setDesktopStepTwoElements
+            : setMobileStepTwoElements;
       setElements(
         elements.map((element) =>
           element.id === updatedElement.id ? updatedElement : element
@@ -176,16 +173,16 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
             ? desktopStepOneElements
             : mobileStepOneElements
           : view === "desktop"
-          ? desktopStepTwoElements
-          : mobileStepTwoElements;
+            ? desktopStepTwoElements
+            : mobileStepTwoElements;
       const setElements =
         previewStep === 1
           ? view === "desktop"
             ? setDesktopStepOneElements
             : setMobileStepOneElements
           : view === "desktop"
-          ? setDesktopStepTwoElements
-          : setMobileStepTwoElements;
+            ? setDesktopStepTwoElements
+            : setMobileStepTwoElements;
       setElements((prevElements) =>
         prevElements.filter((element) => element && element.id !== elementId)
       );
@@ -197,8 +194,8 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
           ? desktopConfigStep1
           : desktopConfigStep2
         : previewStep === 1
-        ? mobileConfigStep1
-        : mobileConfigStep2;
+          ? mobileConfigStep1
+          : mobileConfigStep2;
 
     useImperativeHandle(ref, () => ({
       serializeRealTopBar: () => {
@@ -256,7 +253,6 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
       },
     }));
 
-    // Detect screen width and set view mode
     useEffect(() => {
       const handleResize = () => {
         if (!manualViewChange) {
@@ -336,38 +332,31 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
               setMobileConfigStep2={setMobileConfigStep2}
             />
             <DragAndDropSection />
-            {view === "desktop" ? (
-              <DesktopCustomizationPanel
-                elements={
-                  previewStep === 1
+            <CustomizationPanel
+              view={view}
+              elements={
+                previewStep === 1
+                  ? view === "desktop"
                     ? desktopStepOneElements
-                    : desktopStepTwoElements
-                }
-                onUpdate={handleElementUpdate}
-                onRemove={handleRemoveElement}
-              />
-            ) : (
-              <MobileCustomizationPanel
-                elements={
-                  previewStep === 1
-                    ? mobileStepOneElements
+                    : mobileStepOneElements
+                  : view === "desktop"
+                    ? desktopStepTwoElements
                     : mobileStepTwoElements
-                }
-                onUpdate={handleElementUpdate}
-                onRemove={handleRemoveElement}
-              />
-            )}
+              }
+              onUpdate={handleElementUpdate}
+              onRemove={handleRemoveElement}
+            />
           </div>
           <div className="w-3/4 p-4">
             <StepSelector step={previewStep} setStep={setPreviewStep} />
             <div
               ref={overflowRef}
-              className="mt-4 custom-scrollbar overflow-x-auto overflow-y-hidden max-w-[980px] relative "
+              className="mt-4 custom-scrollbar overflow-x-auto overflow-y-hidden max-w-[980px] relative"
               style={{ height: `calc(${currentConfig.height} + 8px)` }}
             >
               <div ref={topBarPreviewRef}>
                 <TopBarPreview
-                  key={key} // Force re-render on view change
+                  key={key}
                   desktopStepOneElements={desktopStepOneElements}
                   setDesktopStepOneElements={setDesktopStepOneElements}
                   mobileStepOneElements={mobileStepOneElements}

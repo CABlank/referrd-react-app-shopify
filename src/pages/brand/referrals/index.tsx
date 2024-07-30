@@ -136,30 +136,34 @@ const ReferralsIndex: React.FC = () => {
     <div className={`relative ${loading ? "blur" : ""}`}>
       {loading && <LoadingOverlay />}
 
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] mx-auto">
-        Referrals
-      </p>
-
       <div className="flex flex-col justify-center items-center mx-auto gap-4 sm:p-4">
         {/* Performance Metrics */}
         <ScrollableContainer>
           <PerformanceSummary
             metricName="Clicks"
             value={metrics.clicks.toString()}
+            iconName="MouseClickIcon"
           />
           <PerformanceSummary
             metricName="Conversions"
             value={metrics.conversions.toString()}
+            iconName="Conversions"
           />
           <PerformanceSummary
             metricName="Conversion Rate"
             value={`${metrics.conversionRate}%`}
+            iconName="ConversionRate"
           />
           <PerformanceSummary
             metricName="Total Spends"
             value={`$${metrics.totalSpends}`}
+            iconName="TotalSpends"
           />
-          <PerformanceSummary metricName="CPA" value={`$${metrics.cpa}`} />
+          <PerformanceSummary
+            metricName="CPA"
+            value={`$${metrics.cpa}`}
+            iconName="MouseClickedIcon"
+          />
         </ScrollableContainer>
         {/* Search and Sort */}
         <SearchSortSection onSearch={handleSearch} onSort={handleSort} />
@@ -188,6 +192,14 @@ const ReferralsIndex: React.FC = () => {
       </div>
     </div>
   );
+};
+
+export const getStaticProps = async () => {
+  return {
+    props: {
+      title: "Referrals",
+    },
+  };
 };
 
 export default ReferralsIndex;

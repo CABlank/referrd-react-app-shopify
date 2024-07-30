@@ -80,6 +80,7 @@ var ExpandableForm = function (_a) {
         var isNumberValid = validateInput(number, "tel");
         if (isNameValid && isEmailValid && isNumberValid) {
             onSubmit();
+            window.parent.postMessage("goToStep2", "*");
         }
         else {
             setErrors(__assign(__assign(__assign({}, (isNameValid ? {} : { name: "Invalid name" })), (isEmailValid ? {} : { email: "Invalid email" })), (isNumberValid ? {} : { number: "Invalid phone number" })));

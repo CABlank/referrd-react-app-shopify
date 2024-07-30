@@ -1,5 +1,3 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 // interfaces for the data structures
 export interface Campaign {
   settingsTopbarState?: string;
@@ -26,6 +24,8 @@ export interface Campaign {
   amountFunded?: number;
   url?: string;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Helper function to make API requests
 const fetchFromAPI = async <T>(
@@ -84,10 +84,16 @@ const duplicateCampaignToPublicPage = async (
     commissionType: campaign.commissionType,
   };
 
-  await fetchFromAPI("/items/campaign_public_page", token, {
-    method: "POST",
-    body: JSON.stringify(publicPageData),
-  });
+  try {
+    // Assuming the public page data already exists and we need to update it
+    await fetchFromAPI(`/items/campaign_public_page/${campaign.id}`, token, {
+      method: "PATCH",
+      body: JSON.stringify(publicPageData),
+    });
+    console.log("Public page data updated successfully.");
+  } catch (error) {
+    console.error("Failed to update public page data", error);
+  }
 };
 
 // Fetch all campaigns
@@ -123,13 +129,18 @@ export const updateCampaign = async (
   campaign: Campaign,
   token: string
 ): Promise<void> => {
-  await fetchFromAPI<void>(`/items/campaigns/${campaign.id}`, token, {
-    method: "PATCH",
-    body: JSON.stringify(campaign),
-  });
+  try {
+    await fetchFromAPI<void>(`/items/campaigns/${campaign.id}`, token, {
+      method: "PATCH",
+      body: JSON.stringify(campaign),
+    });
+    console.log("Campaign updated successfully.");
 
-  // Duplicate the updated campaign to the public page collection
-  await duplicateCampaignToPublicPage(campaign, token);
+    // Duplicate the updated campaign to the public page collection
+    await duplicateCampaignToPublicPage(campaign, token);
+  } catch (error) {
+    console.error("Failed to update campaign", error);
+  }
 };
 
 // Update the status of a campaign

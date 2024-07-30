@@ -5,10 +5,12 @@ import {
   ElementProps,
   TextElementProps,
   DividerElementProps,
+  InputElementProps,
 } from "./Types";
 import TextElement from "./TextElement";
 import ButtonElement from "./ButtonElement";
 import DividerElement from "./DividerElement";
+import InputElement from "./InputElement";
 import { ItemTypes, DragItem } from "./Types";
 
 interface ElementWrapperProps {
@@ -19,7 +21,15 @@ interface ElementWrapperProps {
   hoverIndex: number | null;
   onRemove?: (id: string) => void;
   showRemoveButton?: boolean;
-  enableDragAndDrop?: boolean; // Add the enableDragAndDrop prop
+  enableDragAndDrop?: boolean;
+  view: "desktop" | "mobile";
+  expandedId: string | undefined;
+  onExpand: (id: string) => void;
+  handleChange: (
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    type: string
+  ) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit?: () => void; // Add handleSubmit prop
 }
 
 const ElementWrapper: React.FC<ElementWrapperProps> = ({
@@ -30,33 +40,40 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   hoverIndex,
   onRemove,
   showRemoveButton = true,
-  enableDragAndDrop = false, // Default to false
+  enableDragAndDrop = false,
+  view,
+  expandedId,
+  onExpand,
+  handleChange,
+  handleSubmit, // Add handleSubmit prop
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Unconditionally call useDrag
   const [{ isDragging }, drag] = useDrag({
     type:
       element.type === "text"
         ? ItemTypes.TEXT_ELEMENT
         : element.type === "button"
-        ? ItemTypes.BUTTON_ELEMENT
-        : ItemTypes.DIVIDER_ELEMENT,
+          ? ItemTypes.BUTTON_ELEMENT
+          : element.type === "divider"
+            ? ItemTypes.DIVIDER_ELEMENT
+            : ItemTypes.INPUT_ELEMENT,
     item: { type: element.type, id: element.id, index },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
+    canDrag: enableDragAndDrop,
   });
 
-  // Unconditionally call useDrop
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: [
       ItemTypes.TEXT_ELEMENT,
       ItemTypes.BUTTON_ELEMENT,
       ItemTypes.DIVIDER_ELEMENT,
+      ItemTypes.INPUT_ELEMENT,
     ],
     hover: (item: DragItem, monitor) => {
-      if (!ref.current || item.index === index) return;
+      if (!enableDragAndDrop || !ref.current || item.index === index) return;
 
       const hoverBoundingRect = ref.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
@@ -73,14 +90,16 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
       }
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver(),
-      canDrop: monitor.canDrop(),
+      isOver: enableDragAndDrop && monitor.isOver(),
+      canDrop: enableDragAndDrop && monitor.canDrop(),
     }),
+    canDrop: () => enableDragAndDrop,
   });
 
-  // Apply drag and drop refs unconditionally
-  drag(ref);
-  drop(ref);
+  if (enableDragAndDrop) {
+    drag(ref);
+    drop(ref);
+  }
 
   if (!element || !element.id) {
     console.error("Element or element.id is undefined:", element);
@@ -90,7 +109,9 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   return (
     <div
       ref={ref}
-      className={`flex-shrink-0 flex items-center cursor-grab place-content-center text-center ${
+      className={`flex-shrink-0 flex items-center ${
+        enableDragAndDrop ? "cursor-grab" : ""
+      } place-content-center text-center ${
         enableDragAndDrop && isDragging ? "opacity-50" : ""
       } ${
         enableDragAndDrop && isOver && canDrop
@@ -106,10 +127,33 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
         <TextElement {...(element as TextElementProps)} />
       )}
       {element.type === "button" && (
-        <ButtonElement {...(element as ButtonElementProps)} />
+        <ButtonElement
+          {...(element as ButtonElementProps)}
+          onClick={handleSubmit} // Pass handleSubmit to ButtonElement
+        />
       )}
       {element.type === "divider" && (
         <DividerElement {...(element as DividerElementProps)} />
+      )}
+      {element.type === "input" && (
+        <InputElement
+          {...(element as InputElementProps)}
+          view={view}
+          expandedId={expandedId}
+          onExpand={onExpand}
+          onChange={handleChange(
+            element.id.includes("text")
+              ? (value) => console.log("Set name value", value)
+              : element.id.includes("email")
+                ? (value) => console.log("Set email value", value)
+                : (value) => console.log("Set number value", value),
+            element.id.includes("text")
+              ? "text"
+              : element.id.includes("email")
+                ? "email"
+                : "tel"
+          )}
+        />
       )}
       {showRemoveButton && onRemove && (
         <button onClick={() => onRemove(element.id)} className="remove-button">

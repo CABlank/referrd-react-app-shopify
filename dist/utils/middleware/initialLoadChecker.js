@@ -34,22 +34,19 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { RequestedTokenType } from "@shopify/shopify-api";
 import shopify from "../shopify/shopifyClient";
 import prisma from "../database/prismaClient";
 import authService from "../../services/auth/auth";
+import jwtValidator from "../jwt/jwtValidator";
 var decodeAndVerifyToken = function (token) {
-    var decoded = jwt.decode(token, { complete: true });
-    if (!decoded || !decoded.payload) {
-        throw new Error("Invalid token");
-    }
+    var decodedPayload = jwtValidator(token);
     var currentTime = Math.floor(Date.now() / 1000);
-    if (currentTime > decoded.payload.exp) {
+    if (currentTime > decodedPayload.exp) {
         throw new Error("Token has expired");
     }
-    return decoded;
+    return decodedPayload;
 };
 var upsertSession = function (session, shop) { return __awaiter(void 0, void 0, void 0, function () {
     var error_1;

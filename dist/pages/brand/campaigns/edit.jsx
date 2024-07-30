@@ -222,11 +222,8 @@ var EditCampaign = function () {
     var campaignDataWithNonNullableUrl = __assign(__assign({}, campaignData), { url: campaignData.url || "", startDate: campaignData.startDate || "", closeDate: campaignData.closeDate || "", company: campaignData.company || "" });
     return (<div className={"relative ".concat(loading ? "blur-sm" : "", " flex-1 overflow-y-auto overflow-x-hidden")}>
       {loading && <LoadingOverlay />}
-      <main className="p-4">
+      <main className="">
         <div className="max-w-7xl mx-auto mb-10 space-y-6">
-          <p className="text-[40px] font-semibold text-left text-[#10ad1b]">
-            Edit Campaign
-          </p>
           <div className="flex justify-between items-center">
             <div className="flex justify-start items-center relative gap-2">
               <Link href="/brand/campaigns" className="flex-grow-0 flex-shrink-0 text-sm font-medium text-left text-black/50">
@@ -240,7 +237,7 @@ var EditCampaign = function () {
               </p>
             </div>
             <div className="flex justify-end">
-              <button className="px-4 py-2 bg-green-500 text-white rounded-md" onClick={handleSaveChanges} disabled={saving} // Disable save button if saving is in progress
+              <button className="px-4 py-2 bg-[#47B775] text-white rounded-md" onClick={handleSaveChanges} disabled={saving} // Disable save button if saving is in progress
     >
                 {saving ? "Saving..." : "Save Changes"}
               </button>
@@ -250,7 +247,7 @@ var EditCampaign = function () {
           {error && <div className="text-red-600">{error}</div>}
           <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
             <div className="flex justify-between items-center mb-6 cursor-pointer" onClick={handleToggle}>
-              <h2 className="text-xl font-semibold text-green-500">
+              <h2 className="text-xl font-semibold text-[#47B775]">
                 Campaign Information
               </h2>
               <button className="focus:outline-none">
@@ -357,4 +354,13 @@ var EditCampaign = function () {
       </main>
     </div>);
 };
+export var getStaticProps = function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, {
+                props: {
+                    title: "Edit Campaign",
+                },
+            }];
+    });
+}); };
 export default EditCampaign;

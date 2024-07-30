@@ -255,4 +255,13 @@ var Payments = function () {
       </div>
     </div>);
 };
+export var getStaticProps = function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, {
+                props: {
+                    title: "Payments",
+                },
+            }];
+    });
+}); };
 export default Payments;

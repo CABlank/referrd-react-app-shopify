@@ -24,6 +24,7 @@ interface RealTopBarProps {
   setUrl?: React.Dispatch<React.SetStateAction<string>>;
   setIsStepTwoAvailable?: React.Dispatch<React.SetStateAction<boolean>>;
   enableDragAndDrop?: boolean;
+  onLoad?: () => void; // Add the onLoad prop
 }
 
 const RealTopBar = forwardRef<unknown, RealTopBarProps>(
@@ -42,6 +43,7 @@ const RealTopBar = forwardRef<unknown, RealTopBarProps>(
       setUrl,
       setIsStepTwoAvailable,
       enableDragAndDrop = false,
+      onLoad, // Destructure the onLoad prop
     },
     ref
   ) => {
@@ -102,6 +104,10 @@ const RealTopBar = forwardRef<unknown, RealTopBarProps>(
         setIsStepTwoAvailableState(deserializedState.isStepTwoAvailable);
         setConfig(deserializedState.config || null);
         setView(deserializedState.view || "desktop");
+
+        if (onLoad) {
+          onLoad(); // Call onLoad after deserializing the state
+        }
       } catch (error) {
         console.error("Failed to deserialize state:", error);
       }
@@ -152,6 +158,10 @@ const RealTopBar = forwardRef<unknown, RealTopBarProps>(
             deserializedState.isStepTwoAvailable || false
           );
           setView(deserializedState.view || "desktop");
+
+          if (onLoad) {
+            onLoad(); // Call onLoad after setting the state
+          }
         }
       }
 
@@ -167,6 +177,10 @@ const RealTopBar = forwardRef<unknown, RealTopBarProps>(
           );
           console.log("Current config:", currentConfig);
           setConfig(currentConfig);
+
+          if (onLoad) {
+            onLoad(); // Call onLoad after deserializing the settings
+          }
         } catch (error) {
           console.error("Failed to initialize with settings state:", error);
         }
@@ -254,7 +268,7 @@ const RealTopBar = forwardRef<unknown, RealTopBarProps>(
                 setStep={setStepState}
                 allowStepChange={true}
                 isStepTwoAvailable={isStepTwoAvailable}
-                enableDragAndDrop={enableDragAndDrop}
+                enableDragAndDrop={false} // Disable drag and drop here
                 forceMobileView={view === "mobile"}
               />
             )}

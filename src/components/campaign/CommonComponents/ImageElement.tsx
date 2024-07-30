@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageElementProps } from "../CommonComponents/Types";
+import { ImageElementProps } from "./Types";
 import styled from "styled-components";
 
 const StyledImage = styled.img<Partial<ImageElementProps>>`
@@ -30,6 +30,14 @@ const ImageElement: React.FC<ImageElementComponentProps> = ({
   };
 
   return <StyledImage src={imageUrl} alt="Image" {...processedProps} />;
+};
+
+export const defaultImageProps: Partial<ImageElementProps> = {
+  imageWidth: "100%",
+  imageHeight: "100%",
+  borderRadius: "0",
+  objectFit: "cover",
+  centerImage: false,
 };
 
 export default ImageElement;

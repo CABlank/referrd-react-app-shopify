@@ -9,7 +9,6 @@ import {
 import StepOne from "./StepOne";
 import StepTwo from "./StepTwo";
 import { v4 as uuidv4 } from "uuid";
-import ClosePopupIcon from "../../../Icons/IconsBuilder/ClosePopupIcon";
 import { defaultTextProps } from "../../CommonComponents/TextElement";
 import { defaultButtonProps } from "../../CommonComponents/ButtonElement";
 import { defaultDividerProps } from "../../CommonComponents/DividerElement";
@@ -112,8 +111,8 @@ const PopupPreview: React.FC<PopupPreviewProps> = ({
         hoverIndex !== null
           ? hoverIndex
           : step === 1
-          ? stepOneElements.length
-          : stepTwoElements.length;
+            ? stepOneElements.length
+            : stepTwoElements.length;
 
       const newElements =
         step === 1 ? [...stepOneElements] : [...stepTwoElements];

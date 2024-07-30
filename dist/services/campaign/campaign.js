@@ -93,7 +93,7 @@ var fetchFromAPI = function (endpoint_1, token_1) {
 };
 // Duplicate campaign data to the public page collection
 var duplicateCampaignToPublicPage = function (campaign, token) { return __awaiter(void 0, void 0, void 0, function () {
-    var publicPageData;
+    var publicPageData, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -112,13 +112,24 @@ var duplicateCampaignToPublicPage = function (campaign, token) { return __awaite
                     commission: campaign.commission,
                     commissionType: campaign.commissionType,
                 };
-                return [4 /*yield*/, fetchFromAPI("/items/campaign_public_page", token, {
-                        method: "POST",
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                // Assuming the public page data already exists and we need to update it
+                return [4 /*yield*/, fetchFromAPI("/items/campaign_public_page/".concat(campaign.id), token, {
+                        method: "PATCH",
                         body: JSON.stringify(publicPageData),
                     })];
-            case 1:
+            case 2:
+                // Assuming the public page data already exists and we need to update it
                 _a.sent();
-                return [2 /*return*/];
+                console.log("Public page data updated successfully.");
+                return [3 /*break*/, 4];
+            case 3:
+                error_1 = _a.sent();
+                console.error("Failed to update public page data", error_1);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
         }
     });
 }); };
@@ -152,20 +163,29 @@ export var createCampaign = function (campaign, token) { return __awaiter(void 0
 }); };
 // Update an existing campaign
 export var updateCampaign = function (campaign, token) { return __awaiter(void 0, void 0, void 0, function () {
+    var error_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, fetchFromAPI("/items/campaigns/".concat(campaign.id), token, {
-                    method: "PATCH",
-                    body: JSON.stringify(campaign),
-                })];
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, fetchFromAPI("/items/campaigns/".concat(campaign.id), token, {
+                        method: "PATCH",
+                        body: JSON.stringify(campaign),
+                    })];
             case 1:
                 _a.sent();
+                console.log("Campaign updated successfully.");
                 // Duplicate the updated campaign to the public page collection
                 return [4 /*yield*/, duplicateCampaignToPublicPage(campaign, token)];
             case 2:
                 // Duplicate the updated campaign to the public page collection
                 _a.sent();
-                return [2 /*return*/];
+                return [3 /*break*/, 4];
+            case 3:
+                error_2 = _a.sent();
+                console.error("Failed to update campaign", error_2);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
         }
     });
 }); };

@@ -97,7 +97,8 @@ const TopBarPreview: React.FC<TopBarPreviewProps> = ({
     }
   }, [forceMobileView, initialView]);
 
-  const dropWrapper = useDropWrapper(
+  const { isOver, drop, containerRef } = useDropWrapper(
+    enableDragAndDrop,
     step,
     view === "desktop" ? desktopStepOneElements : mobileStepOneElements,
     view === "desktop" ? setDesktopStepOneElements : setMobileStepOneElements,
@@ -107,18 +108,14 @@ const TopBarPreview: React.FC<TopBarPreviewProps> = ({
     hoverIndex
   );
 
-  const { isOver, drop, containerRef } = enableDragAndDrop
-    ? dropWrapper
-    : { isOver: false, drop: null, containerRef: null };
-
   const currentElements =
     view === "desktop"
       ? step === 1
         ? desktopStepOneElements
         : desktopStepTwoElements
       : step === 1
-      ? mobileStepOneElements
-      : mobileStepTwoElements;
+        ? mobileStepOneElements
+        : mobileStepTwoElements;
 
   const setCurrentElements =
     view === "desktop"
@@ -126,8 +123,8 @@ const TopBarPreview: React.FC<TopBarPreviewProps> = ({
         ? setDesktopStepOneElements
         : setDesktopStepTwoElements
       : step === 1
-      ? setMobileStepOneElements
-      : setMobileStepTwoElements;
+        ? setMobileStepOneElements
+        : setMobileStepTwoElements;
 
   const safeCurrentElements = currentElements || [];
 
@@ -211,6 +208,7 @@ const TopBarPreview: React.FC<TopBarPreviewProps> = ({
             setUrl={setUrl}
             setStep={setStep}
             allowStepChange={allowStepChange}
+            enableDragAndDrop={enableDragAndDrop}
           />
         )}
         {step === 2 && (isStepTwoAvailable || allowStepChange) && (

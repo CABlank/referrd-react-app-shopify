@@ -211,11 +211,8 @@ const EditCampaign: React.FC = () => {
       } flex-1 overflow-y-auto overflow-x-hidden`}
     >
       {loading && <LoadingOverlay />}
-      <main className="p-4">
-        <div className="max-w-7xl mx-auto mb-10 space-y-6">
-          <p className="text-[40px] font-semibold text-left text-[#10ad1b]">
-            Edit Campaign
-          </p>
+      <main className="">
+        <div className="max-w mx-auto mb-10 space-y-6">
           <div className="flex justify-between items-center">
             <div className="flex justify-start items-center relative gap-2">
               <Link
@@ -248,7 +245,7 @@ const EditCampaign: React.FC = () => {
             </div>
             <div className="flex justify-end">
               <button
-                className="px-4 py-2 bg-green-500 text-white rounded-md"
+                className="px-4 py-2 bg-[#47B775] text-white rounded-md"
                 onClick={handleSaveChanges}
                 disabled={saving} // Disable save button if saving is in progress
               >
@@ -263,7 +260,7 @@ const EditCampaign: React.FC = () => {
               className="flex justify-between items-center mb-6 cursor-pointer"
               onClick={handleToggle}
             >
-              <h2 className="text-xl font-semibold text-green-500">
+              <h2 className="text-xl font-semibold text-[#47B775]">
                 Campaign Information
               </h2>
               <button className="focus:outline-none">
@@ -422,6 +419,14 @@ const EditCampaign: React.FC = () => {
       </main>
     </div>
   );
+};
+
+export const getStaticProps = async () => {
+  return {
+    props: {
+      title: "Edit Campaign",
+    },
+  };
 };
 
 export default EditCampaign;

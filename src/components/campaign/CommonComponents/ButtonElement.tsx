@@ -2,17 +2,17 @@ import React from "react";
 import { ButtonElementProps } from "./Types";
 
 export const defaultButtonProps: Partial<ButtonElementProps> = {
-  buttonText: "Button",
+  buttonText: "Join Us",
   buttonLink: "#",
   buttonBackgroundColor: "#ffffff",
   buttonTextColor: "#000000",
   buttonBorderColor: "#555555",
   buttonBorderWidth: 1,
   buttonBorderRadius: 8,
-  paddingTop: "4px",
-  paddingRight: "16px",
-  paddingBottom: "4px",
-  paddingLeft: "16px",
+  paddingTop: "8px",
+  paddingRight: "24px",
+  paddingBottom: "8px",
+  paddingLeft: "24px",
   marginTop: "0px",
   marginRight: "0px",
   marginBottom: "0px",
@@ -20,7 +20,7 @@ export const defaultButtonProps: Partial<ButtonElementProps> = {
   fontFamily: "Arial",
   fontSize: "14",
   textTransform: "none",
-  fontWeight: "normal",
+  fontWeight: "bold",
   letterSpacing: "normal",
   lineHeight: "normal",
   hoverBackgroundColor: "#ffffff",
@@ -32,6 +32,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({
   buttonText,
   buttonLink,
   buttonAlign = "center",
+  onClick,
   ...props
 }) => {
   const {
@@ -75,6 +76,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({
     lineHeight: lineHeight,
     textDecoration: "none",
     textAlign: buttonAlign as "left" | "center" | "right",
+    cursor: "pointer",
   };
 
   const hoverStyles = {
@@ -84,9 +86,19 @@ const ButtonElement: React.FC<ButtonElementProps> = ({
   };
 
   return (
-    <a
-      href={buttonLink}
+    <button
+      type="button"
       style={inlineStyles}
+      onClick={(e) => {
+        e.preventDefault();
+        console.log("Button clicked");
+        if (onClick) {
+          console.log("onClick provided");
+          onClick();
+        } else {
+          console.log("onClick not provided");
+        }
+      }}
       onMouseOver={(e) => {
         Object.assign(e.currentTarget.style, hoverStyles);
       }}
@@ -95,7 +107,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({
       }}
     >
       {buttonText}
-    </a>
+    </button>
   );
 };
 

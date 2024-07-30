@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+/*import React, { useState, useEffect, useRef, useCallback } from "react";
 import ExpandableInput from "./ExpandableInput";
 import NameIcon from "../../../Icons/IconsBuilder/NameIcon";
 import EmailIcon from "../../../Icons/IconsBuilder/EmailIcon";
@@ -50,31 +50,6 @@ const ExpandableForm: React.FC<ExpandableFormProps> = ({
 
   const formRef = useRef<HTMLDivElement>(null);
 
-  const handleFocus = useCallback((field: string) => {
-    setExpandedInput(field);
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    if (view === "mobile") {
-      setExpandedInput(null);
-    }
-  }, [view]);
-
-  const handleClickOutside = useCallback(
-    (event: MouseEvent) => {
-      if (formRef.current && !formRef.current.contains(event.target as Node)) {
-        handleBlur();
-      }
-    },
-    [handleBlur]
-  );
-
-  useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [handleClickOutside]);
 
   useEffect(() => {
     if (view === "desktop") {
@@ -102,22 +77,6 @@ const ExpandableForm: React.FC<ExpandableFormProps> = ({
       },
     []
   );
-
-  const handleSubmit = useCallback(() => {
-    const isNameValid = validateInput(name, "text");
-    const isEmailValid = validateInput(email, "email");
-    const isNumberValid = validateInput(number, "tel");
-
-    if (isNameValid && isEmailValid && isNumberValid) {
-      onSubmit();
-    } else {
-      setErrors({
-        ...(isNameValid ? {} : { name: "Invalid name" }),
-        ...(isEmailValid ? {} : { email: "Invalid email" }),
-        ...(isNumberValid ? {} : { number: "Invalid phone number" }),
-      });
-    }
-  }, [name, email, number, onSubmit]);
 
   const renderExpandableInput = (
     type: string,
@@ -150,15 +109,6 @@ const ExpandableForm: React.FC<ExpandableFormProps> = ({
           {renderExpandableInput("text", name, "Name", setName)}
           {renderExpandableInput("email", email, "Email", setEmail)}
           {renderExpandableInput("tel", number, "Phone", setNumber)}
-          <div className="flex justify-center items-center flex-grow-0 flex-shrink-0 w-[97px] h-9 relative gap-2 px-6 py-2.5 rounded-lg bg-white">
-            <button
-              id="join-us-button" // Add ID to the button
-              className="flex-grow-0 flex-shrink-0 text-base font-semibold text-left text-[#0d0c16]"
-              onClick={handleSubmit}
-            >
-              Join us
-            </button>
-          </div>
         </>
       ) : (
         <div className="flex flex-col justify-center items-center flex-grow-0 flex-shrink-0">
@@ -198,15 +148,6 @@ const ExpandableForm: React.FC<ExpandableFormProps> = ({
               setNumber,
               <MobileIcon />
             )}
-            <div className="flex justify-center items-center flex-grow-0 flex-shrink-0 relative gap-2 px-4 py-2.5 rounded-lg bg-white h-8">
-              <button
-                id="join-us-button" // Add ID to the button
-                className="flex-grow-0 flex-shrink-0 text-sm font-semibold text-left text-black"
-                onClick={handleSubmit}
-              >
-                Join us
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -215,3 +156,4 @@ const ExpandableForm: React.FC<ExpandableFormProps> = ({
 };
 
 export default ExpandableForm;
+*/

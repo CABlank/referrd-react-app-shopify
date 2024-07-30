@@ -1,4 +1,4 @@
-import React from "react";
+/*import React from "react";
 
 interface ExpandableInputProps {
   type: string;
@@ -40,7 +40,7 @@ const ExpandableInput: React.FC<ExpandableInputProps> = ({
       )}
       <input
         type={type}
-        value={view === "mobile" && !isExpanded ? "" : value} // Adjust this line
+        value={view === "mobile" && !isExpanded ? "" : value || ""}
         onChange={onChange}
         onFocus={onFocus}
         onBlur={onBlur}
@@ -65,3 +65,4 @@ const ExpandableInput: React.FC<ExpandableInputProps> = ({
 };
 
 export default ExpandableInput;
+*/

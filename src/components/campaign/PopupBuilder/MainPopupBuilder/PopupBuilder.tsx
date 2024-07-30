@@ -7,8 +7,7 @@ import React, {
 } from "react";
 import { ElementProps, PopupConfig } from "../../CommonComponents/Types";
 import DragAndDropSection from "../DragAndDropSection";
-import DesktopCustomizationPanel from "../CustomizationPanel/DesktopCustomizationPanel";
-import MobileCustomizationPanel from "../CustomizationPanel/MobileCustomizationPanel";
+import CustomizationPanel from "../CustomizationPanel/CustomizationPanel";
 import PopupPreview from "../Preview/PopupPreview";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -73,16 +72,16 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
             ? desktopStepOneElements
             : desktopStepTwoElements
           : step === 1
-          ? mobileStepOneElements
-          : mobileStepTwoElements;
+            ? mobileStepOneElements
+            : mobileStepTwoElements;
       const setElements =
         view === "desktop"
           ? step === 1
             ? setDesktopStepOneElements
             : setDesktopStepTwoElements
           : step === 1
-          ? setMobileStepOneElements
-          : setMobileStepTwoElements;
+            ? setMobileStepOneElements
+            : setMobileStepTwoElements;
 
       setElements(
         elements.map((element) =>
@@ -149,16 +148,16 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
             ? desktopStepOneElements
             : desktopStepTwoElements
           : step === 1
-          ? mobileStepOneElements
-          : mobileStepTwoElements;
+            ? mobileStepOneElements
+            : mobileStepTwoElements;
       const setElements =
         view === "desktop"
           ? step === 1
             ? setDesktopStepOneElements
             : setDesktopStepTwoElements
           : step === 1
-          ? setMobileStepOneElements
-          : setMobileStepTwoElements;
+            ? setMobileStepOneElements
+            : setMobileStepTwoElements;
 
       setElements((prevElements) =>
         prevElements.filter((element) => element.id !== elementId)
@@ -176,8 +175,8 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
           ? desktopConfigStep1
           : desktopConfigStep2
         : step === 1
-        ? mobileConfigStep1
-        : mobileConfigStep2;
+          ? mobileConfigStep1
+          : mobileConfigStep2;
 
     // Deserialization on mount
     useEffect(() => {
@@ -297,27 +296,22 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
               handleValueChange={handleValueChange}
             />
             <DragAndDropSection />
-            {view === "desktop" ? (
-              <DesktopCustomizationPanel
-                elements={
-                  step === 1 ? desktopStepOneElements : desktopStepTwoElements
-                }
-                onUpdate={handleElementUpdate}
-                onRemove={handleRemoveElement}
-                imageRecentlyAdded={imageRecentlyAdded}
-                setImageRecentlyAdded={setImageRecentlyAdded}
-              />
-            ) : (
-              <MobileCustomizationPanel
-                elements={
-                  step === 1 ? mobileStepOneElements : mobileStepTwoElements
-                }
-                onUpdate={handleElementUpdate}
-                onRemove={handleRemoveElement}
-                imageRecentlyAdded={imageRecentlyAdded}
-                setImageRecentlyAdded={setImageRecentlyAdded}
-              />
-            )}
+            <CustomizationPanel
+              view={view}
+              elements={
+                step === 1
+                  ? view === "desktop"
+                    ? desktopStepOneElements
+                    : mobileStepOneElements
+                  : view === "desktop"
+                    ? desktopStepTwoElements
+                    : mobileStepTwoElements
+              }
+              onUpdate={handleElementUpdate}
+              onRemove={handleRemoveElement}
+              imageRecentlyAdded={imageRecentlyAdded}
+              setImageRecentlyAdded={setImageRecentlyAdded}
+            />
           </div>
           <div className="w-3/4 p-4">
             <StepSelector step={step} setStep={setStep} />

@@ -34,7 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import sessionHandler from "../session/sessionHandler.js"; // Import session handler functions
+import sessionHandler from "../session/sessionHandler"; // Import session handler functions
 import shopify from "../shopify/shopifyClient"; // Import configured Shopify client
 import { RequestedTokenType, Session } from "@shopify/shopify-api"; // Import necessary types from Shopify API
 import validateJWT from "../jwt/jwtValidator"; // Import custom JWT validator

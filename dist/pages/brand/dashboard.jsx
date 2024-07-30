@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -55,18 +66,8 @@ import { fetchDashboardData, } from "../../services/dashboard/dashboard";
 import ScrollableContainer from "@/components/common/ScrollableContainer";
 import ArrowSeeMoreIcon from "@/components/Icons/ArrowSeeMoreIcon";
 import initialLoadChecker from "../../utils/middleware/initialLoadChecker";
-export var getServerSideProps = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, initialLoadChecker(context)];
-            case 1: 
-            // DO NOT REMOVE THIS.
-            return [2 /*return*/, _a.sent()];
-        }
-    });
-}); };
 var DashboardCampaigns = function (_a) {
-    var accessToken = _a.accessToken, refreshToken = _a.refreshToken;
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, title = _a.title;
     var _b = useSession(), session = _b.session, withTokenRefresh = _b.withTokenRefresh, sessionLoading = _b.loading;
     var _c = useState(true), dataLoading = _c[0], setDataLoading = _c[1];
     var _d = useState(null), error = _d[0], setError = _d[1];
@@ -167,11 +168,9 @@ var DashboardCampaigns = function (_a) {
     ];
     return (<div className={"relative ".concat(sessionLoading || dataLoading ? "blur" : "")}>
       {(sessionLoading || dataLoading) && <LoadingOverlay />}
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] ">
-        Hi, {(session === null || session === void 0 ? void 0 : session.user.name) || "there"}!
-      </p>
+
       <div className="relative w-full flex justify-center">
-        <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 py-4">
+        <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 pb-4">
           <ScrollableContainer>
             <PerformanceSummary metricName="Total Clicks" value={metrics.totalClicks.toString()}/>
             <PerformanceSummary metricName="Total Conversions" value={metrics.totalConversions.toString()}/>
@@ -238,4 +237,31 @@ var DashboardCampaigns = function (_a) {
       </div>
     </div>);
 };
+export var getServerSideProps = function (context) { return __awaiter(void 0, void 0, void 0, function () {
+    var result, session, userName, title;
+    var _a, _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
+            case 0: return [4 /*yield*/, initialLoadChecker(context)];
+            case 1:
+                result = _c.sent();
+                if ("redirect" in result || "notFound" in result) {
+                    return [2 /*return*/, result];
+                }
+                if (!("props" in result)) {
+                    return [2 /*return*/, {
+                            props: {
+                                title: "Hi, there!",
+                            },
+                        }];
+                }
+                session = (_a = result.props) === null || _a === void 0 ? void 0 : _a.session;
+                userName = ((_b = session === null || session === void 0 ? void 0 : session.user) === null || _b === void 0 ? void 0 : _b.name) || "there";
+                title = "Hi, ".concat(userName, "!");
+                return [2 /*return*/, {
+                        props: __assign(__assign({}, result.props), { title: title }),
+                    }];
+        }
+    });
+}); };
 export default DashboardCampaigns;

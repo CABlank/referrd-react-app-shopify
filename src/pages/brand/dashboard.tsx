@@ -5,6 +5,7 @@ import ReferralCard from "../../components/common/ReferralCard";
 import DataTableHeader from "../../components/common/DataTableHeader";
 import DataTableRows from "../../components/common/DataTableRows";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
+import Link from "next/link";
 import { useSession } from "../../contexts/SessionContext";
 import {
   fetchDashboardData,
@@ -27,19 +28,13 @@ type DashboardCampaignsProps = {
   accessToken?: string;
   refreshToken?: string;
   serverError?: boolean;
+  title: string;
 };
 
-export const getServerSideProps: GetServerSideProps<
-  DashboardCampaignsProps
-> = async (
-  context: GetServerSidePropsContext
-): Promise<GetServerSidePropsResult<DashboardCampaignsProps>> => {
-  // DO NOT REMOVE THIS.
-  return await initialLoadChecker(context);
-};
 const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
   accessToken,
   refreshToken,
+  title,
 }) => {
   const { session, withTokenRefresh, loading: sessionLoading } = useSession();
   const [dataLoading, setDataLoading] = useState(true);
@@ -157,29 +152,35 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
   return (
     <div className={`relative ${sessionLoading || dataLoading ? "blur" : ""}`}>
       {(sessionLoading || dataLoading) && <LoadingOverlay />}
-      <p className="text-[40px] font-semibold text-left text-[#10ad1b] ">
-        Hi, {session?.user.name || "there"}!
-      </p>
+
       <div className="relative w-full flex justify-center">
-        <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 py-4">
+        <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 pb-4">
           <ScrollableContainer>
             <PerformanceSummary
               metricName="Total Clicks"
               value={metrics.totalClicks.toString()}
+              iconName="MouseClickIcon"
             />
             <PerformanceSummary
               metricName="Total Conversions"
               value={metrics.totalConversions.toString()}
+              iconName="Conversions"
             />
             <PerformanceSummary
               metricName="Conversion Rate"
               value={`${metrics.conversionRate}%`}
+              iconName="ConversionRate"
             />
             <PerformanceSummary
               metricName="Total Spend"
               value={`$${metrics.totalSpend}`}
+              iconName="TotalSpends"
             />
-            <PerformanceSummary metricName="CPA" value={`$${metrics.cpa}`} />
+            <PerformanceSummary
+              metricName="CPA"
+              value={`$${metrics.cpa}`}
+              iconName="MouseClickedIcon"
+            />
           </ScrollableContainer>
         </div>
       </div>
@@ -189,12 +190,14 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
           <div className="flex flex-col justify-start items-start xl:overflow-hidden overflow-x-auto gap-4 lg:p-8 p-4 rounded-2xl bg-white xl:w-2/3 w-full">
             <div className="flex justify-between items-center w-full">
               <p className="text-2xl font-medium text-[#10ad1b]">Campaigns</p>
-              <div className="flex items-center gap-1">
-                <p className="text-base font-medium text-[#851087]/80">
-                  See More
-                </p>
-                <ArrowSeeMoreIcon />
-              </div>
+              <Link href="/brand/campaigns" passHref>
+                <div className="flex items-center gap-1 cursor-pointer">
+                  <p className="text-base font-medium text-[#851087]/80">
+                    See More
+                  </p>
+                  <ArrowSeeMoreIcon />
+                </div>
+              </Link>
             </div>
             <hr className="w-full border-t border-black/15" />
             {prioritizedCampaigns.length > 0 ? (
@@ -250,10 +253,6 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
           <p className="text-2xl font-medium text-[#10ad1b]">
             Latest Conversions
           </p>
-          <div className="flex items-center gap-1">
-            <p className="text-base font-medium text-[#851087]/80">See More</p>
-            <ArrowSeeMoreIcon />
-          </div>
         </div>
         <DataTableHeader
           headers={[
@@ -271,6 +270,38 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
       </div>
     </div>
   );
+};
+
+export const getServerSideProps: GetServerSideProps<
+  DashboardCampaignsProps
+> = async (
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<DashboardCampaignsProps>> => {
+  const result = await initialLoadChecker(context);
+
+  if ("redirect" in result || "notFound" in result) {
+    return result;
+  }
+
+  if (!("props" in result)) {
+    return {
+      props: {
+        title: "Hi, there!",
+      },
+    };
+  }
+
+  // Extract the session from the result
+  const session = (result.props as { session?: any })?.session;
+  const userName = session?.user?.name || "there";
+  const title = `Hi, ${userName}!`;
+
+  return {
+    props: {
+      ...result.props,
+      title,
+    },
+  };
 };
 
 export default DashboardCampaigns;

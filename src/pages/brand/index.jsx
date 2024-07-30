@@ -48,7 +48,7 @@ const DebugIndex = () => {
                   Data Fetching
                 </Text>
                 <Text>
-                  Send GET, POST and GraphQL queries to your app's backend.
+                  Send GET, POST and GraphQL queries to your app&apos;s backend.
                 </Text>
                 <InlineStack wrap={false} align="end">
                   <Button
@@ -69,7 +69,7 @@ const DebugIndex = () => {
                 <Text as="h2" variant="headingMd">
                   Resource Picker
                 </Text>
-                <Text>See how to use AppBridge CDN's Resource Picker</Text>
+                <Text>See how to use AppBridge CDN&apos;s Resource Picker</Text>
                 <InlineStack wrap={false} align="end">
                   <Button
                     variant="primary"
@@ -89,7 +89,7 @@ const DebugIndex = () => {
                 <Text as="h2" variant="headingMd">
                   Another Custom Page
                 </Text>
-                <Text>See how to look another Referrd</Text>
+                <Text>See how to look another Referred</Text>
                 <InlineStack wrap={false} align="end">
                   <Button
                     variant="primary"

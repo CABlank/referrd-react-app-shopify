@@ -4,7 +4,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import TopBarPreview from "./TopBarPreview";
 import { compress, decompress } from "compress-json";
 var RealTopBar = forwardRef(function (_a, ref) {
-    var serializedState = _a.serializedState, settingsState = _a.settingsState, _b = _a.stepOneElements, initialStepOneElements = _b === void 0 ? [] : _b, _c = _a.stepTwoElements, initialStepTwoElements = _c === void 0 ? [] : _c, setStepOneElements = _a.setStepOneElements, setStepTwoElements = _a.setStepTwoElements, _d = _a.view, initialView = _d === void 0 ? "desktop" : _d, _e = _a.step, initialStep = _e === void 0 ? 1 : _e, setStep = _a.setStep, _f = _a.url, initialUrl = _f === void 0 ? "" : _f, setUrl = _a.setUrl, setIsStepTwoAvailable = _a.setIsStepTwoAvailable, _g = _a.enableDragAndDrop, enableDragAndDrop = _g === void 0 ? false : _g;
+    var serializedState = _a.serializedState, settingsState = _a.settingsState, _b = _a.stepOneElements, initialStepOneElements = _b === void 0 ? [] : _b, _c = _a.stepTwoElements, initialStepTwoElements = _c === void 0 ? [] : _c, setStepOneElements = _a.setStepOneElements, setStepTwoElements = _a.setStepTwoElements, _d = _a.view, initialView = _d === void 0 ? "desktop" : _d, _e = _a.step, initialStep = _e === void 0 ? 1 : _e, setStep = _a.setStep, _f = _a.url, initialUrl = _f === void 0 ? "" : _f, setUrl = _a.setUrl, setIsStepTwoAvailable = _a.setIsStepTwoAvailable, _g = _a.enableDragAndDrop, enableDragAndDrop = _g === void 0 ? false : _g, onLoad = _a.onLoad;
     var _h = useState(initialStepOneElements), desktopStepOneElements = _h[0], setDesktopStepOneElementsState = _h[1];
     var _j = useState(initialStepTwoElements), desktopStepTwoElements = _j[0], setDesktopStepTwoElementsState = _j[1];
     var _k = useState(initialStepOneElements), mobileStepOneElements = _k[0], setMobileStepOneElementsState = _k[1];
@@ -37,6 +37,9 @@ var RealTopBar = forwardRef(function (_a, ref) {
             setIsStepTwoAvailableState(deserializedState.isStepTwoAvailable);
             setConfig(deserializedState.config || null);
             setView(deserializedState.view || "desktop");
+            if (onLoad) {
+                onLoad(); // Call onLoad after deserializing the state
+            }
         }
         catch (error) {
             console.error("Failed to deserialize state:", error);
@@ -77,6 +80,9 @@ var RealTopBar = forwardRef(function (_a, ref) {
                 setStepState(deserializedState.step || 1);
                 setIsStepTwoAvailableState(deserializedState.isStepTwoAvailable || false);
                 setView(deserializedState.view || "desktop");
+                if (onLoad) {
+                    onLoad(); // Call onLoad after setting the state
+                }
             }
         }
         if (settingsState) {
@@ -87,6 +93,9 @@ var RealTopBar = forwardRef(function (_a, ref) {
                 var currentConfig = getConfig(deserializedSettings, initialView, initialStep);
                 console.log("Current config:", currentConfig);
                 setConfig(currentConfig);
+                if (onLoad) {
+                    onLoad(); // Call onLoad after deserializing the settings
+                }
             }
             catch (error) {
                 console.error("Failed to initialize with settings state:", error);

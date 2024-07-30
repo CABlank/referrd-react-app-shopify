@@ -51,6 +51,7 @@ var CampaignPage = function () {
     var _d = useState(null), settingsPopupState = _d[0], setSettingsPopupState = _d[1];
     var _e = useState(null), format = _e[0], setFormat = _e[1];
     var _f = useState(true), isLoading = _f[0], setIsLoading = _f[1];
+    var _g = useState(false), isComponentLoaded = _g[0], setIsComponentLoaded = _g[1]; // New state to track component loading
     useEffect(function () {
         var fetchData = function () { return __awaiter(void 0, void 0, void 0, function () {
             var response, data, error_1;
@@ -66,7 +67,7 @@ var CampaignPage = function () {
                         return [4 /*yield*/, fetch("".concat(API_URL, "/items/campaign_public_page/").concat(id), {
                                 headers: {
                                     "Content-Type": "application/json",
-                                    Authorization: "Bearer ".concat(bot_token_harcoded),
+                                    Authorization: "Bearer ".concat(BOT_TOKEN),
                                 },
                             })];
                     case 2:
@@ -150,16 +151,24 @@ var CampaignPage = function () {
             return function () { return observer_1.disconnect(); };
         }
     }, [settingsTopbarState]);
+    useEffect(function () {
+        if (!isLoading && format) {
+            window.parent.postMessage("componentLoaded", "*"); // Notify parent window that the component has loaded
+            setIsComponentLoaded(true); // Set the component as loaded when the format is determined and not loading
+        }
+    }, [isLoading, format]);
     if (isLoading || !format) {
         return null;
     }
     if (format === "Topbar" && serializedTopbarState && settingsTopbarState) {
         return (<div className="top-bar-preview">
-        <RealTopBar serializedState={serializedTopbarState} settingsState={settingsTopbarState} enableDragAndDrop={false} view={"desktop"}/>
+        <RealTopBar serializedState={serializedTopbarState} settingsState={settingsTopbarState} enableDragAndDrop={false} view={"desktop"} onLoad={function () { return setIsComponentLoaded(true); }} // Set the component as loaded when RealTopBar has loaded
+        />
       </div>);
     }
     else if (format === "Popup" && serializedPopupState && settingsPopupState) {
-        return (<RealPopup serializedState={serializedPopupState} settingsState={settingsPopupState} enableDragAndDrop={false} view={"desktop"}/>);
+        return (<RealPopup serializedState={serializedPopupState} settingsState={settingsPopupState} enableDragAndDrop={false} view={"desktop"} onLoad={function () { return setIsComponentLoaded(true); }} // Set the component as loaded when RealPopup has loaded
+        />);
     }
     return null;
 };

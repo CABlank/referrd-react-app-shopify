@@ -43,9 +43,6 @@ var StepTwo = function (_a) {
     ];
     return (<>
       {view === "desktop" && (<div className="flex justify-center items-center flex-grow-0 flex-shrink-0 gap-4 relative">
-          <button onClick={onClose} className="absolute top-0 right-0 m-4 text-white text-lg font-bold z-50">
-            ✕
-          </button>
           <div className="flex flex-col justify-center items-center w-[720px]">
             <div className="flex justify-center items-center gap-4 mb-3">
               <div className="flex flex-col justify-center items-start gap-2">
@@ -99,9 +96,6 @@ var StepTwo = function (_a) {
         </div>)}
 
       {view === "mobile" && (<div className="flex flex-col justify-center items-center pt-2 relative">
-          <button onClick={onClose} className="absolute top-0 right-0 m-2 text-white text-sm font-bold z-50">
-            ✕
-          </button>
           <div className="flex flex-col justify-center items-center w-full gap-2">
             <p className="text-sm text-center text-white font-regular">
               Thanks for signing up!

@@ -51,7 +51,7 @@ const ScrollableContainer = ({ children }: { children: React.ReactNode }) => {
         </button>
       )}
       <div
-        className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 py-4"
+        className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 pb-4"
         ref={scrollRef}
       >
         {children}
