@@ -22,7 +22,6 @@ class MyDocument extends Document {
         <Head>
           {shop && host && (
             <script
-              async
               src={`https://cdn.shopify.com/shopifycloud/app-bridge.js?apiKey=${process.env.CONFIG_SHOPIFY_API_KEY}`}
             ></script>
           )}

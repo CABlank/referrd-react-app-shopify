@@ -5,6 +5,7 @@ import shopify from "../shopify/shopifyClient";
 import prisma from "../database/prismaClient";
 import authService from "../../services/auth/auth";
 import jwtValidator from "../jwt/jwtValidator";
+import sessionLoadChecker from "./sessionLoadChecker"; // Adjust the path as necessary
 
 interface Context extends GetServerSidePropsContext {
   query: {
@@ -29,6 +30,11 @@ const decodeAndVerifyToken = (token: string): JwtPayload => {
 };
 
 const upsertSession = async (session: any, shop: string) => {
+  if (!session) {
+    console.error(`Session is undefined for shop: ${shop}`);
+    return;
+  }
+
   try {
     await prisma.session.upsert({
       where: { sessionId: session.id },
@@ -43,9 +49,15 @@ const upsertSession = async (session: any, shop: string) => {
         sessionId: session.id,
       },
     });
-    console.log(`Stored ${session.type} session for shop:`, session.shop);
+    console.log(
+      `Stored ${session.isOnline ? "online" : "offline"} session for shop:`,
+      session.shop
+    );
   } catch (error) {
-    console.error(`Error storing ${session.type} session:`, error);
+    console.error(
+      `Error storing ${session.isOnline ? "online" : "offline"} session:`,
+      error
+    );
   }
 };
 
@@ -67,9 +79,8 @@ const upsertUser = async (
   ownerFirstName: string,
   ownerLastName: string
 ) => {
-  let existingUser;
   try {
-    existingUser = await prisma.user.findUnique({
+    let existingUser = await prisma.user.findUnique({
       where: { email: ownerEmail },
     });
 
@@ -238,21 +249,45 @@ const initialLoadChecker = async (
     accessToken = directusTokens.accessToken;
     refreshToken = directusTokens.refreshToken;
 
-    console.log("Process completed successfully.");
+    console.log("Obtained Directus Tokens:", { accessToken, refreshToken });
+
+    // Log the tokens before calling sessionLoadChecker
+    console.log("Passing tokens to sessionLoadChecker:", {
+      accessToken,
+      refreshToken,
+    });
+
+    // Call sessionLoadChecker with the tokens
+    const sessionLoadResult = await sessionLoadChecker({
+      ...context,
+      query: {
+        ...context.query,
+        accessToken: accessToken || undefined,
+        refreshToken: refreshToken || undefined,
+      },
+    });
+
+    console.log(
+      "Received response from sessionLoadChecker:",
+      sessionLoadResult
+    );
+
+    return {
+      ...sessionLoadResult,
+      props: {
+        ...("props" in sessionLoadResult ? sessionLoadResult.props : {}),
+        accessToken,
+        refreshToken,
+      },
+    };
   } catch (error) {
     return handleError(
-      `An error occurred at initialLoadChecker: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `An error occurred at initialLoadChecker: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
       error
     );
   }
-
-  return {
-    props: {
-      data: "ok",
-      accessToken,
-      refreshToken,
-    },
-  };
 };
 
 export default initialLoadChecker;

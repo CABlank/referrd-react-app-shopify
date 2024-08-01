@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import ArrowLoginIcon from "../Icons/ArrowLoginIcon";
 import EmailInput from "../common/EmailInput";
 import PasswordInput from "../common/PasswordInput";
 import GoogleIcon from "../Icons/GoogleIcon";
-import { useSession } from "../../contexts/SessionContext";
+import ShopifyPurpleIcon from "../Icons/ShopifyPurpleIcon";
+import ShopifyGreenIcon from "../Icons/ShopifyGreenIcon";
+import WorkEmailPurpleIcon from "../Icons/WorkEmailPurpleIcon";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -15,7 +17,8 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [shopifyStoreUrl, setShopifyStoreUrl] = useState("");
+  const [loginMethod, setLoginMethod] = useState<"email" | "shopify">("email");
   const router = useRouter();
 
   const handleGoogleLogin = () => {
@@ -25,103 +28,123 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
     window.location.href = directusOAuthURL;
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleShopifyLogin = () => {
+    const shopifyOAuthURL = `https://yourshopifyapp.com/auth/shopify?shop=${shopifyStoreUrl}.myshopify.com`;
+    window.location.href = shopifyOAuthURL;
+  };
+
+  const handleLogin = async (event: FormEvent) => {
     event.preventDefault();
-    setError(null); // Clear previous errors
-    try {
-      await onLogin(email, password);
-    } catch (err) {
-      console.error("Login failed:", err);
-      setError("Login failed. Please try again.");
-    }
+    await onLogin(email, password);
   };
 
   return (
-    <div className="relative w-full">
-      <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% {
-            transform: scale(0);
-          }
-          40% {
-            transform: scale(1);
-          }
-        }
-        .loader {
-          display: flex;
-          justify-content: space-around;
-          align-items: center;
-          width: 100px;
-          height: 100px;
-        }
-        .dot {
-          width: 20px;
-          height: 20px;
-          background-color: #851087;
-          border-radius: 50%;
-          animation: bounce 1.4s infinite ease-in-out both;
-        }
-        .dot:nth-child(1) {
-          animation-delay: -0.32s;
-        }
-        .dot:nth-child(2) {
-          animation-delay: -0.16s;
-        }
-      `}</style>
-      {loading && (
-        <div className="absolute inset-0 flex justify-center items-center z-10 bg-white bg-opacity-75 backdrop-blur-md">
-          <div className="loader">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+    <form
+      className="flex flex-col justify-start items-center self-stretch flex-grow-0 flex-shrink-0 gap-4 px-8"
+      onSubmit={handleLogin}
+    >
+      {loginMethod === "email" ? (
+        <>
+          <EmailInput email={email} setEmail={setEmail} />
+          <PasswordInput
+            password={password}
+            setPassword={setPassword}
+            showRequirements={false}
+          />
+          <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
+            <p className="text-sm text-left">
+              <span className="text-black/80">I may need to </span>
+              <Link href="/request-new-password" legacyBehavior>
+                <a className="text-[#10ad1b]">reset my password</a>
+              </Link>
+            </p>
           </div>
-        </div>
+          <button
+            type="submit"
+            className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
+            disabled={loading}
+          >
+            <p className="text-base font-semibold text-left text-white">
+              {loading ? "Logging in..." : "Log In"}
+            </p>
+            <ArrowLoginIcon />
+          </button>
+          <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
+            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">
+              or
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLoginMethod("shopify")}
+            className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
+          >
+            <ShopifyPurpleIcon />
+            <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
+              Log in with Shopify
+            </p>
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
+            <p className="text-base font-medium text-left text-black/80">
+              Shopify Store URL
+            </p>
+            <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
+              <ShopifyGreenIcon />
+              <input
+                type="text"
+                value={shopifyStoreUrl}
+                onChange={(e) => setShopifyStoreUrl(e.target.value)}
+                placeholder="your-store"
+                className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"
+              />
+              <p className="flex-grow-0 flex-shrink-0 text-base text-left text-[#7f7f7f]">
+                .myshopify.com
+              </p>
+            </div>
+          </div>
+          <button
+            type="submit"
+            onClick={handleShopifyLogin}
+            className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
+            disabled={loading}
+          >
+            <p className="text-base font-semibold text-left text-white">
+              {loading ? "Logging in..." : "Log In"}
+            </p>
+            <ArrowLoginIcon />
+          </button>
+          <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
+            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">
+              or
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLoginMethod("email")}
+            className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
+          >
+            <WorkEmailPurpleIcon />
+            <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
+              Work Email Address
+            </p>
+          </button>
+        </>
       )}
-      <form
-        className={`flex flex-col justify-start items-center self-stretch flex-grow-0 flex-shrink-0 gap-4 px-8 ${
-          loading ? "blur-sm pointer-events-none" : ""
-        }`}
-        onSubmit={handleSubmit}
+
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
       >
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
-        >
-          <GoogleIcon />
-          <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
-            Log in with Google
-          </p>
-        </button>
-        <EmailInput email={email} setEmail={setEmail} />
-        <PasswordInput
-          password={password}
-          setPassword={setPassword}
-          showRequirements={false}
-        />
-        <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
-          <p className="text-sm text-left">
-            <span className="text-black/80">I may need to </span>
-            <Link href="/request-new-password" passHref>
-              reset my password
-            </Link>
-          </p>
-        </div>
-        <button
-          type="submit"
-          className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
-          disabled={loading}
-        >
-          <p className="text-base font-semibold text-left text-white">
-            {loading ? "Logging in..." : "Log In"}
-          </p>
-          <ArrowLoginIcon />
-        </button>
-        {error && <p className="text-red-500">{error}</p>}
-      </form>
-    </div>
+        <GoogleIcon />
+        <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
+          Log in with Google
+        </p>
+      </button>
+    </form>
   );
 };
 

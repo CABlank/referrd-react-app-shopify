@@ -10,6 +10,7 @@ import { SessionProvider, useSession } from "../contexts/SessionContext";
 import "../styles/globals.css";
 import BrandLayout from "./layouts/BrandLayout";
 import LoadingOverlay from "../components/common/LoadingOverlay";
+import Link from "next/link";
 
 declare global {
   namespace JSX {
@@ -27,8 +28,12 @@ class MyApp extends App<AppProps> {
     try {
       const appProps = await App.getInitialProps(appContext);
       const { ctx } = appContext;
-      const { shop, host } = ctx.query;
-      return { ...appProps, pageProps: { ...appProps.pageProps, shop, host } };
+      const { shop, host, id_token: idToken } = ctx.query;
+
+      return {
+        ...appProps,
+        pageProps: { ...appProps.pageProps, shop, host, idToken },
+      };
     } catch (error) {
       console.error("Error in getInitialProps:", error);
       return { pageProps: {} };
@@ -91,7 +96,6 @@ const ContentWrapper: React.FC<{
       if (session && router.pathname === "/login") {
         router.replace("/brand/dashboard");
       } else if (!session && router.pathname.startsWith("/brand")) {
-        router.replace("/login");
       }
     }
   }, [sessionChecked, session, router]);
@@ -102,10 +106,35 @@ const ContentWrapper: React.FC<{
 
   const isBrandRoute = router.pathname.startsWith("/brand");
 
+  const createLink = (path: string) => {
+    const url = new URL(path, window.location.href);
+    if (pageProps.shop) url.searchParams.set("shop", pageProps.shop);
+    if (pageProps.idToken) url.searchParams.set("id_token", pageProps.idToken);
+    return url.toString();
+  };
+
   if (isShopify) {
     return (
       <AppBridgeProvider>
-        <Component {...pageProps} />
+        <PolarisProvider i18n={translations}>
+          <ui-nav-menu style={{ display: "none" }}>
+            <Link href={createLink("/")} rel="home">
+              Home
+            </Link>
+            <Link href={createLink("/brand/dashboard")}>Dashboard</Link>
+            <Link href={createLink("/brand/campaigns")}>Campaigns</Link>
+            <Link href={createLink("/brand/support")}>Support</Link>
+            <Link href={createLink("/brand/referrals")}>Referrals</Link>
+            <Link href={createLink("/brand/settings")}>Settings</Link>
+            <Link href={createLink("/brand/payments")}>Payments</Link>
+            <Link href={createLink("/brand/faqs")}>FAQS</Link>
+          </ui-nav-menu>
+          <div className="flex-1 overflow-y-auto">
+            <main className="p-12">
+              <Component {...pageProps} />
+            </main>
+          </div>
+        </PolarisProvider>
       </AppBridgeProvider>
     );
   } else if (Component.noLayout) {

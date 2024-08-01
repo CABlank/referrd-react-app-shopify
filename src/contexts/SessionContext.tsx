@@ -40,7 +40,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState<string | undefined>(undefined);
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
   const hasInitialized = useRef(false);

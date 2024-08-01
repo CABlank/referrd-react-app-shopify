@@ -6,42 +6,25 @@ import AuthLayout from "../components/AuthLayout/AuthLayout";
 import { useSession } from "../contexts/SessionContext";
 
 const Login = () => {
-  const [isLoginActive, setIsLoginActive] = useState(true);
+  const [isLoginActive, setIsLoginActive] = useState(true); // State to toggle between login and sign up
   const router = useRouter();
-  const { session, login, loading, refreshAccessToken } = useSession();
-  const [sessionChecked, setSessionChecked] = useState(false);
+  const { login, session, loading } = useSession();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        await refreshAccessToken();
-      } catch (error) {
-      } finally {
-        setSessionChecked(true);
-      }
-    };
-
-    checkSession();
-  }, [refreshAccessToken]);
-
-  useEffect(() => {
-    if (sessionChecked && session) {
-      router.replace("/brand/dashboard");
-    }
-  }, [sessionChecked, session, router]);
-
+  // Function to handle form submission
   const handleLogin = async (email: string, password: string) => {
-    const credentials = { email, password };
+    const credentials = {
+      email,
+      password,
+    };
 
     try {
       await login(credentials);
-      router.replace("/brand/dashboard");
-    } catch (error) {}
+      router.push("/"); // Redirect to homepage or another protected route after login
+    } catch (error) {
+      console.error("Login failed:", error);
+      // Handle login error (e.g., show a notification to the user)
+    }
   };
-
-  if (!sessionChecked || loading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <AuthLayout
@@ -49,6 +32,7 @@ const Login = () => {
       subtitle="Discover how businesses are monetizing word of mouth"
     >
       <div className="flex flex-col justify-start items-center flex-grow-0 flex-shrink-0 w-full sm:w-[468px] overflow-hidden gap-8 pb-8 rounded-2xl bg-white">
+        {/* Toggle between Login and Signup */}
         <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0">
           <div
             className={`flex justify-center cursor-pointer items-center self-stretch flex-grow relative px-2.5 py-5 border-t-0 border-r-0 ${
