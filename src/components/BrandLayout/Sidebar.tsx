@@ -130,7 +130,7 @@ const Sidebar: React.FC = () => {
         {/* Sidebar Content */}
         <div className="text-center flex justify-center !mt-[0px]">
           <img
-            src="https://2fe5-79-117-226-83.ngrok-free.app/images/logo.png"
+            src="app.referrd.com.au/images/logo.png"
             alt="Logo"
             width={150}
             height={90}

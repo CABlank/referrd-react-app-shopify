@@ -43,7 +43,7 @@ export default async function handler(
         .send("console.error('Campaign with ID 11 not found');");
     }
 
-    const iframeURL = `https://d91c-2a0c-5a81-60d-c800-4c34-d018-6b9e-1c55.ngrok-free.app/campaign/${mostRecentCampaign.id}`;
+    const iframeURL = `app.referrd.com.au/campaign/${mostRecentCampaign.id}`;
 
     const settingsPopup = mostRecentCampaign.settingsPopupState
       ? JSON.parse(mostRecentCampaign.settingsPopupState)
@@ -101,7 +101,7 @@ export default async function handler(
         iframe.onload = function() {
           window.addEventListener('message', function(event) {
             const allowedOrigins = [
-              'https://d91c-2a0c-5a81-60d-c800-4c34-d018-6b9e-1c55.ngrok-free.app',
+              'app.referrd.com.au',
               'https://overboard-development.myshopify.com'
             ];
 
@@ -210,7 +210,7 @@ export default async function handler(
 
         window.addEventListener('message', function(event) {
           const allowedOrigins = [
-            'https://d91c-2a0c-5a81-60d-c800-4c34-d018-6b9e-1c55.ngrok-free.app',
+            'app.referrd.com.au',
             'https://overboard-development.myshopify.com'
           ];
 
