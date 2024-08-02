@@ -27,6 +27,7 @@ type DashboardCampaignsProps = {
   data?: string;
   accessToken?: string;
   refreshToken?: string;
+  userId?: number; // Add optional userId prop
   serverError?: boolean;
   title: string;
 };
@@ -34,6 +35,7 @@ type DashboardCampaignsProps = {
 const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
   accessToken,
   refreshToken,
+  userId, // Receive userId as prop
   title,
 }) => {
   const { session, withTokenRefresh, loading: sessionLoading } = useSession();
@@ -51,9 +53,14 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
       setDataLoading(true);
       loadExecutedRef.current = true;
       try {
+        console.log("userIDDDDDDDDDDDDDDDDDDDDDDDd:", userId);
         const data = await withTokenRefresh(
-          (token) => fetchDashboardData(token),
-          refreshToken
+          (token, userId) => {
+            console.log("accessToken:", token);
+            return fetchDashboardData(token, userId); // Pass userId to the API call
+          },
+          refreshToken,
+          userId // Pass userId directly to withTokenRefresh
         );
         setPayments(data.payments);
         setCustomers(data.customers);
@@ -67,8 +74,7 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
         setDataLoading(false);
       }
     }
-  }, [session?.token, accessToken, refreshToken, withTokenRefresh]);
-
+  }, [session?.token, accessToken, refreshToken, withTokenRefresh, userId]);
   useEffect(() => {
     if (!sessionLoading) {
       loadData();

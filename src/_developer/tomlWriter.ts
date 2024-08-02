@@ -1,4 +1,4 @@
-import setupCheck from "../utils/setup/setupValidator.js";
+import setupCheck from "../utils/setup/setupValidator";
 import toml from "@iarna/toml";
 import "dotenv/config";
 import fs from "fs";

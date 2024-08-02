@@ -8,14 +8,20 @@ import React, {
 } from "react";
 import authService from "../services/auth/auth";
 import Cookies from "js-cookie";
+import { PrismaClient } from "@prisma/client";
+import { updateTokens } from "../pages/api/sessionLoadChecker";
+
+const prisma = new PrismaClient();
 
 interface User {
+  id?: number;
   name: string;
   email: string;
   role: string;
 }
 
 interface Session {
+  id?: number;
   user: User;
   token: string;
   refreshToken: string;
@@ -29,8 +35,9 @@ interface SessionContextType {
   logout: () => void;
   refreshAccessToken: (propsRefreshToken?: string) => Promise<string | null>;
   withTokenRefresh: (
-    apiCall: (token: string) => Promise<any>,
-    propsRefreshToken?: string
+    apiCall: (token: string, userId?: number) => Promise<any>,
+    propsRefreshToken?: string,
+    userId?: number
   ) => Promise<any>;
   loading: boolean;
   name?: string;
@@ -60,6 +67,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       secure: true,
       sameSite: "Strict",
     });
+    console.log("Tokens saved to cookies:", { token, refreshToken });
   };
 
   const clearSession = () => {
@@ -70,6 +78,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     Cookies.remove("token_expiration");
     Cookies.remove("__stripe_mid");
     Cookies.remove("__stripe_sid");
+    console.log("Session cleared and cookies removed");
   };
 
   const login = async (credentials: { email: string; password: string }) => {
@@ -86,12 +95,18 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const user = await authService.fetchUserData(token);
       const role = await authService.fetchUserRole(token, user.role);
       setSession({
-        user: { name: user.first_name, email: user.email, role: role.name },
+        user: {
+          id: user.id,
+          name: user.first_name,
+          email: user.email,
+          role: role.name,
+        },
         token,
         refreshToken,
         expires,
       });
       setName(user.first_name);
+      console.log("User logged in:", user);
     } catch (error) {
       console.error("Login error:", error);
     } finally {
@@ -104,6 +119,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const refreshToken =
         Cookies.get("refresh_token") || session?.refreshToken;
       if (refreshToken) await authService.logout(refreshToken);
+      console.log("User logged out");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -111,28 +127,74 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  let isRefreshing = false;
+
+  const withTokenRefresh = async (
+    apiCall: (token: string, userId?: number) => Promise<any>, // Accept optional userId
+    propsRefreshToken?: string,
+    userId?: number
+  ) => {
+    console.log("user id SESSIONCONTEXT:", userId); // Log the userId
+
+    const PrismaUserId = userId;
+    console.log("Prisma user id:", PrismaUserId); // Log the userId
+
+    const token = await refreshAccessToken(
+      propsRefreshToken,
+      session?.user.id,
+      PrismaUserId
+    ); // Pass userId if it exists
+
+    if (!token) throw new Error("Failed to refresh token");
+
+    console.log("Using access token for API call:", token);
+    return await apiCall(token, session?.user.id); // Pass userId to the API call
+  };
+
   const refreshAccessToken = async (
-    propsRefreshToken?: string
+    propsRefreshToken?: string,
+    userId?: number, // Optional userId parameter
+    PrismaUserId?: number // Optional userId parameter
   ): Promise<string | null> => {
     if (refreshPromiseRef.current) return refreshPromiseRef.current;
 
     const refreshPromise = (async () => {
-      const refreshTokenToUse =
+      let refreshTokenToUse =
         propsRefreshToken ||
         Cookies.get("refresh_token") ||
         session?.refreshToken;
+
+      if (!refreshTokenToUse && session?.token) {
+        // If refreshTokenToUse is still not found, try to get it from the database using the access token
+        const tokenRecord = await prisma.token.findFirst({
+          where: {
+            accessToken: session.token,
+          },
+        });
+
+        if (tokenRecord) {
+          refreshTokenToUse = tokenRecord.refreshToken;
+        }
+      }
+
       if (!refreshTokenToUse) {
         console.error("No refresh token found");
         return null;
       }
 
+      console.log("Using refresh token:", refreshTokenToUse);
+
       try {
+        console.log("PrismaUserId id:", PrismaUserId); // Log the userId
         const { data } = await authService.refreshToken(refreshTokenToUse);
         const {
           access_token: token,
           refresh_token: newRefreshToken,
           expires,
         } = data;
+
+        console.log("New access token obtained:", token);
+        console.log("New refresh token obtained:", newRefreshToken);
 
         const user = await authService.fetchUserData(token);
         const role = await authService.fetchUserRole(token, user.role);
@@ -144,6 +206,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 refreshToken: newRefreshToken,
                 expires,
                 user: {
+                  id: user.id,
                   name: user.first_name,
                   email: user.email,
                   role: role.name,
@@ -151,6 +214,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
               }
             : {
                 user: {
+                  id: user.id,
                   name: user.first_name,
                   email: user.email,
                   role: role.name,
@@ -163,6 +227,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setName(user.first_name);
         saveTokensToCookies(token, newRefreshToken, expires);
 
+        // Update the refresh token in the database using the API endpoint
+        if (PrismaUserId) {
+          await fetch("/api/sessionLoadChecker", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              PrismaUserId,
+              accessToken: token,
+              refreshToken: newRefreshToken,
+              expires,
+            }),
+          });
+        }
+
+        console.log("Refreshed access token for user:", userId); // Log the userId
         return token;
       } catch (error) {
         console.error("Error refreshing access token:", error);
@@ -177,15 +258,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return token;
   };
 
-  const withTokenRefresh = async (
-    apiCall: (token: string) => Promise<any>,
-    propsRefreshToken?: string
-  ) => {
-    const token = await refreshAccessToken(propsRefreshToken);
-    if (!token) throw new Error("Failed to refresh token");
-    return await apiCall(token);
-  };
-
   const handleFetchUserDataError = async (error: any) => {
     if (error.response?.status === 401 || error.message === "Token expired") {
       const token = await refreshAccessToken();
@@ -194,12 +266,18 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           const user = await authService.fetchUserData(token);
           const role = await authService.fetchUserRole(token, user.role);
           setSession({
-            user: { name: user.first_name, email: user.email, role: role.name },
+            user: {
+              id: user.id,
+              name: user.first_name,
+              email: user.email,
+              role: role.name,
+            },
             token,
             refreshToken: session?.refreshToken || "",
             expires: session?.expires || 0,
           });
           setName(user.first_name);
+          console.log("User data fetched after token refresh:", user);
           return;
         } catch (err) {
           console.error("Error fetching user data after refresh:", err);
@@ -224,7 +302,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           const user = await authService.fetchUserData(token);
           const role = await authService.fetchUserRole(token, user.role);
           setSession({
-            user: { name: user.first_name, email: user.email, role: role.name },
+            user: {
+              id: user.id,
+              name: user.first_name,
+              email: user.email,
+              role: role.name,
+            },
             token,
             refreshToken: refreshToken || "",
             expires: Number(Cookies.get("token_expiration")) || 0,

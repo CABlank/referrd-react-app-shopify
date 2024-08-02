@@ -5,7 +5,6 @@ import shopify from "../shopify/shopifyClient";
 import prisma from "../database/prismaClient";
 import authService from "../../services/auth/auth";
 import jwtValidator from "../jwt/jwtValidator";
-import sessionLoadChecker from "./sessionLoadChecker"; // Adjust the path as necessary
 
 interface Context extends GetServerSidePropsContext {
   query: {
@@ -109,6 +108,49 @@ const upsertUser = async (
     }
   } catch (error) {
     return handleError("Error registering user in Prisma:", error);
+  }
+};
+
+const saveDirectusTokens = async (
+  userId: number,
+  accessToken: string | null,
+  refreshToken: string | null,
+  expiresAt: Date
+) => {
+  try {
+    const existingToken = await prisma.token.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+
+    if (existingToken) {
+      await prisma.token.update({
+        where: {
+          id: existingToken.id, // Use id to uniquely identify the token record
+        },
+        data: {
+          accessToken: accessToken!,
+          refreshToken: refreshToken!,
+          expiresAt: expiresAt,
+          updatedAt: new Date(),
+        },
+      });
+      console.log("Directus tokens updated in Prisma.");
+    } else {
+      await prisma.token.create({
+        data: {
+          userId: userId,
+          accessToken: accessToken!,
+          refreshToken: refreshToken!,
+          expiresAt: expiresAt,
+        },
+      });
+      console.log("Directus tokens saved in Prisma.");
+    }
+  } catch (error) {
+    console.error("Error saving Directus tokens in Prisma:", error);
+    throw error;
   }
 };
 
@@ -241,6 +283,15 @@ const initialLoadChecker = async (
 
     await upsertUser(ownerEmail, ownerFirstName, ownerLastName);
 
+    // Find the user ID to save tokens
+    const user = await prisma.user.findUnique({
+      where: { email: ownerEmail },
+    });
+
+    if (!user) {
+      throw new Error("User not found after upsertion.");
+    }
+
     const directusTokens = await handleDirectusUser(
       ownerEmail,
       ownerFirstName,
@@ -251,33 +302,16 @@ const initialLoadChecker = async (
 
     console.log("Obtained Directus Tokens:", { accessToken, refreshToken });
 
-    // Log the tokens before calling sessionLoadChecker
-    console.log("Passing tokens to sessionLoadChecker:", {
-      accessToken,
-      refreshToken,
-    });
-
-    // Call sessionLoadChecker with the tokens
-    const sessionLoadResult = await sessionLoadChecker({
-      ...context,
-      query: {
-        ...context.query,
-        accessToken: accessToken || undefined,
-        refreshToken: refreshToken || undefined,
-      },
-    });
-
-    console.log(
-      "Received response from sessionLoadChecker:",
-      sessionLoadResult
-    );
+    // Save Directus tokens in the database
+    const expiresAt = new Date(); // Set the correct expiration time based on your requirements
+    expiresAt.setHours(expiresAt.getHours() + 1); // Example: tokens expire in 1 hour
+    await saveDirectusTokens(user.id, accessToken, refreshToken, expiresAt);
 
     return {
-      ...sessionLoadResult,
       props: {
-        ...("props" in sessionLoadResult ? sessionLoadResult.props : {}),
         accessToken,
         refreshToken,
+        userId: user.id, // Add userId to props
       },
     };
   } catch (error) {

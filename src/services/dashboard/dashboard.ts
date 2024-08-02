@@ -63,7 +63,10 @@ const fetchFromAPI = async <T>(
 };
 
 // Fetch dashboard data
-export const fetchDashboardData = async (token: string) => {
+export const fetchDashboardData = async (
+  token: string,
+  userId: number | undefined
+) => {
   const [
     paymentsData,
     customersData,

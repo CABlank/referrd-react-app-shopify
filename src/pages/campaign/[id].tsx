@@ -6,7 +6,6 @@ import RealPopup from "../../components/campaign/PopupBuilder/Preview/RealPopup"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const bot_token_harcoded = "Hj4_S6JamTw_56h0EkAvAMExoVdSrzqc";
 
 const CampaignPage: React.FC & { noLayout?: boolean } = () => {
   const router = useRouter();

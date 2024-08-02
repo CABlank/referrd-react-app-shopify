@@ -18,6 +18,19 @@ import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import DesktopCreativeHide from "@/components/campaign/DesktopCreativeHide";
 import StripeWrapper from "../../../components/campaign/StripeWrapper";
 import PaymentForm from "../../../components/campaign/PaymentForm";
+import sessionLoadCheckerUtil from "../../../utils/middleware/sessionLoadCheckerUtil";
+import {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  GetServerSidePropsResult,
+} from "next"; // Import Next.js API types
+
+interface CampaignEditProps {
+  accessToken?: string;
+  refreshToken?: string;
+  title: string;
+  userId?: number;
+}
 
 const useIsDesktop = () => {
   const [isDesktop, setIsDesktop] = useState<boolean>(
@@ -421,12 +434,28 @@ const EditCampaign: React.FC = () => {
   );
 };
 
-export const getStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps<CampaignEditProps> = async (
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<CampaignEditProps>> => {
+  const result = await sessionLoadCheckerUtil(context);
+
+  if ("redirect" in result || "notFound" in result) {
+    return result;
+  }
+
+  if (!("props" in result)) {
+    return {
+      props: {
+        title: "Edit Campaign",
+      },
+    };
+  }
+
   return {
     props: {
+      ...result.props,
       title: "Edit Campaign",
     },
   };
 };
-
 export default EditCampaign;

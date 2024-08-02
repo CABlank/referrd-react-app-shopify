@@ -42,7 +42,7 @@ const useSupport = () => {
 
   useEffect(() => {
     const loadQueries = async () => {
-      const hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
+      const hardcodedToken = "s3-ZWWXB2aPvx_nIShLlF2a12mafupCk";
       if (hardcodedToken && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;

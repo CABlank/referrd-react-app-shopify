@@ -21,8 +21,26 @@ import LiveStatusIcon from "@/components/Icons/LiveStatusIcon";
 import EndedStatusIcon from "@/components/Icons/EndedStatusIcon";
 import DraftStatusIcon from "@/components/Icons/DraftStatusIcon";
 import PendingStatusIcon from "@/components/Icons/PendingStatusIcon";
+import sessionLoadCheckerUtil from "../../../utils/middleware/sessionLoadCheckerUtil";
+import {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  GetServerSidePropsResult,
+} from "next"; // Import Next.js API types
 
-const CampaignIndex: React.FC = () => {
+interface CampaignIndexProps {
+  accessToken?: string;
+  refreshToken?: string;
+  title: string;
+  userId?: number;
+}
+
+const CampaignIndex: React.FC<CampaignIndexProps> = ({
+  accessToken,
+  refreshToken,
+  title,
+  userId,
+}) => {
   const router = useRouter();
   const { session, withTokenRefresh } = useSession();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -33,16 +51,20 @@ const CampaignIndex: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [showQRPopup, setShowQRPopup] = useState<number | null>(null);
   const loadExecutedRef = useRef(false);
+  console.log("userId:", userId);
 
   useEffect(() => {
     const loadCampaigns = async () => {
-      if (session?.token && !loadExecutedRef.current) {
+      if ((session?.token || accessToken) && !loadExecutedRef.current) {
         setLoading(true);
         loadExecutedRef.current = true;
 
         try {
-          const campaignsData = await withTokenRefresh((token) =>
-            fetchCampaigns(token)
+          console.log("userIDDDDDDDDDDDDDDDDDDDDDDDd:", userId);
+          const campaignsData = await withTokenRefresh(
+            (token) => fetchCampaigns(token),
+            refreshToken,
+            userId
           );
           const currentDate = new Date();
 
@@ -85,14 +107,15 @@ const CampaignIndex: React.FC = () => {
     };
 
     loadCampaigns();
-  }, [session, withTokenRefresh]);
+  }, [session, accessToken, refreshToken, withTokenRefresh]);
 
   const handleDelete = async () => {
-    if (session?.token && deleteCampaignId !== null) {
+    if ((session?.token || accessToken) && deleteCampaignId !== null) {
       setDeleting(true);
       try {
-        await withTokenRefresh((token) =>
-          deleteCampaign(deleteCampaignId, token)
+        await withTokenRefresh(
+          (token) => deleteCampaign(deleteCampaignId, token),
+          refreshToken
         );
         setShowDeletePopup(false);
         setDeleteCampaignId(null);
@@ -107,7 +130,7 @@ const CampaignIndex: React.FC = () => {
   };
 
   const handleCreateCampaign = async () => {
-    if (session?.token) {
+    if (session?.token || accessToken) {
       setLoading(true);
       try {
         const newCampaign: Campaign = {
@@ -124,8 +147,9 @@ const CampaignIndex: React.FC = () => {
           commissionType: "FixedAmount",
           amountFunded: 0,
         };
-        const createdCampaign = await withTokenRefresh((token) =>
-          createCampaign(newCampaign, token)
+        const createdCampaign = await withTokenRefresh(
+          (token) => createCampaign(newCampaign, token),
+          refreshToken
         );
         router.push(`/brand/campaigns/edit?campaignId=${createdCampaign.id}`);
       } catch (err) {
@@ -150,6 +174,7 @@ const CampaignIndex: React.FC = () => {
         return "text-gray-600";
     }
   };
+
   const getStatusIcon = (status: any) => {
     switch (status) {
       case "Live":
@@ -348,9 +373,28 @@ const CampaignIndex: React.FC = () => {
   );
 };
 
-export const getStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps<
+  CampaignIndexProps
+> = async (
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<CampaignIndexProps>> => {
+  const result = await sessionLoadCheckerUtil(context);
+
+  if ("redirect" in result || "notFound" in result) {
+    return result;
+  }
+
+  if (!("props" in result)) {
+    return {
+      props: {
+        title: "Campaigns",
+      },
+    };
+  }
+
   return {
     props: {
+      ...result.props,
       title: "Campaigns",
     },
   };
