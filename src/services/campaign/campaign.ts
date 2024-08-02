@@ -66,7 +66,8 @@ const fetchFromAPI = async <T>(
 // Duplicate campaign data to the public page collection
 const duplicateCampaignToPublicPage = async (
   campaign: Campaign,
-  token: string
+  token: string,
+  isUpdate: boolean
 ): Promise<void> => {
   const publicPageData = {
     campaign_id: campaign.id,
@@ -84,15 +85,24 @@ const duplicateCampaignToPublicPage = async (
     commissionType: campaign.commissionType,
   };
 
+  const method = isUpdate ? "PATCH" : "POST";
+  const endpoint = isUpdate
+    ? `/items/campaign_public_page/${campaign.id}`
+    : `/items/campaign_public_page`;
+
   try {
-    // Assuming the public page data already exists and we need to update it
-    await fetchFromAPI(`/items/campaign_public_page/${campaign.id}`, token, {
-      method: "PATCH",
+    await fetchFromAPI(endpoint, token, {
+      method: method,
       body: JSON.stringify(publicPageData),
     });
-    console.log("Public page data updated successfully.");
+    console.log(
+      `Public page data ${isUpdate ? "updated" : "created"} successfully.`
+    );
   } catch (error) {
-    console.error("Failed to update public page data", error);
+    console.error(
+      `Failed to ${isUpdate ? "update" : "create"} public page data`,
+      error
+    );
   }
 };
 
@@ -119,7 +129,7 @@ export const createCampaign = async (
   );
 
   // Duplicate the created campaign to the public page collection
-  await duplicateCampaignToPublicPage(createdCampaign, token);
+  await duplicateCampaignToPublicPage(createdCampaign, token, false);
 
   return createdCampaign;
 };
@@ -137,7 +147,7 @@ export const updateCampaign = async (
     console.log("Campaign updated successfully.");
 
     // Duplicate the updated campaign to the public page collection
-    await duplicateCampaignToPublicPage(campaign, token);
+    await duplicateCampaignToPublicPage(campaign, token, true);
   } catch (error) {
     console.error("Failed to update campaign", error);
   }
@@ -154,6 +164,7 @@ export const updateCampaignStatus = (
     body: JSON.stringify({ status }),
   });
 
+// Update the amount funded for a campaign
 export const updateCampaignStatusAndAmount = (
   id: number,
   amountFunded: number,
@@ -165,10 +176,24 @@ export const updateCampaignStatusAndAmount = (
   });
 
 // Delete a campaign
-export const deleteCampaign = (id: number, token: string): Promise<void> =>
-  fetchFromAPI<void>(`/items/campaigns/${id}`, token, {
+export const deleteCampaign = async (
+  id: number,
+  token: string
+): Promise<void> => {
+  await fetchFromAPI<void>(`/items/campaigns/${id}`, token, {
     method: "DELETE",
   });
+
+  // Delete the public page data associated with the campaign
+  try {
+    await fetchFromAPI<void>(`/items/campaign_public_page/${id}`, token, {
+      method: "DELETE",
+    });
+    console.log("Public page data deleted successfully.");
+  } catch (error) {
+    console.error("Failed to delete public page data", error);
+  }
+};
 
 // Upload a file
 export const uploadFile = async (
