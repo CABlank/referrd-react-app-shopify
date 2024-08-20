@@ -6,7 +6,7 @@ import {
   submitResponse,
   updateSupportQueryStatus,
 } from "../services/support/support";
-import { useSession } from "../contexts/SessionContext";
+import { useSession } from "../context/SessionContext";
 
 // Interface for SupportDetailState to define the shape of the state
 interface SupportDetailState {

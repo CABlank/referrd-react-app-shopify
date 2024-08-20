@@ -10,10 +10,9 @@
  * 5. Handles Errors: It logs and responds with an error if the request fails.
  * 6. Exports the Middleware-Applied Handler: Finally, it exports the handler function wrapped with the request verifier middleware.
  */
-
+/*
 import verifyRequest from "../../../utils/middleware/applyMiddleware"; // Import the request verifier middleware
-import shopify from "../../../utils/shopify/shopifyClient"; // Import the Shopify client
-import sessionHandler from "../../../utils/session/sessionHandler"; // Import the session handler
+import shopify from "../../../utils/shopify/shopifyClient"; // Import the Shopify clientimport sessionHandler from "../../../utils/session/sessionHandler"; // Import the session handler
 import type { NextApiRequest, NextApiResponse } from "next"; // Import Next.js API types
 
 /**
@@ -23,7 +22,7 @@ import type { NextApiRequest, NextApiResponse } from "next"; // Import Next.js A
  * @function handler
  * @param {NextApiRequest} req - The HTTP request object.
  * @param {NextApiResponse} res - The HTTP response object.
- */
+ */ /*
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   // Reject anything that's not a POST
   if (req.method !== "POST") {
@@ -50,3 +49,4 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 };
 
 export default verifyRequest(handler); // Export the middleware-applied handler
+*/

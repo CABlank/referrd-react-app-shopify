@@ -1,15 +1,12 @@
 import React from "react";
 
 // Define interfaces for the props
-interface Referral {
-  date_created: string;
-  location: string;
-  spend: number;
-  conversion: string;
-}
-
 interface Customer {
   name: string;
+  email: string;
+  date_created: string;
+  location: string;
+  mobile: string;
 }
 
 interface Campaign {
@@ -21,42 +18,39 @@ interface ReferralCode {
 }
 
 interface DetailSectionProps {
-  referral: Referral | null;
   customer: Customer | null;
   referralCode: ReferralCode | null;
   campaign: Campaign | null;
 }
 
+const parseLocation = (location: string): string => {
+  try {
+    const parsedLocation = JSON.parse(location);
+    return `${parsedLocation.city}, ${parsedLocation.country}`;
+  } catch {
+    return "Unknown";
+  }
+};
+
 const DetailSection: React.FC<DetailSectionProps> = ({
-  referral,
   customer,
   referralCode,
   campaign,
 }) => {
-  // If data is not available, display placeholder
   const details = [
-    {
-      label: "Payment",
-      value: referral
-        ? referral.conversion === "true"
-          ? "Completed"
-          : "Pending"
-        : "N/A",
-      additionalStyles:
-        "bg-[#d6b713]/5 rounded-[40px] px-4 py-0.5 border border-[#b59a0b] text-[#b59a0b]",
-    },
+    { label: "Name", value: customer?.name || "N/A" },
+    { label: "Email", value: customer?.email || "N/A" },
     {
       label: "Date",
-      value: referral
-        ? new Date(referral.date_created).toLocaleString()
+      value: customer
+        ? new Date(customer.date_created).toLocaleString()
         : "N/A",
     },
-    { label: "Referral Code", value: referralCode ? referralCode.code : "N/A" },
-    { label: "Campaign", value: campaign ? campaign.name : "N/A" },
     {
-      label: "Commission",
-      value: referral ? `$${referral.spend.toFixed(2)}` : "N/A",
+      label: "Location",
+      value: customer ? parseLocation(customer.location) : "N/A",
     },
+    { label: "Mobile", value: customer?.mobile || "N/A" },
   ];
 
   return (
@@ -77,11 +71,7 @@ const DetailSection: React.FC<DetailSectionProps> = ({
             {detail.label}
           </p>
           <div className="flex items-center gap-2">
-            <p
-              className={`text-base text-left text-black/50 ${
-                detail.additionalStyles || ""
-              }`}
-            >
+            <p className="text-base text-center text-black/50">
               {detail.value}
             </p>
           </div>

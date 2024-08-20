@@ -8,6 +8,7 @@ export interface Company {
   logo: string | File | null;
   logoUrl?: string;
   date_created: string | number | Date;
+  UUID: string;
 }
 
 // Helper function to make API requests
@@ -150,4 +151,60 @@ export const fetchCompaniesWithLogo = async (
   );
 
   return companiesWithLogo;
+};
+
+// Fetch the URL of the first company
+export const fetchCompanyUrl = async (token: string): Promise<string> => {
+  const companies = await fetchCompanies(token);
+
+  if (companies.length === 0) {
+    console.error("No companies found");
+    throw new Error("No companies found");
+  }
+
+  const company = companies[0]; // Get the first company
+  return company.domain; // Return the company's domain (URL)
+};
+
+// services/company.ts
+// Fetch the URLs of all companies
+export const fetchCompanyUrls = async (token: string): Promise<string[]> => {
+  const response = await fetch(`${API_URL}/items/company`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch company URLs`);
+  }
+
+  const responseData = await response.json();
+
+  // Check if response data is structured as expected
+  if (!responseData.data || !Array.isArray(responseData.data)) {
+    throw new Error("Invalid response format");
+  }
+
+  // Extract the domain from each company object
+  const companyDomains = responseData.data.map(
+    (company: Company) => company.domain
+  );
+
+  return companyDomains;
+};
+
+// Fetch the company id
+export const fetchCompanyId = async (token: string): Promise<string> => {
+  const companies = await fetchCompanies(token);
+
+  if (companies.length === 0) {
+    console.error("No companies found");
+    throw new Error("No companies found");
+  }
+
+  const company = companies[0]; // Get the first company
+  return company.UUID!; // Return the company's id
 };

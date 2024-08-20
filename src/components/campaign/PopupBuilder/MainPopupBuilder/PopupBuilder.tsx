@@ -4,6 +4,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useEffect,
+  useRef,
 } from "react";
 import { ElementProps, PopupConfig } from "../../CommonComponents/Types";
 import DragAndDropSection from "../DragAndDropSection";
@@ -65,6 +66,20 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
 
     const [imageRecentlyAdded, setImageRecentlyAdded] = useState(false);
 
+    const containerRefDesktopStepOne = useRef<HTMLDivElement>(null);
+    const containerRefDesktopStepTwo = useRef<HTMLDivElement>(null);
+    const containerRefMobileStepOne = useRef<HTMLDivElement>(null);
+    const containerRefMobileStepTwo = useRef<HTMLDivElement>(null);
+
+    const [compiledHtmlDesktopStepOne, setCompiledHtmlDesktopStepOne] =
+      useState<string>("");
+    const [compiledHtmlDesktopStepTwo, setCompiledHtmlDesktopStepTwo] =
+      useState<string>("");
+    const [compiledHtmlMobileStepOne, setCompiledHtmlMobileStepOne] =
+      useState<string>("");
+    const [compiledHtmlMobileStepTwo, setCompiledHtmlMobileStepTwo] =
+      useState<string>("");
+
     const handleElementUpdate = (updatedElement: ElementProps) => {
       const elements =
         view === "desktop"
@@ -97,43 +112,32 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
       if (view === "desktop") {
         const setConfig =
           step === 1 ? setDesktopConfigStep1 : setDesktopConfigStep2;
-
-        setConfig((prevConfig) => ({
-          ...prevConfig,
-          [name]: value,
-        }));
+        setConfig((prevConfig) => ({ ...prevConfig, [name]: value }));
       } else {
         const setConfig =
           step === 1 ? setMobileConfigStep1 : setMobileConfigStep2;
-
-        setConfig((prevConfig) => ({
-          ...prevConfig,
-          [name]: value,
-        }));
+        setConfig((prevConfig) => ({ ...prevConfig, [name]: value }));
       }
     };
 
     const handleValueChange = (
       e: ChangeEvent<HTMLInputElement>,
-      type: "height" | "width" | "borderWidth"
+      type:
+        | "height"
+        | "width"
+        | "borderWidth"
+        | "backgroundColor"
+        | "ImagePosition"
     ) => {
       const { value } = e.target;
       if (view === "desktop") {
         const setConfig =
           step === 1 ? setDesktopConfigStep1 : setDesktopConfigStep2;
-
-        setConfig((prevConfig) => ({
-          ...prevConfig,
-          [type]: `${value}px`,
-        }));
+        setConfig((prevConfig) => ({ ...prevConfig, [type]: `${value}px` }));
       } else {
         const setConfig =
           step === 1 ? setMobileConfigStep1 : setMobileConfigStep2;
-
-        setConfig((prevConfig) => ({
-          ...prevConfig,
-          [type]: `${value}px`,
-        }));
+        setConfig((prevConfig) => ({ ...prevConfig, [type]: `${value}px` }));
       }
     };
 
@@ -169,24 +173,67 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
       setImageRecentlyAdded(true);
     };
 
-    const currentConfig =
-      view === "desktop"
-        ? step === 1
-          ? desktopConfigStep1
-          : desktopConfigStep2
-        : step === 1
-          ? mobileConfigStep1
-          : mobileConfigStep2;
+    const compileHtmlDesktopStepOne = () => {
+      if (containerRefDesktopStepOne.current) {
+        const html = containerRefDesktopStepOne.current.innerHTML;
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html;
+        const popupContent = wrapper.querySelector(
+          ".popup-content"
+        ) as HTMLElement;
+        if (popupContent) {
+          popupContent.style.flexDirection = "row"; // Ensure row direction for desktop
+        }
+        setCompiledHtmlDesktopStepOne(wrapper.innerHTML);
+      }
+    };
+
+    const compileHtmlDesktopStepTwo = () => {
+      if (containerRefDesktopStepTwo.current) {
+        const html = containerRefDesktopStepTwo.current.innerHTML;
+        setCompiledHtmlDesktopStepTwo(html);
+      }
+    };
+
+    const compileHtmlMobileStepOne = () => {
+      if (containerRefMobileStepOne.current) {
+        const html = containerRefMobileStepOne.current.innerHTML;
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html;
+
+        // Ensure column direction for mobile in popup content
+        const popupContent = wrapper.querySelector(
+          ".popup-content"
+        ) as HTMLElement | null;
+        if (popupContent) {
+          popupContent.style.flexDirection = "column";
+        }
+
+        // Add styles to elements with the class 'image-drop'
+        const imageDropElements = wrapper.querySelectorAll(
+          ".image-drop"
+        ) as NodeListOf<HTMLElement>;
+        imageDropElements.forEach((element) => {
+          element.style.removeProperty("width"); // Remove existing width property
+          element.style.width = "100%";
+          element.style.height = "16rem";
+        });
+
+        setCompiledHtmlMobileStepOne(wrapper.innerHTML);
+      }
+    };
+
+    const compileHtmlMobileStepTwo = () => {
+      if (containerRefMobileStepTwo.current) {
+        const html = containerRefMobileStepTwo.current.innerHTML;
+        setCompiledHtmlMobileStepTwo(html);
+      }
+    };
 
     // Deserialization on mount
     useEffect(() => {
       if (campaign.serializedPopupState) {
-        console.log(
-          "Serialized Popup State provided:",
-          campaign.serializedPopupState
-        );
         const serializedState = JSON.parse(campaign.serializedPopupState);
-        console.log("Parsed Serialized State:", serializedState);
         if (serializedState) {
           setDesktopStepOneElements(serializedState.desktopStepOneElements);
           setDesktopStepTwoElements(serializedState.desktopStepTwoElements);
@@ -198,12 +245,7 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
       }
 
       if (campaign.settingsPopupState) {
-        console.log(
-          "Settings Popup State provided:",
-          campaign.settingsPopupState
-        );
         const settingsState = JSON.parse(campaign.settingsPopupState);
-        console.log("Parsed Settings State:", settingsState);
         if (settingsState) {
           setDesktopConfigStep1(
             settingsState.desktopStep1 || initialDesktopConfigStep1
@@ -219,9 +261,29 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
           );
         }
       }
+
+      compileHtmlDesktopStepOne();
+      compileHtmlDesktopStepTwo();
+      compileHtmlMobileStepOne();
+      compileHtmlMobileStepTwo();
     }, [campaign.serializedPopupState, campaign.settingsPopupState]);
 
-    // Serialization and Deserialization methods
+    useEffect(() => {
+      compileHtmlDesktopStepOne();
+    }, [desktopStepOneElements, desktopConfigStep1]);
+
+    useEffect(() => {
+      compileHtmlDesktopStepTwo();
+    }, [desktopStepTwoElements, desktopConfigStep2]);
+
+    useEffect(() => {
+      compileHtmlMobileStepOne();
+    }, [mobileStepOneElements, mobileConfigStep1]);
+
+    useEffect(() => {
+      compileHtmlMobileStepTwo();
+    }, [mobileStepTwoElements, mobileConfigStep2]);
+
     useImperativeHandle(ref, () => ({
       serializeRealPopUp: () => {
         const state = {
@@ -232,7 +294,6 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
           step,
           view,
         };
-        console.log("Serialized Popup State:", state);
         return state;
       },
       serializePopupSettings: () => {
@@ -242,11 +303,17 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
           mobileStep1: mobileConfigStep1,
           mobileStep2: mobileConfigStep2,
         };
-        console.log("Serialized Popup Settings:", state);
         return state;
       },
+      getCompiledHtml: () => {
+        return {
+          desktopStepOne: compiledHtmlDesktopStepOne,
+          desktopStepTwo: compiledHtmlDesktopStepTwo,
+          mobileStepOne: compiledHtmlMobileStepOne,
+          mobileStepTwo: compiledHtmlMobileStepTwo,
+        };
+      },
       deserializeRealPopUp: (serializedState: any) => {
-        console.log("Deserializing Real Popup State:", serializedState);
         if (serializedState) {
           setDesktopStepOneElements(serializedState.desktopStepOneElements);
           setDesktopStepTwoElements(serializedState.desktopStepTwoElements);
@@ -257,7 +324,6 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
         }
       },
       deserializePopupSettings: (settingsState: any) => {
-        console.log("Deserializing Popup Settings State:", settingsState);
         if (settingsState) {
           setDesktopConfigStep1(
             settingsState.desktopStep1 || initialDesktopConfigStep1
@@ -278,10 +344,16 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
     return (
       <DndProvider backend={HTML5Backend}>
         <div className={`flex ${className}`}>
-          <div className="w-1/4 p-4 border-r max-h-[750px] overflow-y-auto overflow-x-hidden">
+          <div className="w-1/4 p-4  max-h-[750px] overflow-y-auto overflow-x-hidden">
             <ViewSelector
               view={view}
-              setView={setView}
+              setView={(newView) => {
+                setView(newView);
+                compileHtmlDesktopStepOne();
+                compileHtmlDesktopStepTwo();
+                compileHtmlMobileStepOne();
+                compileHtmlMobileStepTwo();
+              }}
               previewStep={step}
               setDesktopConfigStep1={setDesktopConfigStep1}
               setDesktopConfigStep2={setDesktopConfigStep2}
@@ -291,7 +363,15 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
             <SettingsPanel
               isOpen={isSettingsOpen}
               toggleSettings={toggleSettings}
-              config={currentConfig}
+              config={
+                view === "desktop"
+                  ? step === 1
+                    ? desktopConfigStep1
+                    : desktopConfigStep2
+                  : step === 1
+                    ? mobileConfigStep1
+                    : mobileConfigStep2
+              }
               handleConfigChange={handleConfigChange}
               handleValueChange={handleValueChange}
             />
@@ -316,33 +396,114 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
           <div className="w-3/4 p-4">
             <StepSelector step={step} setStep={setStep} />
             <div className="mt-4 flex justify-center items-center bg-gray-100 border-2 border-gray-200 relative h-[580px]">
-              <PopupPreview
-                stepOneElements={
-                  view === "desktop"
-                    ? desktopStepOneElements
-                    : mobileStepOneElements
-                }
-                setStepOneElements={
-                  view === "desktop"
-                    ? setDesktopStepOneElements
-                    : setMobileStepOneElements
-                }
-                stepTwoElements={
-                  view === "desktop"
-                    ? desktopStepTwoElements
-                    : mobileStepTwoElements
-                }
-                setStepTwoElements={
-                  view === "desktop"
-                    ? setDesktopStepTwoElements
-                    : setMobileStepTwoElements
-                }
-                view={view}
-                config={currentConfig}
-                step={step}
-                onImageAdd={handleImageAdd}
-                setStep={setStep} // Pass setStep to handle step changes
-              />
+              <div
+                ref={containerRefDesktopStepOne}
+                className="w-full h-full absolute content-center top-0 left-0"
+                style={{
+                  display: view === "desktop" && step === 1 ? "block" : "none",
+                }}
+              >
+                <PopupPreview
+                  stepOneElements={desktopStepOneElements}
+                  setStepOneElements={setDesktopStepOneElements}
+                  stepTwoElements={desktopStepTwoElements}
+                  setStepTwoElements={setDesktopStepTwoElements}
+                  view={view}
+                  config={desktopConfigStep1}
+                  step={1}
+                  onImageAdd={handleImageAdd}
+                  setStep={setStep}
+                  onElementsChange={compileHtmlDesktopStepOne}
+                />
+              </div>
+              <div
+                ref={containerRefDesktopStepTwo}
+                className="w-full h-full absolute top-0 left-0"
+                style={{
+                  display: view === "desktop" && step === 2 ? "block" : "none",
+                }}
+              >
+                <PopupPreview
+                  stepOneElements={desktopStepOneElements}
+                  setStepOneElements={setDesktopStepOneElements}
+                  stepTwoElements={desktopStepTwoElements}
+                  setStepTwoElements={setDesktopStepTwoElements}
+                  view={view}
+                  config={desktopConfigStep2}
+                  step={2}
+                  onImageAdd={handleImageAdd}
+                  setStep={setStep}
+                  onElementsChange={compileHtmlDesktopStepTwo}
+                />
+              </div>
+              <div
+                ref={containerRefMobileStepOne}
+                className="w-full h-full absolute top-0 left-0"
+                style={{
+                  display: view === "mobile" && step === 1 ? "block" : "none",
+                }}
+              >
+                <PopupPreview
+                  stepOneElements={mobileStepOneElements}
+                  setStepOneElements={setMobileStepOneElements}
+                  stepTwoElements={mobileStepTwoElements}
+                  setStepTwoElements={setMobileStepTwoElements}
+                  view={view}
+                  config={mobileConfigStep1}
+                  step={1}
+                  onImageAdd={handleImageAdd}
+                  setStep={setStep}
+                  onElementsChange={compileHtmlMobileStepOne}
+                />
+              </div>
+              <div
+                ref={containerRefMobileStepTwo}
+                className="w-full h-full absolute top-0 left-0"
+                style={{
+                  display: view === "mobile" && step === 2 ? "block" : "none",
+                }}
+              >
+                <PopupPreview
+                  stepOneElements={mobileStepOneElements}
+                  setStepOneElements={setMobileStepOneElements}
+                  stepTwoElements={mobileStepTwoElements}
+                  setStepTwoElements={setMobileStepTwoElements}
+                  view={view}
+                  config={mobileConfigStep2}
+                  step={2}
+                  onImageAdd={handleImageAdd}
+                  setStep={setStep}
+                  onElementsChange={compileHtmlMobileStepTwo}
+                />
+              </div>
+            </div>
+            <div style={{ display: "none" }}>
+              <div>
+                <h2>Compiled HTML - Desktop Step One:</h2>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: compiledHtmlDesktopStepOne,
+                  }}
+                />
+                <h2>Compiled HTML - Desktop Step Two:</h2>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: compiledHtmlDesktopStepTwo,
+                  }}
+                />
+                <h2>Compiled HTML - Mobile Step One:</h2>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: compiledHtmlMobileStepOne,
+                  }}
+                />
+                <h2>Compiled HTML - Mobile Step Two:</h2>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: compiledHtmlMobileStepTwo,
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

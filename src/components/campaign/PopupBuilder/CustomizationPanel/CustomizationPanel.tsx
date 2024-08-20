@@ -135,7 +135,6 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
       parsedValue = (e.target as HTMLInputElement).checked ? 1 : 0;
     }
 
-    console.log("Updating element:", element.id, "with", name, parsedValue);
     onUpdate({ ...element, [name]: parsedValue });
   };
 

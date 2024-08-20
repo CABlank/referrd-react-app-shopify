@@ -36,7 +36,7 @@ const ReferralDetail: React.FC<ReferralDetailProps> = ({
               onChange={handleChange}
             >
               <option value="">Select one</option>
-              <option value="Flat">Flat</option>
+              <option value="Dollar">Dollar</option>
               <option value="Percentage">Percentage</option>
             </select>
           </div>

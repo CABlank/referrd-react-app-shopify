@@ -5,7 +5,6 @@ import {
   shopifyApi,
 } from "@shopify/shopify-api";
 import "@shopify/shopify-api/adapters/node";
-import appUninstalledHandler from "../webhooks/appUninstallHandler"; // Corrected import path
 
 // Determine if the app is running in development mode
 const isDev = process.env.NODE_ENV === "development";
@@ -65,7 +64,19 @@ shopify.webhooks.addHandlers({
   APP_UNINSTALLED: {
     deliveryMethod: DeliveryMethod.Http, // Specify the delivery method for the webhook
     callbackUrl: "/api/webhooks/app_uninstalled", // The URL to handle the webhook
-    callback: appUninstalledHandler, // The function to handle the webhook
+  },
+  ORDERS_CREATE: {
+    deliveryMethod: DeliveryMethod.Http, // Specify the delivery method for the webhook
+    callbackUrl: "/api/webhooks/order-created", // The URL to handle the 'orders/create' webhook
+    callback: async (topic, shop, body) => {
+      // Define the inline handler function
+      const order = JSON.parse(body);
+      console.log("New Order Created via Handler:");
+      console.log(`Order ID: ${order.id}`);
+      console.log(`Name: ${order.name}`);
+      console.log(`Email: ${order.email}`);
+      console.log(`Total: ${order.total_price} ${order.currency}`);
+    },
   },
 });
 

@@ -1,8 +1,10 @@
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
-import jwt from "jsonwebtoken";
+import jwtValidator from "../jwt/jwtValidator";
 import shopify from "../shopify/shopifyClient";
-import prisma from "../database/prismaClient";
+import { PrismaClient } from "@prisma/client";
 import { RequestedTokenType } from "@shopify/shopify-api";
+
+const prisma = new PrismaClient();
 
 interface ParsedUrlQuery {
   [key: string]: string | string[] | undefined;
@@ -20,15 +22,28 @@ interface JwtPayload {
   [key: string]: any; // Include any additional properties
 }
 
+let lastOrderId: string | null = null; // Store the last order ID in memory
+
+// Function to decode and verify the JWT token
 const decodeAndVerifyToken = (token: string): JwtPayload => {
   try {
-    const decodedPayload = jwt.decode(token) as JwtPayload;
+    console.log("Starting JWT validation...");
+
+    const decodedPayload: JwtPayload = jwtValidator(token); // Use the jwtValidator function
+
     const currentTime = Math.floor(Date.now() / 1000);
     if (!decodedPayload || currentTime > decodedPayload.exp) {
       throw new Error("Token has expired or is invalid");
     }
-    return decodedPayload;
+
+    console.log("JWT validation successful:", decodedPayload);
+
+    return {
+      ...decodedPayload,
+      exp: decodedPayload.exp || 0, // Provide a default value for 'exp' if it is missing
+    };
   } catch (error) {
+    console.error("JWT validation failed:", error);
     throw new Error("Token validation failed");
   }
 };
@@ -84,7 +99,12 @@ const sessionLoadCheckerUtil = async (
     console.log("Shop:", shop);
     console.log("ID Token:", idToken);
 
+    // Validate and decode the JWT token
     const decodedToken = decodeAndVerifyToken(idToken);
+
+    // Extract any useful information from the decoded token if needed
+    // For example: decodedToken.shopDomain or decodedToken.email
+
     const tokenExchange = shopify.auth.tokenExchange;
 
     const { session: onlineSession } = await tokenExchange({
@@ -94,17 +114,17 @@ const sessionLoadCheckerUtil = async (
     });
     console.log("Online session obtained:", onlineSession);
 
-    // Fetch the shop owner's email
+    // Fetch the shop owner's email using the online session
     const client = new shopify.clients.Graphql({ session: onlineSession });
 
-    const QUERY = `{
+    const SHOP_QUERY = `{
       shop {
         email
       }
     }`;
 
-    const response = await client.request(QUERY);
-    const shopDetails = response.data;
+    const shopResponse = await client.request(SHOP_QUERY);
+    const shopDetails = shopResponse.data;
 
     if (!shopDetails || !shopDetails.shop || !shopDetails.shop.email) {
       throw new Error("Failed to fetch shop details.");

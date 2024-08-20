@@ -8,7 +8,7 @@ import {
   submitResponse,
   updateSupportQueryStatus,
 } from "../services/support/support";
-// import { useSession } from "../contexts/SessionContext"; // No longer needed since we're using a hardcoded token
+import { useSession } from "../context/SessionContext";
 
 // Interface for SupportState to define the shape of the state
 export interface SupportState {
@@ -24,9 +24,17 @@ export interface SupportState {
 }
 
 // Custom hook to manage support queries and responses
-const useSupport = () => {
-  // const { session, withTokenRefresh } = useSession(); // No longer needed since we're using a hardcoded token
-  const router = useRouter(); // Add router here
+const useSupport = ({
+  accessToken,
+  refreshToken,
+  userId,
+}: {
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+}) => {
+  const { session, withTokenRefresh } = useSession();
+  const router = useRouter();
   const [state, setState] = useState<SupportState>({
     queries: [],
     query: null,
@@ -42,12 +50,15 @@ const useSupport = () => {
 
   useEffect(() => {
     const loadQueries = async () => {
-      const hardcodedToken = "s3-ZWWXB2aPvx_nIShLlF2a12mafupCk";
-      if (hardcodedToken && !loadExecutedRef.current) {
+      if ((session?.token || accessToken) && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
-          const data = await fetchSupportQueries(hardcodedToken);
+          const data = await withTokenRefresh(
+            (token) => fetchSupportQueries(token),
+            refreshToken,
+            userId
+          );
           setState((prevState) => ({
             ...prevState,
             queries: data,
@@ -66,7 +77,7 @@ const useSupport = () => {
     };
 
     loadQueries();
-  }, []);
+  }, [session, accessToken, refreshToken, userId, withTokenRefresh]);
 
   // Handle input changes
   const handleChange = (field: keyof SupportState, value: any) => {
@@ -78,8 +89,7 @@ const useSupport = () => {
 
   // Submit a new support query
   const handleSubmit = async () => {
-    const hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-    if (hardcodedToken) {
+    if (session?.token || accessToken) {
       try {
         const data = {
           title: state.queryTitle,
@@ -87,7 +97,11 @@ const useSupport = () => {
           topic: state.topic,
           status: "Pending",
         };
-        await submitSupportQuery(data, hardcodedToken);
+        await withTokenRefresh(
+          (token) => submitSupportQuery(data, token),
+          refreshToken,
+          userId
+        );
         setState((prevState) => ({
           ...prevState,
           queryTitle: "",
@@ -95,7 +109,11 @@ const useSupport = () => {
           topic: "Payment",
         }));
         // Reload queries to show the new submission
-        const updatedQueries = await fetchSupportQueries(hardcodedToken);
+        const updatedQueries = await withTokenRefresh(
+          (token) => fetchSupportQueries(token),
+          refreshToken,
+          userId
+        );
         setState((prevState) => ({
           ...prevState,
           queries: updatedQueries,
@@ -112,17 +130,24 @@ const useSupport = () => {
 
   // Submit a new message for a specific support query
   const handleNewMessageSubmit = async () => {
-    const hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-    if (state.query && hardcodedToken) {
+    if (state.query && (session?.token || accessToken)) {
       try {
         const response = {
           support_query_id: state.query.id,
           message: state.newMessage,
         };
-        await submitResponse(response, hardcodedToken);
+        await withTokenRefresh(
+          (token) => submitResponse(response, token),
+          refreshToken,
+          userId
+        );
         setState((prevState) => ({ ...prevState, newMessage: "" }));
         // Reload responses
-        const responsesData = await fetchSupportResponses(hardcodedToken);
+        const responsesData = await withTokenRefresh(
+          (token) => fetchSupportResponses(token),
+          refreshToken,
+          userId
+        );
         setState((prevState) => ({
           ...prevState,
           responses: responsesData.filter(
@@ -141,17 +166,18 @@ const useSupport = () => {
 
   // Update the status of a specific support query
   const handleStatusChange = async (status: string) => {
-    const hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-    if (state.query && hardcodedToken) {
+    if (state.query && (session?.token || accessToken)) {
       try {
-        await updateSupportQueryStatus(
-          state.query.id,
-          { status },
-          hardcodedToken
+        await withTokenRefresh(
+          (token) =>
+            updateSupportQueryStatus(state.query.id, { status }, token),
+          refreshToken,
+          userId
         );
-        const updatedQuery = await fetchSupportQuery(
-          state.query.id,
-          hardcodedToken
+        const updatedQuery = await withTokenRefresh(
+          (token) => fetchSupportQuery(state.query.id, token),
+          refreshToken,
+          userId
         );
         setState((prevState) => ({
           ...prevState,
@@ -183,4 +209,3 @@ const useSupport = () => {
 };
 
 export default useSupport;
-// };

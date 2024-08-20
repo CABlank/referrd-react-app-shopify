@@ -1,7 +1,21 @@
 import React from "react";
 const FacebookIcon = () => {
   return (
-    <div className="flex flex-col justify-center items-center flex-grow-0 flex-shrink-0 relative gap-[13.333333969116211px] rounded-[5.33px] bg-[#1877f2]">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        flexGrow: 0,
+        flexShrink: 0,
+        position: "relative",
+        gap: "13.33px",
+        borderRadius: "5.33px",
+        backgroundColor: "#1877f2",
+        cursor: "pointer",
+      }}
+    >
       <svg
         width={33}
         height={32}

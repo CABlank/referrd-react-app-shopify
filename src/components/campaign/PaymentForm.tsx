@@ -1,18 +1,23 @@
+// components/campaign/PaymentForm.tsx
+
 import React, { useState } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
-import { useSession } from "../../contexts/SessionContext";
+import { useSession } from "../../context/SessionContext";
 
 interface PaymentFormProps {
   campaignId: number;
   amountFunded: number;
   disabled?: boolean;
   oldAmount: number;
+  onSuccess: () => void; // Callback for handling successful payment
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
   campaignId,
   amountFunded,
   oldAmount,
+  onSuccess, // Destructure onSuccess from props
+  disabled, // Declare the 'disabled' variable
 }) => {
   const [loading, setLoading] = useState(false);
   const stripe = useStripe();
@@ -29,7 +34,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     setLoading(true);
 
     try {
-      // Retrieve token using withTokenRefresh
       const token = await withTokenRefresh((token) => Promise.resolve(token));
 
       // Create checkout session
@@ -38,7 +42,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ amountFunded, campaignId, token, oldAmount }),
+        body: JSON.stringify({
+          amountFunded,
+          campaignId,
+          token,
+          oldAmount,
+        }),
       });
 
       const { id } = await response.json();
@@ -48,6 +57,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       if (error) {
         console.error("Stripe checkout error:", error);
         setLoading(false);
+      } else {
+        onSuccess(); // Call onSuccess callback after successful payment
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -59,10 +70,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     <form onSubmit={handlePayment}>
       <button
         type="submit"
-        disabled={!stripe || loading}
-        className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-10 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
+        disabled={!stripe || loading || disabled}
+        className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-10 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775] text-white"
       >
-        Submit Amount
+        {loading ? "Processing..." : "Pay with Stripe"}
       </button>
     </form>
   );

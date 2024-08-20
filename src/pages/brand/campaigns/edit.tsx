@@ -1,29 +1,30 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useState, useEffect, useRef } from "react";
-import CampaignDetail from "../../../components/campaign/CampaignDetail";
-import ReferralDetail from "../../../components/campaign/ReferralDetail";
-import DiscountValue from "../../../components/campaign/DiscountValue";
 import BarBuilder from "../../../components/campaign/BarBuilder/MainBarBuilder/BarBuilder";
 import PopupBuilder from "../../../components/campaign/PopupBuilder/MainPopupBuilder/PopupBuilder";
 import CampaignCreativeSelector from "../../../components/campaign/CampaignCreativeSelector";
-import ArrowDropdownIcon from "../../../components/Icons/ArrowDropdownIcon";
 import {
   fetchCampaign,
   updateCampaign,
   Campaign,
 } from "../../../services/campaign/campaign";
-import { useSession } from "../../../contexts/SessionContext";
+import { fetchCompanyUrl } from "../../../services/company/company";
+import { useSession } from "../../../context/SessionContext";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
+import Spinner from "../../../components/common/Spinner";
 import DesktopCreativeHide from "@/components/campaign/DesktopCreativeHide";
-import StripeWrapper from "../../../components/campaign/StripeWrapper";
-import PaymentForm from "../../../components/campaign/PaymentForm";
-import sessionLoadCheckerUtil from "../../../utils/middleware/sessionLoadCheckerUtil";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
 import {
   GetServerSideProps,
   GetServerSidePropsContext,
   GetServerSidePropsResult,
-} from "next"; // Import Next.js API types
+} from "next";
+import FundCampaignModal from "../../../components/campaign/FundCampaignModal";
+import CampaignInformation from "../../../components/campaign/CampaignInformation";
+import CampaignHeader from "../../../components/campaign/CampaignHeader";
+import CampaignPayment from "../../../components/campaign/CampaignPayment";
+import PushCampaignLive from "../../../components/campaign/PushCampaignLive";
 
 interface CampaignEditProps {
   accessToken?: string;
@@ -46,14 +47,19 @@ const useIsDesktop = () => {
   return isDesktop;
 };
 
-const EditCampaign: React.FC = () => {
+const EditCampaign: React.FC<CampaignEditProps> = ({
+  accessToken,
+  refreshToken,
+  userId,
+}) => {
   const { session, loading: sessionLoading, withTokenRefresh } = useSession();
   const router = useRouter();
   const { campaignId } = router.query as { campaignId: string };
   const [isOpen, setIsOpen] = useState(true);
   const [campaignData, setCampaignData] = useState<Campaign | null>(null);
+  const [companyUrl, setCompanyUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false); // Added state to track saving status
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadExecutedRef = useRef(false);
   const barBuilderRef = useRef<any>(null);
@@ -61,17 +67,30 @@ const EditCampaign: React.FC = () => {
   const isDesktop = useIsDesktop();
 
   const [showFundPopup, setShowFundPopup] = useState(false);
-  const [amountFunded, setFundAmount] = useState<number>(10000); // Default fund amount
+  const [amountFunded, setFundAmount] = useState<number>(1000);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (session?.token && campaignId && !loadExecutedRef.current) {
+      if (
+        (session?.token || accessToken) &&
+        campaignId &&
+        !loadExecutedRef.current
+      ) {
         setLoading(true);
         loadExecutedRef.current = true;
         try {
-          const data = await withTokenRefresh((token) =>
-            fetchCampaign(Number(campaignId), token)
+          const data = await withTokenRefresh(
+            (token) => fetchCampaign(Number(campaignId), token),
+            refreshToken
           );
+
+          const url = await withTokenRefresh(
+            (token) => fetchCompanyUrl(token),
+            refreshToken
+          );
+          setCompanyUrl(url);
+
           setCampaignData({
             ...data,
             startDate: data.startDate
@@ -80,10 +99,9 @@ const EditCampaign: React.FC = () => {
             closeDate: data.closeDate
               ? new Date(data.closeDate).toISOString().split("T")[0]
               : "",
-            company: data.company || "", // Ensure company is a string
+            company: url,
           });
 
-          // Deserialize state if available
           if (
             data.serializedTopbarState &&
             data.settingsTopbarState &&
@@ -121,10 +139,21 @@ const EditCampaign: React.FC = () => {
     if (!sessionLoading) {
       fetchData();
     }
-  }, [session, campaignId, sessionLoading, withTokenRefresh]);
+  }, [
+    session,
+    accessToken,
+    refreshToken,
+    campaignId,
+    sessionLoading,
+    withTokenRefresh,
+  ]);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handlePaymentSuccess = () => {
+    router.push(`/brand/campaigns/edit?campaignId=${campaignId}`);
   };
 
   const handleChange = (
@@ -153,11 +182,11 @@ const EditCampaign: React.FC = () => {
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setSaving(true); // Indicate that saving is in progress
+    setSaving(true);
 
     if (campaignData) {
       try {
-        if (session?.token) {
+        if (session?.token || accessToken) {
           if (barBuilderRef.current) {
             const serializedTopbarState =
               barBuilderRef.current.serializeRealTopBar();
@@ -168,6 +197,9 @@ const EditCampaign: React.FC = () => {
             );
             campaignData.settingsTopbarState =
               JSON.stringify(settingsTopbarState);
+
+            const compiledHtml = barBuilderRef.current.getCompiledHtml();
+            campaignData.compiledHtml = JSON.stringify(compiledHtml);
           }
 
           if (popupBuilderRef.current) {
@@ -179,15 +211,15 @@ const EditCampaign: React.FC = () => {
               JSON.stringify(serializedPopupState);
             campaignData.settingsPopupState =
               JSON.stringify(settingsPopupState);
-          }
 
-          console.log("Campaign data before save:", campaignData);
+            const compiledHtml = popupBuilderRef.current.getCompiledHtml();
+            campaignData.compiledHtml = JSON.stringify(compiledHtml);
+          }
 
           await withTokenRefresh(async (token) => {
             await updateCampaign(campaignData, token);
-          });
+          }, refreshToken);
 
-          // Show the funding popup after saving changes
           setShowFundPopup(true);
         }
       } catch (error) {
@@ -195,173 +227,53 @@ const EditCampaign: React.FC = () => {
         setError("Failed to save data. Please communicate with support.");
       } finally {
         setLoading(false);
-        setSaving(false); // Indicate that saving is complete
+        setSaving(false);
       }
     }
   };
 
-  if (loading) {
-    return <LoadingOverlay />;
+  if (loading || saving) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner />
+      </div>
+    );
   }
 
   if (!campaignData) {
     return <div>{error || "Loading..."}</div>;
   }
 
-  // Ensure that the URL is always a string before passing it to the components
   const campaignDataWithNonNullableUrl = {
     ...campaignData,
-    url: campaignData.url || "", // Ensure url is a string
-    startDate: campaignData.startDate || "", // Ensure startDate is a string
-    closeDate: campaignData.closeDate || "", // Ensure closeDate is a string
-    company: campaignData.company || "", // Ensure company is a string
+    url: campaignData.company || "",
+    startDate: campaignData.startDate || "",
+    closeDate: campaignData.closeDate || "",
+    company: campaignData.company || "",
   };
 
   return (
     <div
       className={`relative ${
-        loading ? "blur-sm" : ""
+        loading || saving ? "blur-sm" : ""
       } flex-1 overflow-y-auto overflow-x-hidden`}
     >
       {loading && <LoadingOverlay />}
       <main className="">
         <div className="max-w mx-auto mb-10 space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="flex justify-start items-center relative gap-2">
-              <Link
-                href="/brand/campaigns"
-                className="flex-grow-0 flex-shrink-0 text-sm font-medium text-left text-black/50"
-              >
-                Campaigns
-              </Link>
-              <svg
-                width={16}
-                height={16}
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="flex-grow-0 flex-shrink-0 w-4 h-4 relative"
-                preserveAspectRatio="xMidYMid meet"
-              >
-                <path
-                  d="M5.75 3.5L10.25 8L5.75 12.5"
-                  stroke="black"
-                  strokeOpacity="0.5"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <p className="flex-grow-0 flex-shrink-0 text-sm font-medium text-left text-black/50">
-                Edit Campaign
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <button
-                className="px-4 py-2 bg-[#47B775] text-white rounded-md"
-                onClick={handleSaveChanges}
-                disabled={saving} // Disable save button if saving is in progress
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
+          <CampaignHeader
+            saving={saving}
+            handleSaveChanges={handleSaveChanges}
+          />
 
           {error && <div className="text-red-600">{error}</div>}
-          <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
-            <div
-              className="flex justify-between items-center mb-6 cursor-pointer"
-              onClick={handleToggle}
-            >
-              <h2 className="text-xl font-semibold text-[#47B775]">
-                Campaign Information
-              </h2>
-              <button className="focus:outline-none">
-                <ArrowDropdownIcon isOpen={isOpen} />
-              </button>
-            </div>
-            <hr className="border-gray-200 mb-6" />
-            {isOpen ? (
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <CampaignDetail
-                    campaign={campaignDataWithNonNullableUrl}
-                    handleChange={handleChange}
-                    className="bg-white p-0 border-0 shadow-none"
-                  />
-                </div>
-                <div className="w-full md:w-[1px] bg-gray-200" />
-                <div className="flex-1">
-                  <ReferralDetail
-                    campaign={campaignDataWithNonNullableUrl}
-                    handleChange={handleChange}
-                    className="bg-white p-0 border-0 shadow-none"
-                  />
-                </div>
-                <div className="w-full md:w-[1px] bg-gray-200" />
-                <div className="flex-1">
-                  <DiscountValue
-                    discount={{
-                      type: campaignData.discountType,
-                      value: campaignData.discountValue,
-                      appliesTo: campaignData.appliesTo,
-                    }}
-                    handleChange={handleChange}
-                    className="bg-white p-0 border-0 shadow-none"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500 flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <p className="mr-0 md:mr-10">
-                    <strong>Campaign ID:</strong> {campaignData.id}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Name:</strong> {campaignData.name}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Start Date:</strong> {campaignData.startDate}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Close Date:</strong> {campaignData.closeDate}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Company:</strong> {campaignData.company}
-                  </p>
-                </div>
-                <div className="w-full md:w-[1px] bg-gray-200 my-2 md:my-0" />
-                <div className="flex-1">
-                  <p className="mr-0 md:mr-10">
-                    <strong>Commission Type:</strong>{" "}
-                    {campaignData.commissionType}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Commission:</strong> {campaignData.commission}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Campaign Terms:</strong> {campaignData.terms}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Campaign URL:</strong> {campaignData.url}
-                  </p>
-                </div>
-                <div className="w-full md:w-[1px] bg-gray-200 my-2 md:my-0" />
-                <div className="flex-1">
-                  <p className="mr-0 md:mr-10">
-                    <strong>Discount Type:</strong> {campaignData.discountType}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Discount Value:</strong>{" "}
-                    {campaignData.discountValue}
-                  </p>
-                  <p className="mr-0 md:mr-10">
-                    <strong>Applies To:</strong> {campaignData.appliesTo}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+
+          <CampaignInformation
+            isOpen={isOpen}
+            handleToggle={handleToggle}
+            campaignData={campaignDataWithNonNullableUrl}
+            handleChange={handleChange}
+          />
         </div>
         {isDesktop ? (
           <>
@@ -369,66 +281,49 @@ const EditCampaign: React.FC = () => {
               className="w-full mb-10 bg-white shadow rounded-lg border border-gray-200"
               selectedFormat={campaignData.format}
               onSelect={handleFormatSelect}
-            />
-            {campaignData.format === "Topbar" ? (
-              <BarBuilder
-                ref={barBuilderRef}
-                campaign={campaignDataWithNonNullableUrl}
-                className="w-full bg-white shadow rounded-lg border border-gray-200"
-              />
-            ) : (
-              <PopupBuilder
-                ref={popupBuilderRef}
-                campaign={campaignDataWithNonNullableUrl}
-                className="w-full bg-white shadow rounded-lg border border-gray-200"
-              />
-            )}
+            >
+              {campaignData.format === "Topbar" ? (
+                <BarBuilder
+                  ref={barBuilderRef}
+                  campaign={campaignDataWithNonNullableUrl}
+                  className="w-full bg-white shadow rounded-lg border border-gray-200"
+                />
+              ) : (
+                <PopupBuilder
+                  ref={popupBuilderRef}
+                  campaign={campaignDataWithNonNullableUrl}
+                  className="w-full bg-white shadow rounded-lg border border-gray-200"
+                />
+              )}
+            </CampaignCreativeSelector>
           </>
         ) : (
           <DesktopCreativeHide />
         )}
         {showFundPopup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-              <div className="flex flex-col gap-4">
-                <p className="text-xl font-medium text-left text-[#10ad1b]">
-                  4. Boost this Campaign
-                </p>
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-700">Fund Amount</label>
-                    <input
-                      type="number"
-                      value={amountFunded}
-                      onChange={(e) => setFundAmount(Number(e.target.value))}
-                      className="px-4 py-2 border border-gray-300 rounded mb-4 w-full"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-left text-black/75">
-                  Left Campaign Budget: {campaignData.amountFunded}
-                </p>
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowFundPopup(false)}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                    disabled={saving}
-                  >
-                    Cancel
-                  </button>
-                  <StripeWrapper>
-                    <PaymentForm
-                      campaignId={Number(campaignId)}
-                      amountFunded={amountFunded || 0}
-                      oldAmount={campaignData.amountFunded || 0}
-                      disabled={saving}
-                    />
-                  </StripeWrapper>
-                </div>
-              </div>
-            </div>
-          </div>
+          <FundCampaignModal
+            token={session?.token ?? ""}
+            amountFunded={amountFunded}
+            setFundAmount={setFundAmount}
+            setShowFundPopup={setShowFundPopup}
+            saving={saving}
+            campaignId={campaignId}
+            oldAmountFunded={campaignData.amountFunded || 0}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
         )}
+
+        <CampaignPayment
+          campaignId={Number(campaignId)}
+          token={session?.token ?? ""}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+
+        <PushCampaignLive
+          campaignId={campaignData.id!}
+          token={session?.token!}
+          currentStatus={campaignData.status as "Live" | "Draft" | "Ended"}
+        />
       </main>
     </div>
   );
@@ -437,7 +332,7 @@ const EditCampaign: React.FC = () => {
 export const getServerSideProps: GetServerSideProps<CampaignEditProps> = async (
   context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<CampaignEditProps>> => {
-  const result = await sessionLoadCheckerUtil(context);
+  const result = await initialLoadChecker(context);
 
   if ("redirect" in result || "notFound" in result) {
     return result;
@@ -458,4 +353,5 @@ export const getServerSideProps: GetServerSideProps<CampaignEditProps> = async (
     },
   };
 };
+
 export default EditCampaign;

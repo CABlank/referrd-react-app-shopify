@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -54,46 +54,5 @@ body {
   background-color: #0e9b18;
   border-radius: 20px;
   border: 3px solid #f3f3f3;
-}
 
-/* Media Queries for different screen sizes */
-@media (min-width: 1920px) {
-  .layout-container {
-    width: 80%;
-  }
-
-  .layout-width {
-    max-width: 1619px;
-  }
-
-  .sidebar-container {
-    width: 20%;
-    position: relative;
-    background: #fff;
-  }
-
-  .desktop-sidebar {
-    position: absolute;
-    right: 0;
-  }
-}
-
-@media (min-width: 2440px) {
-  .layout-container {
-    width: 75%;
-  }
-
-  .sidebar-container {
-    width: 25%;
-  }
-}
-
-@media (min-width: 2700px) {
-  .layout-container {
-    width: 70%;
-  }
-
-  .sidebar-container {
-    width: 30%;
-  }
 }

@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import LoginForm from "../components/Auth/LoginForm";
 import RegisterForm from "../components/Auth/RegisterForm";
 import AuthLayout from "../components/AuthLayout/AuthLayout";
-import { useSession } from "../contexts/SessionContext";
+import { useSession } from "../context/SessionContext";
 
 const Login = () => {
   const [isLoginActive, setIsLoginActive] = useState(true); // State to toggle between login and sign up

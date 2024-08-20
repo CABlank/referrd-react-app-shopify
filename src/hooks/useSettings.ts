@@ -2,21 +2,44 @@ import { useState, useEffect, useRef } from "react";
 import {
   fetchSettings,
   updateSettings,
+  createSettings,
   Settings as SettingsType,
 } from "../services/settings";
-import { useSession } from "../contexts/SessionContext";
+import { useSession } from "../context/SessionContext";
 
-// Custom hook to manage settings
-const useSettings = () => {
+interface UseSettingsArgs {
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+}
+
+const useSettings = ({
+  accessToken,
+  refreshToken,
+  userId,
+}: UseSettingsArgs) => {
   const { session, withTokenRefresh } = useSession();
 
-  // State management using a single object to avoid multiple state updates
+  const initialSettings: SettingsType = {
+    id: undefined,
+    contactName: "",
+    brandName: "",
+    mobile: "",
+    email: "",
+    country: "",
+    businessAddress: "",
+    notify_referral_conversions: null,
+    notify_payment_confirmation: null,
+    notify_payment_notifications: null,
+    no_payment_notifications: null,
+  };
+
   const [settingsState, setSettingsState] = useState<{
     settings: SettingsType | null;
     loading: boolean;
     error: string | null;
   }>({
-    settings: null,
+    settings: initialSettings,
     loading: true,
     error: null,
   });
@@ -25,16 +48,20 @@ const useSettings = () => {
 
   useEffect(() => {
     const loadSettings = async () => {
-      if (session?.token && !loadExecutedRef.current) {
+      if ((session?.token || accessToken) && !loadExecutedRef.current) {
         setSettingsState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
-          const data = await withTokenRefresh((token) => fetchSettings(token));
+          const data = await withTokenRefresh(
+            (token) => fetchSettings(token),
+            refreshToken,
+            userId
+          );
           setSettingsState({ settings: data, loading: false, error: null });
         } catch (err) {
           console.error("Error fetching settings:", err);
           setSettingsState({
-            settings: null,
+            settings: initialSettings,
             loading: false,
             error: "Failed to fetch settings. Please try again.",
           });
@@ -42,33 +69,45 @@ const useSettings = () => {
       }
     };
 
-    if (session) {
-      loadSettings();
-    }
-  }, [session, withTokenRefresh]);
+    loadSettings();
+  }, [session, accessToken, refreshToken, userId, withTokenRefresh]);
 
   const handleChange = (field: keyof SettingsType, value: any) => {
     setSettingsState((prevState) => ({
       ...prevState,
       settings: prevState.settings
         ? { ...prevState.settings, [field]: value }
-        : null,
+        : { ...initialSettings, [field]: value },
     }));
   };
 
   const handleSave = async () => {
-    if (session?.token && settingsState.settings) {
+    if ((session?.token || accessToken) && settingsState.settings) {
       setSettingsState((prevState) => ({ ...prevState, loading: true }));
       try {
-        await withTokenRefresh((token) =>
-          updateSettings(settingsState.settings!, token)
-        );
+        if (settingsState.settings.id) {
+          await withTokenRefresh(
+            (token) => updateSettings(settingsState.settings!, token),
+            refreshToken,
+            userId
+          );
+        } else {
+          const newSettings = await withTokenRefresh(
+            (token) => createSettings(settingsState.settings!, token),
+            refreshToken,
+            userId
+          );
+          setSettingsState((prevState) => ({
+            ...prevState,
+            settings: newSettings,
+          }));
+        }
       } catch (err) {
-        console.error("Error updating settings:", err);
+        console.error("Error saving settings:", err);
         setSettingsState((prevState) => ({
           ...prevState,
           loading: false,
-          error: "Failed to update settings. Please try again.",
+          error: "Failed to save settings. Please try again.",
         }));
       } finally {
         setSettingsState((prevState) => ({ ...prevState, loading: false }));

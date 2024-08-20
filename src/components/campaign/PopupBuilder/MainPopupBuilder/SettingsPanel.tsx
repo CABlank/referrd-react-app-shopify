@@ -2,8 +2,8 @@ import React, { ChangeEvent } from "react";
 import ColorField from "../../CommonComponents/ColorField";
 import TextField from "../../CommonComponents/TextField";
 import ArrowDropdownIcon from "../../../Icons/ArrowDropdownIcon";
-import { PopupConfig } from "../../CommonComponents/Types";
 import SelectField from "../../CommonComponents/SelectField";
+import { PopupConfig } from "../../CommonComponents/Types";
 
 export const initialDesktopConfigStep1: PopupConfig = {
   backgroundColor: "#af9292",
@@ -15,8 +15,8 @@ export const initialDesktopConfigStep1: PopupConfig = {
 
 export const initialDesktopConfigStep2: PopupConfig = {
   backgroundColor: "#ffffff",
-  height: "500px",
-  width: "600px",
+  height: "350px",
+  width: "400px",
   borderWidth: "16px",
   ImagePosition: "None",
 };
@@ -31,8 +31,8 @@ export const initialMobileConfigStep1: PopupConfig = {
 
 export const initialMobileConfigStep2: PopupConfig = {
   backgroundColor: "#ffffff",
-  height: "500px",
-  width: "280px",
+  height: "350px",
+  width: "300px",
   borderWidth: "16px",
   ImagePosition: "None",
 };
@@ -46,7 +46,12 @@ interface SettingsPanelProps {
   ) => void;
   handleValueChange: (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "height" | "width" | "borderWidth"
+    type:
+      | "height"
+      | "width"
+      | "borderWidth"
+      | "backgroundColor"
+      | "ImagePosition"
   ) => void;
 }
 
@@ -57,6 +62,19 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   handleConfigChange,
   handleValueChange,
 }) => {
+  const renderTextField = (label: string, name: keyof PopupConfig) => (
+    <TextField
+      label={label}
+      name={name}
+      type="text"
+      value={config[name].replace("px", "")}
+      onChange={(e) =>
+        handleValueChange(e as ChangeEvent<HTMLInputElement>, name)
+      }
+      isMeasurement={true}
+    />
+  );
+
   return (
     <div className="p-4 bg-white border-b-2">
       <div
@@ -68,39 +86,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       </div>
       {isOpen && (
         <div className="mt-4 space-y-4">
-          <TextField
-            label="Height"
-            name="height"
-            type="text"
-            value={config.height.replace("px", "")}
-            onChange={(e) =>
-              handleValueChange(e as ChangeEvent<HTMLInputElement>, "height")
-            }
-            isMeasurement={true}
-          />
-          <TextField
-            label="Width"
-            name="width"
-            type="text"
-            value={config.width.replace("px", "")}
-            onChange={(e) =>
-              handleValueChange(e as ChangeEvent<HTMLInputElement>, "width")
-            }
-            isMeasurement={true}
-          />
-          <TextField
-            label="Border Width"
-            name="borderWidth"
-            type="text"
-            value={config.borderWidth.replace("px", "")}
-            onChange={(e) =>
-              handleValueChange(
-                e as ChangeEvent<HTMLInputElement>,
-                "borderWidth"
-              )
-            }
-            isMeasurement={true}
-          />
+          {renderTextField("Height", "height")}
+          {renderTextField("Width", "width")}
+          {renderTextField("Border Width", "borderWidth")}
           <ColorField
             label="Background Color"
             name="backgroundColor"

@@ -1,16 +1,22 @@
-// pages/_app.tsx
-import AppBridgeProvider from "../components/providers/AppBridgeProvider";
-import { AppProvider as PolarisProvider, AppProvider } from "@shopify/polaris";
+import { AppProvider as PolarisProvider } from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
 import App, { AppProps, AppContext } from "next/app";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { SessionProvider, useSession } from "../contexts/SessionContext";
+import { SessionProvider, useSession } from "../context/SessionContext";
 import "../styles/globals.css";
-import BrandLayout from "./layouts/BrandLayout";
+import BrandLayout from "./layouts/BrandLayout/BrandLayout";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import Link from "next/link";
+import createApp from "@shopify/app-bridge";
+import { Toast } from "@shopify/app-bridge/actions";
+
+declare global {
+  interface Window {
+    shopify: any;
+  }
+}
 
 declare global {
   namespace JSX {
@@ -53,17 +59,15 @@ class MyApp extends App<AppProps> {
     const isShopify = this.isShopify();
 
     return (
-      <AppProvider i18n={translations}>
-        <PolarisProvider i18n={translations}>
-          <SessionProvider>
-            <ContentWrapper
-              isShopify={isShopify}
-              Component={Component}
-              pageProps={pageProps}
-            />
-          </SessionProvider>
-        </PolarisProvider>
-      </AppProvider>
+      <PolarisProvider i18n={translations}>
+        <SessionProvider>
+          <ContentWrapper
+            isShopify={isShopify}
+            Component={Component}
+            pageProps={pageProps}
+          />
+        </SessionProvider>
+      </PolarisProvider>
     );
   }
 }
@@ -96,9 +100,30 @@ const ContentWrapper: React.FC<{
       if (session && router.pathname === "/login") {
         router.replace("/brand/dashboard");
       } else if (!session && router.pathname.startsWith("/brand")) {
+        // Additional logic can be added here
       }
     }
   }, [sessionChecked, session, router]);
+
+  // Initialize App Bridge and trigger actions
+  useEffect(() => {
+    if (isShopify && pageProps.shop && pageProps.host) {
+      const app = createApp({
+        apiKey: process.env.CONFIG_SHOPIFY_API_KEY as string,
+        host: pageProps.host, // Use `host` instead of `shopOrigin`
+      });
+
+      // Attach app instance to window for debugging if needed
+      window.shopify = app;
+
+      // Example: Show a toast notification when the app initializes
+      const toast = Toast.create(app, {
+        message: "App initialized successfully!",
+        duration: 5000,
+      });
+      toast.dispatch(Toast.Action.SHOW);
+    }
+  }, [isShopify, pageProps.shop, pageProps.host]);
 
   if (loading || !sessionChecked) {
     return <LoadingOverlay />;
@@ -115,27 +140,21 @@ const ContentWrapper: React.FC<{
 
   if (isShopify) {
     return (
-      <AppBridgeProvider>
-        <PolarisProvider i18n={translations}>
-          <ui-nav-menu style={{ display: "none" }}>
-            <Link href={createLink("/")} rel="home">
-              Home
-            </Link>
-            <Link href={createLink("/brand/dashboard")}>Dashboard</Link>
-            <Link href={createLink("/brand/campaigns")}>Campaigns</Link>
-            <Link href={createLink("/brand/support")}>Support</Link>
-            <Link href={createLink("/brand/referrals")}>Referrals</Link>
-            <Link href={createLink("/brand/settings")}>Settings</Link>
-            <Link href={createLink("/brand/payments")}>Payments</Link>
-            <Link href={createLink("/brand/faqs")}>FAQS</Link>
-          </ui-nav-menu>
-          <div className="flex-1 overflow-y-auto">
-            <main className="p-12">
-              <Component {...pageProps} />
-            </main>
-          </div>
-        </PolarisProvider>
-      </AppBridgeProvider>
+      <>
+        <ui-nav-menu style={{ display: "none" }}>
+          <Link href={createLink("/brand/dashboard")}>Dashboard</Link>
+          <Link href={createLink("/brand/campaigns")}>Campaigns</Link>
+          <Link href={createLink("/brand/referrals")}>Referrals</Link>
+          <Link href={createLink("/brand/settings")}>Settings</Link>
+          <Link href={createLink("/brand/payments")}>Payments</Link>
+          <Link href={createLink("/brand/support")}>Support</Link>
+        </ui-nav-menu>
+        <div className="flex-1 overflow-y-auto">
+          <main className="p-12">
+            <Component {...pageProps} />
+          </main>
+        </div>
+      </>
     );
   } else if (Component.noLayout) {
     return <Component {...pageProps} />;

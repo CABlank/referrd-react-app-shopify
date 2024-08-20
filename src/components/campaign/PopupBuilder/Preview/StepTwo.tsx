@@ -9,7 +9,6 @@ import SmsIcon from "@/components/Icons/IconsSocialMedia/SmsIcon";
 import XIcon from "@/components/Icons/IconsSocialMedia/XIcon";
 import LinkedinIcon from "@/components/Icons/IconsSocialMedia/LinkedinIcon";
 import RedditIcon from "@/components/Icons/IconsSocialMedia/RedditIcon";
-import QRCode from "qrcode.react";
 
 interface StepTwoProps {
   elements: ElementProps[];
@@ -32,6 +31,8 @@ const styles = {
     padding: "2rem",
     gap,
     position: "relative" as const,
+    outline: "none",
+    boxShadow: "none",
   }),
   text: (color: string, fontSize = "1rem", fontWeight = "bold") => ({
     fontSize,
@@ -39,6 +40,8 @@ const styles = {
     fontWeight,
     textAlign: "center" as const,
     color,
+    outline: "none",
+    boxShadow: "none",
   }),
   iconWrapper: (bgColor: string, iconSize: string, boxShadow?: string) => ({
     cursor: "pointer",
@@ -50,6 +53,7 @@ const styles = {
     width: iconSize,
     height: iconSize,
     boxShadow: boxShadow || "none",
+    outline: "none",
   }),
   button: (bgColor: string) => ({
     display: "flex",
@@ -60,12 +64,61 @@ const styles = {
     padding: "0.625rem 1.5rem",
     borderRadius: "0.625rem",
     backgroundColor: bgColor,
+    outline: "none",
+    boxShadow: "none",
+    border: "none",
   }),
   iconGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "1rem",
+    gridTemplateColumns: "repeat(4, 65px)",
+    placeItems: "center",
+    gap: "28px 0px",
     width: "100%",
+    outline: "none",
+    boxShadow: "none",
+  },
+  copyButton: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "2.5rem",
+    padding: "0 1.5rem",
+    borderTopLeftRadius: "0.75rem",
+    borderBottomLeftRadius: "0.75rem",
+    backgroundColor: "rgba(133, 16, 135, 0.8)",
+    color: "white",
+    fontSize: "1rem",
+    fontWeight: "500",
+    flexShrink: 0,
+    cursor: "pointer",
+    outline: "none",
+    boxShadow: "none",
+    border: "none",
+  },
+  urlContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "2.5rem",
+    padding: "0 1.5rem",
+    borderTopRightRadius: "0.75rem",
+    borderBottomRightRadius: "0.75rem",
+    backgroundColor: "white",
+    border: "0.5px solid rgba(0, 0, 0, 0.3)",
+    flexGrow: 1,
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    outline: "none",
+    boxShadow: "none",
+  },
+  urlText: {
+    fontSize: "1rem",
+    fontWeight: "500",
+    color: "rgba(0, 0, 0, 0.5)",
+    outline: "none",
+    boxShadow: "none",
   },
 };
 
@@ -133,6 +186,7 @@ const Icon = ({
 
   return (
     <div
+      id={platform} // Set the id as the platform name
       style={styles.iconWrapper(bgColor, iconSize, boxShadow)}
       onClick={() => handleShareClick(platform, url)}
     >
@@ -161,12 +215,9 @@ const StepTwo: React.FC<StepTwoProps> = ({
   const truncatedUrl = truncateUrl(url, 30);
 
   const handleCopyClick = () => {
-    console.log("handleCopyClick called");
-    console.log("URL to copy:", url);
     navigator.clipboard
       .writeText(url)
       .then(() => {
-        console.log("Text copied successfully");
         setCopyText("Copied");
         setTimeout(() => setCopyText("Copy"), 2000); // Change back to "Copy" after 2 seconds
       })
@@ -191,7 +242,14 @@ const StepTwo: React.FC<StepTwoProps> = ({
 
   return (
     <div style={styles.container(view === "mobile" ? "1.5rem" : "1rem")}>
-      <p style={styles.text("rgba(0,0,0,0.8)", "1.2rem", "bold")}>
+      <p
+        style={{
+          color: "black",
+          margin: "0",
+          fontSize: "20px",
+          fontWeight: "bold",
+        }}
+      >
         Thank you for signing up!
       </p>
       <div
@@ -200,9 +258,16 @@ const StepTwo: React.FC<StepTwoProps> = ({
           flexDirection: "column",
           alignItems: "center",
           gap: "1rem",
+          outline: "none",
+          boxShadow: "none",
         }}
       >
-        <p style={styles.text("rgba(0,0,0,0.8)", "0.75rem")}>
+        <p
+          style={{
+            color: "black",
+            margin: "0",
+          }}
+        >
           Click on an icon to share instantly
         </p>
         <div style={styles.iconGrid}>
@@ -219,25 +284,15 @@ const StepTwo: React.FC<StepTwoProps> = ({
           ))}
         </div>
       </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "1rem",
-        }}
-      >
-        <p style={styles.text("rgba(0,0,0,0.8)", "0.8rem", "normal")}>
-          Scan the QR code to visit:
-        </p>
-        <QRCode value={url || "https://example.com"} size={80} />
-      </div>
+
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           width: "100%",
           marginTop: "0.2rem",
+          outline: "none",
+          boxShadow: "none",
         }}
       >
         {elements.map((element, index) => (
@@ -267,35 +322,31 @@ const StepTwo: React.FC<StepTwoProps> = ({
           <div
             style={{
               width: elementWidth,
-              borderRight: "0px solid red",
+              borderRight: "2px solid red",
               flexShrink: 0,
+              outline: "none",
+              boxShadow: "none",
             }}
           />
         )}
       </div>
       <div
+        id="copy-button"
         style={{
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           width: "100%",
           gap: "0rem",
+          outline: "none",
+          boxShadow: "none",
         }}
       >
-        <button
-          className="flex justify-center items-center h-10 relative gap-2 px-6 rounded-tl-lg rounded-bl-lg bg-[#851087]/80 text-white text-base font-medium"
-          onClick={handleCopyClick}
-          style={{ flexShrink: 0 }}
-        >
+        <button onClick={handleCopyClick} style={styles.copyButton}>
           {copyText}
         </button>
-        <div
-          className="flex justify-center items-center h-10 relative gap-2 px-6 py-2.5 rounded-tr-lg rounded-br-lg bg-white border-[0.5px] border-black/30"
-          style={{ flexGrow: 1, minWidth: 0 }}
-        >
-          <span className="text-base font-medium text-left text-black/50 overflow-hidden text-ellipsis whitespace-nowrap">
-            {truncatedUrl}
-          </span>
+        <div id="domain" style={styles.urlContainer}>
+          <span style={styles.urlText}>{truncatedUrl}</span>
         </div>
       </div>
     </div>

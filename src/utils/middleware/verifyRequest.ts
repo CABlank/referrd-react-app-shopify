@@ -28,7 +28,7 @@ const verifyRequest = async (
     const payload = validateJWT(authHeader.split(" ")[1]); // Validate the JWT token from the authorization header
 
     let shop = shopify.utils.sanitizeShop(
-      (payload as { dest: string }).dest.replace("https://", "")
+      (payload as unknown as { dest: string }).dest.replace("https://", "")
     ); // Sanitize the shop URL from the payload
     if (!shop) {
       throw new Error("No shop found, not a valid request"); // Throw error if shop is not found

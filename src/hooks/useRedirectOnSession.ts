@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { useSession } from "../contexts/SessionContext";
+import { useSession } from "../context/SessionContext";
 
 const useRedirectOnSession = () => {
   const { session } = useSession();

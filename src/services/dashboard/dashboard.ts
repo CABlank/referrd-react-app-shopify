@@ -1,91 +1,100 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-export interface Payment {
-  id: number;
-  status: string;
-  referral_id: number;
-  date_created: string;
-}
-
-export interface Referral {
-  test: string;
-  referralCode: number;
-  id: number;
-  date_created: string;
-  referrer: number;
-  campaign: number;
-  spend: number;
-  conversion: string;
-  location: string;
-}
-
-export interface Customer {
-  id: number;
-  email: string;
-  name: string;
-  mobile: string;
-  referralCode: number;
-}
-
-export interface Campaign {
-  date_updated: string | number | Date;
-  imageSrc: string;
-  test: string;
-  price: any;
-  openTo: string;
-  closeDate: any;
-  status: any;
-  id: number;
-  name: string;
-}
-
-// Helper function to make API requests
-const fetchFromAPI = async <T>(
-  endpoint: string,
-  token: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${endpoint}`);
-  }
-
-  const data = await response.json();
-  return data.data;
-};
+import { fetchCustomers, fetchCampaigns } from "../referrals/referrals"; // Import fetchCustomers and fetchCampaigns from the referrals module
+import { fetchPaymentsByCompanyId } from "../payments/payments"; // Import fetchPaymentsByCompanyId from the payments module
 
 // Fetch dashboard data
 export const fetchDashboardData = async (
   token: string,
-  userId: number | undefined
+  companyUUID: string // Assume you need companyUUID to fetch customers
 ) => {
-  const [
-    paymentsData,
-    customersData,
-    campaignsData,
-    referralsData,
-    referralCodesData,
-  ] = await Promise.all([
-    fetchFromAPI<Payment[]>("/items/payments", token),
-    fetchFromAPI<Customer[]>("/items/customers", token),
-    fetchFromAPI<Campaign[]>("/items/campaigns", token),
-    fetchFromAPI<Referral[]>("/items/referrals", token),
-    fetchFromAPI<any[]>("/items/referral_codes", token),
+  const [customersData, campaignsData, paymentsData] = await Promise.all([
+    fetchCustomers(token, companyUUID), // Fetch customers by company UUID
+    fetchCampaigns(token), // Fetch campaigns
+    fetchPaymentsByCompanyId(companyUUID, token), // Fetch payments by company UUID
   ]);
 
   return {
-    payments: paymentsData,
     customers: customersData,
     campaigns: campaignsData,
-    referrals: referralsData,
-    referralCodes: referralCodesData,
+    payments: paymentsData,
   };
 };
+
+// Payment interface
+export interface Payment {
+  date_created: string | number | Date;
+  id?: number;
+  order_number: string;
+  customer_email: string;
+  total_price: string;
+  total_discounts: string;
+  line_items: Array<{
+    productName: string;
+    quantity: number;
+    price: string;
+  }>;
+  discounts_applied: string | Array<{ code: string }>;
+  referral_uuid?: string;
+  status: string;
+  campaign_uuid?: string;
+  company_id?: string;
+}
+
+// Customer interface
+export interface Customer {
+  id: number;
+  date_created: string;
+  date_updated: string | null;
+  uuid: string;
+  name: string;
+  email: string;
+  mobile: string;
+  referred_by: string;
+  conversion_count: number;
+  signup_count: number;
+  location: string;
+  click_count: number;
+  company_id: string;
+  campaign_uuid: string;
+}
+
+// Company interface
+export interface Company {
+  id?: number;
+  name: string;
+  domain: string;
+  logo: string | File | null;
+  logoUrl?: string;
+  date_created: string | number | Date;
+  UUID: string;
+}
+
+// Campaign interface
+export interface Campaign {
+  settingsTopbarState?: string;
+  settingsPopupState?: string;
+  commission: React.ReactNode;
+  commissionType: "FixedAmount" | "Percentage";
+  id?: number;
+  status?: string;
+  user_created?: string;
+  date_created?: string;
+  user_updated?: string | null;
+  date_updated?: string | null;
+  name: string;
+  startDate: string | null;
+  closeDate: string | null;
+  company: string | null;
+  terms: string | null;
+  discountType: "FixedAmount" | "Percentage";
+  discountValue: string | null;
+  appliesTo: string | null;
+  format: "Popup" | "Topbar";
+  serializedTopbarState?: string;
+  serializedPopupState?: string;
+  amountFunded?: number;
+  url?: string;
+  compiledHtml?: string;
+  company_id?: string;
+  uuid?: string;
+}
+export { fetchCustomers };

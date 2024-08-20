@@ -44,7 +44,6 @@ export default async function handler(
       rawRequest: req,
       rawResponse: res,
     }); // Process the webhook using Shopify client
-    console.log(`--> Processed ${topic} from ${shop}`); // Log success
   } catch (e) {
     console.error(
       `---> Error while processing webhooks for ${shop} at ${topic} | ${
@@ -52,7 +51,6 @@ export default async function handler(
       }`
     ); // Log error
     if (!res.headersSent) {
-      console.log("No headers sent");
       res.status(500).send((e as Error).message); // Send error response
     }
   }

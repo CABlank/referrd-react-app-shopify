@@ -3,69 +3,140 @@ import SearchSortSection from "../../components/common/SearchSortSection";
 import DataTableHeader from "../../components/common/DataTableHeader";
 import PerformanceSummary from "../../components/common/PerformanceSummary";
 import Pagination from "../../components/common/Pagination";
-import { useRouter } from "next/router";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 import DataTableRows from "../../components/common/DataTableRows";
 import {
-  fetchPayments,
-  updatePaymentStatus,
+  fetchCompanyUUID,
+  fetchPaymentsByCompanyId,
   Payment,
-  fetchCustomers,
-  fetchCampaigns,
-  fetchReferrals,
-  Referral,
-  Customer,
-  Campaign,
+  fetchReferrer,
+  fetchCampaignMetadata,
+  updatePaymentStatus as updatePaymentStatusService,
 } from "../../services/payments/payments";
-import { useSession } from "../../contexts/SessionContext";
+import { useSession } from "../../context/SessionContext";
 import DeclineIcon from "@/components/Icons/DeclineIcon";
 import AcceptIcon from "@/components/Icons/AcceptIcon";
 import SeparatorIcon from "@/components/Icons/SeparatorIcon";
 import ScrollableContainer from "@/components/common/ScrollableContainer";
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker";
+import {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  GetServerSidePropsResult,
+} from "next";
 
 interface MappedPayment extends Payment {
   referrer: string;
   campaign: string;
   referralCashback: number;
   date: string;
+  order: string;
 }
 
-const Payments: React.FC = () => {
-  const router = useRouter();
+interface PaymentsProps {
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+  title: string;
+}
+
+const Payments: React.FC<PaymentsProps> = ({
+  accessToken,
+  refreshToken,
+  userId,
+}) => {
   const { session, withTokenRefresh } = useSession();
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [payments, setPayments] = useState<MappedPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const loadExecutedRef = useRef(false);
 
-  // Search, sort, and pagination states
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("date");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [buttonClicked, setButtonClicked] = useState<
+    "Accepted" | "Declined" | null
+  >(null);
+  const [selectedPayments, setSelectedPayments] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
-      const hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-      if (hardcodedToken && !loadExecutedRef.current) {
+      if ((session?.token || accessToken) && !loadExecutedRef.current) {
         setLoading(true);
-        loadExecutedRef.current = true; // Set the ref to true to indicate loadData has been called
-        try {
-          const [paymentsData, customersData, campaignsData, referralsData] =
-            await Promise.all([
-              fetchPayments(hardcodedToken),
-              fetchCustomers(hardcodedToken),
-              fetchCampaigns(hardcodedToken),
-              fetchReferrals(hardcodedToken),
-            ]);
+        loadExecutedRef.current = true;
 
-          setPayments(paymentsData);
-          setCustomers(customersData);
-          setCampaigns(campaignsData);
-          setReferrals(referralsData);
+        try {
+          const companyUUID = await withTokenRefresh(
+            (token) => fetchCompanyUUID(token),
+            refreshToken,
+            userId
+          );
+
+          if (companyUUID) {
+            const paymentsData = await withTokenRefresh(
+              (token) => fetchPaymentsByCompanyId(companyUUID, token),
+              refreshToken,
+              userId
+            );
+
+            if (paymentsData) {
+              const mappedPayments = await Promise.all(
+                paymentsData.map(
+                  async (payment: {
+                    referral_uuid: string;
+                    campaign_uuid: string;
+                    total_price: string;
+                    date_created: string | number | Date;
+                    order_number: any;
+                  }) => {
+                    const referrer = payment.referral_uuid
+                      ? await withTokenRefresh(
+                          (token) =>
+                            fetchReferrer(payment.referral_uuid, token),
+                          refreshToken,
+                          userId
+                        )
+                      : null;
+                    const campaign = payment.campaign_uuid
+                      ? await withTokenRefresh(
+                          (token) =>
+                            fetchCampaignMetadata(payment.campaign_uuid, token),
+                          refreshToken,
+                          userId
+                        )
+                      : null;
+
+                    const referrerName =
+                      referrer?.name || referrer?.email || "N/A";
+                    const campaignName = campaign ? `${campaign.name}` : "N/A";
+
+                    // Calculate referral fee
+                    const referralFee = campaign
+                      ? calculateReferralFee(
+                          payment.total_price,
+                          campaign.commission,
+                          campaign.commissionType
+                        )
+                      : 0;
+
+                    return {
+                      ...payment,
+                      referrer: referrerName,
+                      campaign: campaignName,
+                      referralCashback: referralFee,
+                      date: new Date(payment.date_created).toLocaleString(),
+                      order: `#${payment.order_number}`,
+                    };
+                  }
+                )
+              );
+              setPayments(mappedPayments);
+            }
+          } else {
+            setError("Failed to load company UUID.");
+          }
         } catch (err) {
           console.error("Error loading data:", err);
           setError("Failed to load data. Please try again.");
@@ -76,17 +147,32 @@ const Payments: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [session?.token, accessToken, refreshToken, userId, withTokenRefresh]);
+
+  const calculateReferralFee = (
+    totalPrice: string,
+    commission: number,
+    commissionType: string
+  ): number => {
+    if (commissionType === "FixedAmount") {
+      return commission;
+    } else if (commissionType === "Percentage") {
+      return (parseFloat(totalPrice) * commission) / 100;
+    }
+    return 0;
+  };
 
   const handlePaymentAction = async (
     paymentId: number,
     action: "Accepted" | "Declined"
   ) => {
-    if (session?.token) {
+    if (session?.token || accessToken) {
       setLoading(true);
       try {
-        await withTokenRefresh((token) =>
-          updatePaymentStatus(paymentId, action, token)
+        await withTokenRefresh(
+          (token) => updatePaymentStatusService(paymentId, action, token),
+          refreshToken,
+          userId
         );
         setPayments((prevPayments) =>
           prevPayments.map((payment) =>
@@ -102,8 +188,61 @@ const Payments: React.FC = () => {
     }
   };
 
-  const ActionButtons = ({ payment }: { payment: Payment }) => {
-    if (payment.status === "Pending") {
+  const handleBulkAction = async (action: "Accepted" | "Declined") => {
+    if ((session?.token || accessToken) && selectedPayments.length > 0) {
+      setLoading(true);
+      setButtonClicked(action);
+      try {
+        await withTokenRefresh(
+          (token) =>
+            Promise.all(
+              selectedPayments.map((paymentId) =>
+                updatePaymentStatusService(paymentId, action, token)
+              )
+            ),
+          refreshToken,
+          userId
+        );
+        setPayments((prevPayments) =>
+          prevPayments.map((payment) =>
+            selectedPayments.includes(payment.id ?? 0)
+              ? { ...payment, status: action }
+              : payment
+          )
+        );
+        setSelectedPayments([]); // Clear selected payments
+        setSelectAll(false); // Reset select all state
+      } catch (err) {
+        console.error("Error processing bulk payment action:", err);
+        setError("Failed to process bulk payment action. Please try again.");
+      } finally {
+        setLoading(false);
+        setTimeout(() => {
+          setButtonClicked(null);
+        }, 3000); // Reset buttonClicked after 3 seconds
+      }
+    }
+  };
+
+  const ActionButtons = ({ payment }: { payment: MappedPayment }) => {
+    const statusStyles = {
+      Accepted: {
+        container: "text-[#10ad1b] bg-[#d6f5d6]/5 border-[#10ad1b]",
+        text: "text-[#10ad1b]",
+      },
+      Declined: {
+        container: "text-[#d52121] bg-[#f5d6d6]/5 border-[#d52121]",
+        text: "text-[#d52121]",
+      },
+      Pending: {
+        container: "text-gray-500 bg-gray-200/5 border-gray-500",
+        text: "text-gray-500",
+      },
+    };
+
+    const status = payment.status as keyof typeof statusStyles;
+
+    if (status === "Pending") {
       return (
         <div className="flex justify-start items-center gap-2">
           <div
@@ -124,36 +263,17 @@ const Payments: React.FC = () => {
         </div>
       );
     } else {
-      return <p className="text-base text-gray-500">{payment.status}</p>;
+      return (
+        <div
+          className={`flex items-center gap-2 ${statusStyles[status].container} rounded-[40px] px-4 py-0.5 border`}
+        >
+          <p className={`text-base ${statusStyles[status].text}`}>
+            {payment.status}
+          </p>
+        </div>
+      );
     }
   };
-
-  const mapPaymentData = (): MappedPayment[] => {
-    return payments.map((payment) => {
-      const referral = referrals.find((ref) => ref.id === payment.referral_id);
-      const customer = customers.find((c) => c.id === referral?.referrer);
-      const campaign = campaigns.find((c) => c.id === referral?.campaign);
-
-      return {
-        ...payment, // Include all properties from the original payment object
-        referrer: customer?.name || "N/A",
-        campaign: campaign?.name || "N/A",
-        referralCashback: referral?.spend || 0,
-        date: new Date(payment.date_created).toLocaleString(), // Derived property for formatted date
-        status: payment.status, // Include status property
-        referral_id: payment.referral_id, // Include referral_id property
-        date_created: payment.date_created, // Include date_created property
-      } as MappedPayment; // Add type assertion to MappedPayment
-    });
-  };
-
-  interface MappedPayment extends Payment {
-    referrer: string;
-    campaign: string;
-    referralCashback: number;
-    date: string;
-    [key: string]: any; // Add index signature to allow indexing with a string
-  }
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -167,7 +287,33 @@ const Payments: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const filteredPayments = mapPaymentData().filter((payment) => {
+  const handleItemsPerPageChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setItemsPerPage(parseInt(event.target.value));
+    setCurrentPage(1); // Reset to the first page whenever items per page changes
+  };
+
+  const handleCheckboxChange = (paymentId: number, isChecked: boolean) => {
+    setSelectedPayments((prevSelectedPayments) => {
+      if (isChecked) {
+        return [...prevSelectedPayments, paymentId];
+      } else {
+        return prevSelectedPayments.filter((id) => id !== paymentId);
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    setSelectAll(!selectAll);
+    if (!selectAll) {
+      setSelectedPayments(paginatedPayments.map((payment) => payment.id ?? 0));
+    } else {
+      setSelectedPayments([]);
+    }
+  };
+
+  const filteredPayments = payments.filter((payment) => {
     return (
       payment.referrer.toLowerCase().includes(searchQuery.toLowerCase()) ||
       payment.campaign.toLowerCase().includes(searchQuery.toLowerCase())
@@ -177,8 +323,17 @@ const Payments: React.FC = () => {
   const sortedPayments = filteredPayments.sort((a, b) => {
     if (sortOrder === "date") {
       return new Date(b.date).getTime() - new Date(a.date).getTime();
+    } else if (sortOrder === "order") {
+      return a.order.localeCompare(b.order);
+    } else if (sortOrder === "referrer") {
+      return a.referrer.localeCompare(b.referrer);
+    } else if (sortOrder === "campaign") {
+      return a.campaign.localeCompare(b.campaign);
+    } else if (sortOrder === "referralCashback") {
+      return b.referralCashback - a.referralCashback; // Assuming referralCashback is a number
+    } else {
+      return 0; // Default case if sortOrder doesn't match any known property
     }
-    return a[sortOrder].localeCompare(b[sortOrder]);
   });
 
   const paginatedPayments = sortedPayments.slice(
@@ -187,6 +342,7 @@ const Payments: React.FC = () => {
   );
 
   const columns = [
+    { dataIndex: "order", className: "text-center" },
     { dataIndex: "date", className: "text-center text-sm" },
     { dataIndex: "referrer", className: "text-center" },
     { dataIndex: "campaign", className: "text-center" },
@@ -211,21 +367,24 @@ const Payments: React.FC = () => {
     const pendingPayments = payments.filter(
       (p) => p.status === "Pending"
     ).length;
-    const totalReferralCashback = payments.reduce(
-      (acc, p) =>
-        acc + (referrals.find((ref) => ref.id === p.referral_id)?.spend || 0),
+
+    // Calculate the total order value
+    const totalOrderValue = payments.reduce(
+      (acc, p) => acc + parseFloat(p.total_price),
       0
     );
-    const averageReferralCashback =
-      totalPayments > 0 ? totalReferralCashback / totalPayments : 0;
+
+    // Calculate the average order value
+    const averageOrderValue =
+      totalPayments > 0 ? totalOrderValue / totalPayments : 0;
 
     return {
       totalPayments,
       acceptedPayments,
       declinedPayments,
       pendingPayments,
-      totalReferralCashback: totalReferralCashback.toFixed(2),
-      averageReferralCashback: averageReferralCashback.toFixed(2),
+      totalOrderValue: totalOrderValue.toFixed(2),
+      averageOrderValue: averageOrderValue.toFixed(2),
     };
   };
 
@@ -255,33 +414,96 @@ const Payments: React.FC = () => {
               iconName="ConversionRate"
             />
             <PerformanceSummary
-              metricName="Total Ref Cashback"
-              value={`$${metrics.totalReferralCashback}`}
+              metricName="Total Order Value"
+              value={`$${metrics.totalOrderValue}`}
               iconName="TotalSpends"
             />
             <PerformanceSummary
-              metricName="Avg Ref Cashback"
-              value={`$${metrics.averageReferralCashback}`}
+              metricName="Avg Order Value"
+              value={`$${metrics.averageOrderValue}`}
               iconName="MouseClickedIcon"
             />
           </ScrollableContainer>
         </div>
 
-        {/* Search and Sort */}
-        <SearchSortSection onSearch={handleSearch} onSort={handleSort} />
+        {/* Data Table */}
+        <div className="w-full">
+          {/* Search, Sort, Items Per Page, and Bulk Actions */}
+          <div className="flex justify-between w-full mb-4">
+            <div className="flex items-center gap-2">
+              {selectedPayments.length > 0 && (
+                <>
+                  <button
+                    onClick={() => handleBulkAction("Accepted")}
+                    className={`h-10 px-6 py-2 rounded-lg ${
+                      buttonClicked === "Accepted"
+                        ? "bg-[#47B775] text-white"
+                        : "bg-[#47B775] text-white hover:bg-[#3a955d]"
+                    } font-medium`}
+                  >
+                    {buttonClicked === "Accepted"
+                      ? "Accepted"
+                      : "Accept Selected"}
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction("Declined")}
+                    className={`h-10 px-6 py-2 rounded-lg ${
+                      buttonClicked === "Declined"
+                        ? "bg-[#D52121] text-white"
+                        : "bg-[#D52121] text-white hover:bg-[#b41b1b]"
+                    } font-medium`}
+                  >
+                    {buttonClicked === "Declined"
+                      ? "Declined"
+                      : "Decline Selected"}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <SearchSortSection onSearch={handleSearch} onSort={handleSort} />
+              <div className="flex items-center px-0 py-2 justify-center rounded-lg bg-white w-[30%] sm:w-auto">
+                <select
+                  className="text-[.8rem] sm:text-base font-medium text-left text-black/80"
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                >
+                  <option value={10}>10 Items Per Page</option>
+                  <option value={20}>20 Items Per Page</option>
+                  <option value={50}>50 Items Per Page</option>
+                  <option value={100}>100 Items Per Page</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Data Table and Pagination */}
         <div className="flex flex-col w-full overflow-x-auto lg:overflow-hidden rounded-2xl bg-white text-center">
           <DataTableHeader
-            headers={[
-              { title: "Date", align: "center" },
-              { title: "Referrer", align: "center" },
-              { title: "Campaign", align: "center" },
-              { title: "Referral Fee", align: "center" },
-              { title: "Action", align: "center", className: "extra-styles" },
-            ]}
+            headers={{
+              selectAll,
+              handleSelectAll,
+              columns: [
+                { title: "Order", align: "center", className: "extra-styles" },
+                { title: "Date", align: "center" },
+                { title: "Referrer", align: "center" },
+                { title: "Campaign", align: "center" },
+                { title: "Referral Fee", align: "center" },
+                { title: "Action", align: "center" },
+              ],
+            }}
           />
-          <DataTableRows rowData={paginatedPayments} columns={columns} />
+          <DataTableRows
+            rowData={paginatedPayments.map((payment) => ({
+              ...payment,
+              selected: selectedPayments.includes(payment.id ?? 0),
+            }))}
+            columns={columns}
+            selectable={true}
+            handleCheckboxChange={handleCheckboxChange}
+            selectedPayments={selectedPayments}
+          />
           {sortedPayments.length > 0 && (
             <Pagination
               totalItems={sortedPayments.length}
@@ -296,9 +518,26 @@ const Payments: React.FC = () => {
   );
 };
 
-export const getStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps<PaymentsProps> = async (
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<PaymentsProps>> => {
+  const result = await initialLoadChecker(context);
+
+  if ("redirect" in result || "notFound" in result) {
+    return result;
+  }
+
+  if (!("props" in result)) {
+    return {
+      props: {
+        title: "Payments",
+      },
+    };
+  }
+
   return {
     props: {
+      ...result.props,
       title: "Payments",
     },
   };

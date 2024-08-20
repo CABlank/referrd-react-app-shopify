@@ -6,14 +6,17 @@ import DataTableHeader from "../../components/common/DataTableHeader";
 import DataTableRows from "../../components/common/DataTableRows";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 import Link from "next/link";
-import { useSession } from "../../contexts/SessionContext";
+import { useSession } from "../../context/SessionContext";
 import {
   fetchDashboardData,
   Payment,
-  Referral,
   Customer,
   Campaign,
 } from "../../services/dashboard/dashboard";
+import {
+  fetchCompanyUUID,
+  fetchPaymentsByCompanyId,
+} from "../../services/payments/payments";
 import ScrollableContainer from "@/components/common/ScrollableContainer";
 import ArrowSeeMoreIcon from "@/components/Icons/ArrowSeeMoreIcon";
 import initialLoadChecker from "../../utils/middleware/initialLoadChecker";
@@ -44,8 +47,6 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
   const [payments, setPayments] = useState<Payment[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [referralCodes, setReferralCodes] = useState<any[]>([]);
   const loadExecutedRef = useRef(false);
 
   const loadData = useCallback(async () => {
@@ -53,20 +54,30 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
       setDataLoading(true);
       loadExecutedRef.current = true;
       try {
-        console.log("userIDDDDDDDDDDDDDDDDDDDDDDDd:", userId);
-        const data = await withTokenRefresh(
-          (token, userId) => {
-            console.log("accessToken:", token);
-            return fetchDashboardData(token, userId); // Pass userId to the API call
+        // Fetch company UUID first
+        const companyUUID = await withTokenRefresh(
+          async (token) => {
+            return fetchCompanyUUID(token);
           },
+          refreshToken,
+          userId
+        );
+
+        if (!companyUUID) {
+          throw new Error("Failed to load company UUID.");
+        }
+
+        // Use the fetched companyUUID to fetch dashboard data
+        const data = await withTokenRefresh(
+          (token) => fetchDashboardData(token, companyUUID),
           refreshToken,
           userId // Pass userId directly to withTokenRefresh
         );
-        setPayments(data.payments);
+
+        // Set the fetched data to state
         setCustomers(data.customers);
         setCampaigns(data.campaigns);
-        setReferrals(data.referrals);
-        setReferralCodes(data.referralCodes);
+        setPayments(data.payments);
       } catch (err) {
         console.error("Error loading data:", err);
         setError("Failed to load data. Please try again.");
@@ -75,6 +86,7 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
       }
     }
   }, [session?.token, accessToken, refreshToken, withTokenRefresh, userId]);
+
   useEffect(() => {
     if (!sessionLoading) {
       loadData();
@@ -82,22 +94,29 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
   }, [session, sessionLoading, loadData]);
 
   const computePerformanceMetrics = () => {
-    const totalClicks = referrals.length;
-    const totalConversions = referrals.filter(
-      (ref) => ref.conversion === "true"
-    ).length;
-    const totalSpend = referrals.reduce(
-      (acc, ref) => acc + (ref.spend || 0),
+    const totalClicks = customers.reduce(
+      (sum, customer) => sum + customer.click_count,
       0
     );
+    const totalConversions = customers.reduce(
+      (sum, customer) => sum + customer.conversion_count,
+      0
+    );
+
+    const totalSpend = payments.reduce(
+      (sum, payment) => sum + parseFloat(payment.total_price),
+      0
+    );
+
     const conversionRate =
       totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+
     const cpa = totalConversions > 0 ? totalSpend / totalConversions : 0;
 
     return {
       totalClicks,
       totalConversions,
-      totalSpend,
+      totalSpend: totalSpend.toFixed(2),
       conversionRate: conversionRate.toFixed(2),
       cpa: cpa.toFixed(2),
     };
@@ -107,15 +126,15 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
 
   const prioritizeCampaigns = () => {
     const publishedCampaigns = campaigns.filter(
-      (campaign) => campaign.status.toLowerCase() === "published"
+      (campaign) => campaign.status && campaign.status.toLowerCase() === "live"
     );
 
     const otherCampaigns = campaigns
-      .filter((campaign) => campaign.status.toLowerCase() !== "published")
+      .filter((campaign) => (campaign.status ?? "").toLowerCase() !== "live")
       .sort(
         (a, b) =>
-          new Date(b.date_updated).getTime() -
-          new Date(a.date_updated).getTime()
+          new Date(b.date_updated ?? 0).getTime() -
+          new Date(a.date_updated ?? 0).getTime()
       );
 
     return [...publishedCampaigns, ...otherCampaigns].slice(0, 3);
@@ -123,42 +142,34 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
 
   const prioritizedCampaigns = prioritizeCampaigns();
 
-  const mapReferralData = () => {
-    return referrals.map((referral) => {
-      const customer = customers.find((c) => c.id === referral.referrer);
-      const campaign = campaigns.find((c) => c.id === referral.campaign);
-      const referralCode = referralCodes.find(
-        (code) => code.id === referral.referralCode
-      );
-
-      return {
-        id: referral.id,
-        date: new Date(referral.date_created).toLocaleString(),
-        referrer: customer?.name || "N/A",
-        campaign: campaign?.name || "N/A",
-        location: referral.location || "N/A",
-        spend: referral.spend ? `$${referral.spend}` : "No Spend",
-        conversion: referral.conversion === "true" ? "Yes" : "No",
-        referralCode: referralCode?.code || "N/A",
-        test: referral.test || "N/A",
-      };
-    });
-  };
-
-  const latestConversions = mapReferralData().slice(0, 5);
+  // Map the payments data for displaying in Latest Conversions
+  const latestConversions = payments.slice(0, 5).map((payment) => ({
+    date: new Date(payment.date_created).toLocaleString(),
+    referrer: payment.customer_email,
+    conversion: payment.status,
+    spend: `Order #${payment.order_number}`,
+  }));
 
   const latestConversionColumns = [
     { dataIndex: "date", className: "text-left" },
-    { dataIndex: "location", className: "text-left" },
     { dataIndex: "referrer", className: "text-left" },
     { dataIndex: "conversion", className: "text-left" },
     { dataIndex: "spend", className: "text-left" },
   ];
 
+  const parseLocation = (locationString: string | undefined) => {
+    if (!locationString) return "N/A";
+    try {
+      const location = JSON.parse(locationString);
+      return `${location.city}, ${location.country}`;
+    } catch {
+      return "N/A";
+    }
+  };
+
   return (
     <div className={`relative ${sessionLoading || dataLoading ? "blur" : ""}`}>
       {(sessionLoading || dataLoading) && <LoadingOverlay />}
-
       <div className="relative w-full flex justify-center">
         <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 pb-4">
           <ScrollableContainer>
@@ -190,8 +201,7 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
           </ScrollableContainer>
         </div>
       </div>
-
-      <div className="flex flex-auto justify-center items-start max-w-full mx-auto gap-4  flex-col xl:flex-row">
+      <div className="flex flex-auto justify-center items-start max-w-full mx-auto gap-4 flex-col xl:flex-row">
         <div className="flex flex-col justify-start items-start flex-grow gap-8 rounded-2xl contents overflow-x-auto">
           <div className="flex flex-col justify-start items-start xl:overflow-hidden overflow-x-auto gap-4 lg:p-8 p-4 rounded-2xl bg-white xl:w-2/3 w-full">
             <div className="flex justify-between items-center w-full">
@@ -210,11 +220,11 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
               prioritizedCampaigns.map((campaign, index) => (
                 <React.Fragment key={index}>
                   <CampaignItem
-                    imageSrc={campaign.imageSrc || "default-image.png"}
+                    imageSrc={"default-image.png"} // Replacing with a fallback
                     title={campaign.name}
-                    test={campaign.test || "Default Test"}
-                    price={campaign.price ? `$${campaign.price}` : "No Price"}
-                    status={campaign.status}
+                    test={`Start: ${new Date(campaign.startDate!).toLocaleDateString()} `}
+                    price={`$ ${String(campaign.amountFunded)}` || "Unknown"} // Convert to string
+                    status={campaign.status || "Unknown"} // Handle potential undefined status
                     endDate={
                       campaign.closeDate
                         ? `Until ${new Date(
@@ -222,7 +232,7 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
                           ).toLocaleDateString()}`
                         : "No End Date"
                     }
-                    openTo={campaign.openTo || "All"}
+                    openTo={"All"} // Set this to a default value or remove if not relevant
                   />
                   {index < prioritizedCampaigns.length - 1 && (
                     <hr className="w-full border-t border-black/15" />
@@ -235,20 +245,12 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
           </div>
           <div className="flex flex-col justify-start items-start overflow-x-auto sm:overflow-hidden gap-4 p-8 rounded-2xl bg-white xl:w-1/3 w-full flex-grow">
             <ReferralCard
-              data={referrals.slice(0, 4).map((referral) => {
-                const customer = customers.find(
-                  (c) => c.id === referral.referrer
-                );
-                const referralCode = referralCodes.find(
-                  (code) => code.id === referral.referralCode
-                );
-                return {
-                  name: customer?.name || "Unknown",
-                  test: referral.location || "N/A",
-                  code: referralCode?.code || "N/A",
-                  date: new Date(referral.date_created).toLocaleDateString(),
-                };
-              })}
+              data={customers.slice(0, 3).map((customer) => ({
+                name: customer.name || "Unknown",
+                location: parseLocation(customer.location), // Use parsed location
+                email: customer.email || "N/A", // Use email
+                date: new Date(customer.date_created).toLocaleDateString(),
+              }))}
             />
           </div>
         </div>
@@ -256,18 +258,25 @@ const DashboardCampaigns: React.FC<DashboardCampaignsProps> = ({
       {/* Full-width table */}
       <div className="flex flex-col w-full overflow-x-auto xl:overflow-hidden rounded-2xl bg-white text-center shadow-lg mt-4 p-4 mobile-scroll">
         <div className="flex justify-between items-center w-[1024px] lg:w-full p-4">
-          <p className="text-2xl font-medium text-[#10ad1b]">
-            Latest Conversions
-          </p>
+          <p className="text-2xl font-medium text-[#10ad1b]">Payments</p>
+          <Link href="/brand/payments" passHref>
+            <div className="flex items-center gap-1 cursor-pointer">
+              <p className="text-base font-medium text-[#851087]/80">
+                See More
+              </p>
+              <ArrowSeeMoreIcon />
+            </div>
+          </Link>
         </div>
         <DataTableHeader
-          headers={[
-            { title: "Date/Time", align: "left" },
-            { title: "Location", align: "left" },
-            { title: "Referrer", align: "left" },
-            { title: "Conversion", align: "left" },
-            { title: "Spend", align: "left" },
-          ]}
+          headers={{
+            columns: [
+              { title: "Date/Time", align: "center" },
+              { title: "Referrer", align: "center" },
+              { title: "Conversion", align: "center" },
+              { title: "Orders", align: "center" },
+            ],
+          }}
         />
         <DataTableRows
           rowData={latestConversions}

@@ -8,9 +8,12 @@ interface ExpandableInputProps {
   isExpanded: boolean;
   onFocus: () => void;
   onBlur: () => void;
+  style?: React.CSSProperties;
+  name: string;
 }
 
 const ExpandableInput: React.FC<ExpandableInputProps> = ({
+  name,
   type,
   value,
   placeholder,
@@ -21,18 +24,41 @@ const ExpandableInput: React.FC<ExpandableInputProps> = ({
 }) => {
   return (
     <div
-      className={`flex items-center h-10 relative gap-2.5 p-2 rounded-lg bg-white border-[0.5px] w-full ${
-        isExpanded ? "border-blue-500" : "border-black/30"
-      } transition-all duration-200`}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        height: "40px",
+        position: "relative",
+        gap: "10px",
+        padding: "8px",
+        borderRadius: "10px",
+        backgroundColor: "white",
+        border: `0.5px solid ${isExpanded ? "blue" : "rgba(0, 0, 0, 0.3)"}`,
+        width: "100%",
+        transition: "all 0.2s",
+        boxShadow: "none",
+        outline: "none",
+      }}
     >
       <input
+        name={name}
         type={type}
         value={value}
         placeholder={placeholder}
         onChange={onChange}
         onFocus={onFocus}
         onBlur={onBlur}
-        className="flex-grow text-sm text-left text-black placeholder-black/50 p-2 outline-none"
+        style={{
+          flexGrow: 1,
+          fontSize: "14px",
+          textAlign: "left",
+          color: "black",
+          padding: "8px",
+          outline: "none",
+          border: "none",
+          backgroundColor: "transparent",
+          boxShadow: "none",
+        }}
         required
       />
     </div>

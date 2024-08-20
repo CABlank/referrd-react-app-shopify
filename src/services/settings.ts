@@ -3,6 +3,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 // Interface defining the shape of the Settings object
 export interface Settings {
   id?: number;
+  contactName: string;
   brandName: string;
   mobile: string;
   email: string;
@@ -54,3 +55,10 @@ export const updateSettings = (
   token: string
 ): Promise<Settings> =>
   fetchFromAPI(`/items/settings/${settings.id}`, "PATCH", token, settings);
+
+// Function to create settings using the helper function
+export const createSettings = (
+  settings: Settings,
+  token: string
+): Promise<Settings> =>
+  fetchFromAPI("/items/settings", "POST", token, settings);

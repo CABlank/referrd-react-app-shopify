@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import { Redirect } from "@shopify/app-bridge/actions"; // Import Redirect from Shopify App Bridge
 import CalendarIcon from "../../../components/Icons/CalendarIcon";
 import DeleteIcon from "../../../components/Icons/DeleteIcon";
 import EditIcon from "../../../components/Icons/EditIcon";
-import QRCode from "qrcode.react";
 import PaymentFormInline from "../../../components/campaign/PaymentFormInline";
 import StripeWrapper from "../../../components/campaign/StripeWrapper";
+import QRCode from "qrcode.react";
+
 import {
   deleteCampaign,
   updateCampaignStatus,
@@ -13,7 +15,7 @@ import {
   Campaign,
   fetchCampaigns,
 } from "../../../services/campaign/campaign";
-import { useSession } from "../../../contexts/SessionContext";
+import { useSession } from "../../../context/SessionContext";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import CampaignItemIconSmall from "../../../components/Icons/CampaignItemIconSmall";
 import DoubleMoneyIcon from "../../../components/Icons/DoubleMoneyIcon";
@@ -21,7 +23,8 @@ import LiveStatusIcon from "@/components/Icons/LiveStatusIcon";
 import EndedStatusIcon from "@/components/Icons/EndedStatusIcon";
 import DraftStatusIcon from "@/components/Icons/DraftStatusIcon";
 import PendingStatusIcon from "@/components/Icons/PendingStatusIcon";
-import sessionLoadCheckerUtil from "../../../utils/middleware/sessionLoadCheckerUtil";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
+
 import {
   GetServerSideProps,
   GetServerSidePropsContext,
@@ -33,6 +36,8 @@ interface CampaignIndexProps {
   refreshToken?: string;
   title: string;
   userId?: number;
+  shop?: string;
+  host?: string;
 }
 
 const CampaignIndex: React.FC<CampaignIndexProps> = ({
@@ -40,6 +45,8 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
   refreshToken,
   title,
   userId,
+  shop,
+  host,
 }) => {
   const router = useRouter();
   const { session, withTokenRefresh } = useSession();
@@ -51,7 +58,6 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
   const [deleting, setDeleting] = useState(false);
   const [showQRPopup, setShowQRPopup] = useState<number | null>(null);
   const loadExecutedRef = useRef(false);
-  console.log("userId:", userId);
 
   useEffect(() => {
     const loadCampaigns = async () => {
@@ -60,7 +66,6 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
         loadExecutedRef.current = true;
 
         try {
-          console.log("userIDDDDDDDDDDDDDDDDDDDDDDDd:", userId);
           const campaignsData = await withTokenRefresh(
             (token) => fetchCampaigns(token),
             refreshToken,
@@ -109,19 +114,20 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
     loadCampaigns();
   }, [session, accessToken, refreshToken, withTokenRefresh]);
 
+  // Handle campaign deletion
   const handleDelete = async () => {
     if ((session?.token || accessToken) && deleteCampaignId !== null) {
       setDeleting(true);
       try {
         await withTokenRefresh(
           (token) => deleteCampaign(deleteCampaignId, token),
-          refreshToken
+          refreshToken,
+          userId // Pass userId here
         );
         setShowDeletePopup(false);
         setDeleteCampaignId(null);
         setDeleting(false);
-        // Reload the page
-        router.reload();
+        router.reload(); // Reload the page after deletion
       } catch (err) {
         setDeleting(false);
         console.error("Error deleting campaign:", err);
@@ -129,6 +135,7 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
     }
   };
 
+  // Handle campaign creation
   const handleCreateCampaign = async () => {
     if (session?.token || accessToken) {
       setLoading(true);
@@ -149,9 +156,21 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
         };
         const createdCampaign = await withTokenRefresh(
           (token) => createCampaign(newCampaign, token),
-          refreshToken
+          refreshToken,
+          userId // Pass userId here
         );
-        router.push(`/brand/campaigns/edit?campaignId=${createdCampaign.id}`);
+
+        // Use Shopify App Bridge for navigation if in Shopify
+        if (shop && host) {
+          const appBridge = window.shopify;
+          const redirect = Redirect.create(appBridge);
+          redirect.dispatch(
+            Redirect.Action.APP,
+            `/brand/campaigns/edit?campaignId=${createdCampaign.id}&shop=${shop}&host=${host}`
+          );
+        } else {
+          router.push(`/brand/campaigns/edit?campaignId=${createdCampaign.id}`);
+        }
       } catch (err) {
         console.error("Error creating campaign:", err);
         setError("Failed to create campaign. Please try again.");
@@ -275,11 +294,20 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
                 </div>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() =>
-                      router.push(
-                        `/brand/campaigns/edit?campaignId=${campaign.id}`
-                      )
-                    }
+                    onClick={() => {
+                      if (shop && host) {
+                        const appBridge = window.shopify;
+                        const redirect = Redirect.create(appBridge);
+                        redirect.dispatch(
+                          Redirect.Action.APP,
+                          `/brand/campaigns/edit?campaignId=${campaign.id}&shop=${shop}&host=${host}`
+                        );
+                      } else {
+                        router.push(
+                          `/brand/campaigns/edit?campaignId=${campaign.id}`
+                        );
+                      }
+                    }}
                     className="p-2 bg-gray-200 rounded-full hover:bg-gray-300"
                   >
                     <EditIcon />
@@ -378,7 +406,7 @@ export const getServerSideProps: GetServerSideProps<
 > = async (
   context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<CampaignIndexProps>> => {
-  const result = await sessionLoadCheckerUtil(context);
+  const result = await initialLoadChecker(context);
 
   if ("redirect" in result || "notFound" in result) {
     return result;

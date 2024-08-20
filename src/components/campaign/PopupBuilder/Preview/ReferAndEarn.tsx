@@ -12,11 +12,10 @@ interface ReferAndEarnProps {
     imageWidth?: string;
     imageHeight?: string;
     borderRadius?: string;
-    objectFit?: "none" | "cover" | "contain" | "fill" | "scale-down"; // Ensure correct type
+    objectFit?: "none" | "cover" | "contain" | "fill" | "scale-down";
     centerImage?: boolean;
   };
   view: "desktop" | "mobile";
-  onSubmit: (name: string, email: string, number: string) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -26,7 +25,6 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
   imageUrl,
   imageProps = {},
   view,
-  onSubmit,
 }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -41,12 +39,6 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
     setIsExpanded(null);
   };
 
-  const handleFormSubmit = () => {
-    onSubmit(name, email, number);
-
-    window.parent.postMessage("goToStep2", "*");
-  };
-
   const [{ isOver }, drop] = useDrop({
     accept: ItemTypes.IMAGE,
     drop: (item: { url: string }) => {},
@@ -55,101 +47,90 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
     }),
   });
 
+  const shouldRenderContent = true; // Replace with your actual conditional logic
+
   const defaultImageProps = {
     imageWidth: "100%",
     imageHeight: "100%",
     borderRadius: "0",
-    objectFit: "cover" as "cover", // Ensuring objectFit is one of the specific string literals
+    objectFit: "cover" as const,
     centerImage: false,
   };
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: view === "mobile" ? "column" : "row",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-        height: "100%",
-        position: "relative",
-        overflow: "hidden",
-        borderRadius: "1rem",
-      }}
-    >
-      {imagePosition !== "None" && (
-        <div
-          ref={drop as unknown as React.RefObject<HTMLDivElement>} // Correctly cast ref
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "relative",
-            overflow: "hidden",
-            width: view === "mobile" ? "100%" : "50%",
-            height: view === "mobile" ? "16rem" : "100%",
-            order:
-              view === "mobile"
-                ? imagePosition === "Left"
-                  ? 1
-                  : 2
-                : imagePosition === "Left"
-                  ? 1
-                  : 2,
-            border: isOver ? "2px dashed #ccc" : "0px solid transparent",
-          }}
-        >
-          {imageUrl ? (
-            <ImageElement
-              id={""}
-              type={"image"}
-              imageUrl={imageUrl}
-              {...defaultImageProps}
-              {...imageProps}
-            />
-          ) : (
-            <div style={{ color: "#A3A3A3" }}>Drag and drop an image here</div>
-          )}
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: view === "mobile" ? "column" : "row",
-          width:
-            view === "mobile"
-              ? "100%"
-              : imagePosition === "None"
-                ? "100%"
-                : "50%",
-          justifyContent: "center",
-          alignItems: "center",
-          order: 1,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            width: "100%",
-            padding: "1rem",
-          }}
-        >
+  // Function to render the inner content
+  const renderInnerContent = () => {
+    return (
+      <>
+        {imagePosition !== "None" && (
           <div
+            ref={drop as unknown as React.RefObject<HTMLDivElement>}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              position: "relative",
+              overflow: "hidden",
+              width: view === "mobile" ? "100%" : "50%",
+              height: view === "mobile" ? "16rem" : "100%",
+              order:
+                view === "mobile"
+                  ? imagePosition === "Left"
+                    ? 1
+                    : 2
+                  : imagePosition === "Left"
+                    ? 1
+                    : 2,
+              border: isOver ? "2px dashed #ccc" : "0px solid transparent",
+              outline: "none",
+              boxShadow: "none",
+            }}
+          >
+            {imageUrl ? (
+              <ImageElement
+                id={""}
+                type={"image"}
+                imageUrl={imageUrl}
+                {...defaultImageProps}
+                {...imageProps}
+              />
+            ) : (
+              <div
+                style={{ color: "#A3A3A3", outline: "none", boxShadow: "none" }}
+              >
+                Drag and drop an image here
+              </div>
+            )}
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "inherit",
+            width:
+              view === "mobile"
+                ? "100%"
+                : imagePosition === "None"
+                  ? "100%"
+                  : "50%",
+            justifyContent: "center",
+            alignItems: "center",
+            order: 1,
+            outline: "none",
+            boxShadow: "none",
+          }}
+        >
+          <form
+            method="post"
             style={{
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
-              flexGrow: 0,
-              flexShrink: 0,
-              position: "relative",
-              gap: "8px",
-              paddingBottom: "1rem",
-              textAlign: view === "mobile" ? "center" : "left",
+              width: "100%",
+              padding: "1rem",
+              outline: "none",
+              boxShadow: "none",
             }}
           >
             <div
@@ -158,104 +139,168 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
                 flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
-                alignSelf: "stretch", // Changed from selfStretch to alignSelf
                 flexGrow: 0,
                 flexShrink: 0,
-                gap: "8px",
-              }}
-            >
-              {children}
-            </div>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              alignSelf: "stretch", // Changed from selfStretch to alignSelf
-              flexGrow: 0,
-              flexShrink: 0,
-              gap: "8px",
-            }}
-          >
-            <ExpandableInput
-              type="text"
-              value={name}
-              placeholder="Name"
-              onChange={(e) => setName(e.target.value)}
-              isExpanded={isExpanded === "name"}
-              onFocus={() => handleFocus("name")}
-              onBlur={handleBlur}
-            />
-            <ExpandableInput
-              type="email"
-              value={email}
-              placeholder="Email"
-              onChange={(e) => setEmail(e.target.value)}
-              isExpanded={isExpanded === "email"}
-              onFocus={() => handleFocus("email")}
-              onBlur={handleBlur}
-            />
-            <ExpandableInput
-              type="tel"
-              value={number}
-              placeholder="Phone"
-              onChange={(e) => setNumber(e.target.value)}
-              isExpanded={isExpanded === "number"}
-              onFocus={() => handleFocus("number")}
-              onBlur={handleBlur}
-            />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              alignSelf: "stretch", // Changed from selfStretch to alignSelf
-              flexGrow: 0,
-              flexShrink: 0,
-              gap: "16px",
-              paddingTop: "0.625rem",
-            }}
-          >
-            <button
-              onClick={handleFormSubmit}
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                alignSelf: "stretch", // Changed from selfStretch to alignSelf
-                flexGrow: 0,
-                flexShrink: 0,
-                height: "2.5rem",
                 position: "relative",
                 gap: "8px",
-                paddingLeft: "1.5rem",
-                paddingRight: "1.5rem",
-                paddingTop: "0.625rem",
-                paddingBottom: "0.625rem",
-                borderRadius: "0.625rem",
-                backgroundColor: "#e3a16880",
+                paddingBottom: "1rem",
+                textAlign: view === "mobile" ? "center" : "left",
+                outline: "none",
+                boxShadow: "none",
               }}
             >
-              <span
+              <div
                 style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  alignSelf: "stretch",
                   flexGrow: 0,
                   flexShrink: 0,
-                  textAlign: "center",
-                  color: "white",
-                  fontSize: view === "mobile" ? "0.875rem" : "1rem",
-                  fontWeight: "500",
+                  gap: "8px",
+                  outline: "none",
+                  boxShadow: "none",
                 }}
               >
-                Submit
-              </span>
-            </button>
-          </div>
+                {children}
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                alignSelf: "stretch",
+                flexGrow: 0,
+                flexShrink: 0,
+                gap: "8px",
+                outline: "none",
+                boxShadow: "none",
+              }}
+            >
+              <ExpandableInput
+                type="text"
+                name="name"
+                value={name}
+                placeholder="Name"
+                onChange={(e) => setName(e.target.value)}
+                isExpanded={isExpanded === "name"}
+                onFocus={() => handleFocus("name")}
+                onBlur={handleBlur}
+                style={{
+                  outline: "none",
+                  boxShadow: "none",
+                }}
+              />
+              <ExpandableInput
+                name="email"
+                type="email"
+                value={email}
+                placeholder="Email"
+                onChange={(e) => setEmail(e.target.value)}
+                isExpanded={isExpanded === "email"}
+                onFocus={() => handleFocus("email")}
+                onBlur={handleBlur}
+                style={{
+                  outline: "none",
+                  boxShadow: "none",
+                }}
+              />
+              <ExpandableInput
+                name="number"
+                type="tel"
+                value={number}
+                placeholder="Phone"
+                onChange={(e) => setNumber(e.target.value)}
+                isExpanded={isExpanded === "number"}
+                onFocus={() => handleFocus("number")}
+                onBlur={handleBlur}
+                style={{
+                  outline: "none",
+                  boxShadow: "none",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                alignSelf: "stretch",
+                flexGrow: 0,
+                flexShrink: 0,
+                gap: "16px",
+                paddingTop: "0.625rem",
+                outline: "none",
+                boxShadow: "none",
+              }}
+            >
+              <button
+                id="submit-button"
+                style={{
+                  cursor: "pointer",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  alignSelf: "stretch",
+                  flexGrow: 0,
+                  flexShrink: 0,
+                  height: "2.5rem",
+                  position: "relative",
+                  gap: "8px",
+                  paddingLeft: "1.5rem",
+                  paddingRight: "1.5rem",
+                  paddingTop: "0.625rem",
+                  paddingBottom: "0.625rem",
+                  borderRadius: "0.625rem",
+                  backgroundColor: "#e3a16880",
+                  outline: "none",
+                  boxShadow: "none",
+                  border: "none",
+                }}
+              >
+                <span
+                  style={{
+                    flexGrow: 0,
+                    flexShrink: 0,
+                    textAlign: "center",
+                    color: "white",
+                    fontSize: view === "mobile" ? "0.875rem" : "1rem",
+                    fontWeight: "500",
+                    outline: "none",
+                    boxShadow: "none",
+                  }}
+                >
+                  Submit
+                </span>
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
+      </>
+    );
+  };
+
+  return (
+    <div
+      style={{
+        display: view === "mobile" ? "grid" : "flex",
+        flexDirection: "inherit",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "1rem",
+        outline: "none",
+        boxShadow: "none",
+      }}
+    >
+      {shouldRenderContent && renderInnerContent()}
     </div>
   );
 };

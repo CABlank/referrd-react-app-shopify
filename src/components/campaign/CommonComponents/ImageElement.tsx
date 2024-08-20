@@ -1,15 +1,5 @@
 import React from "react";
 import { ImageElementProps } from "./Types";
-import styled from "styled-components";
-
-const StyledImage = styled.img<Partial<ImageElementProps>>`
-  width: ${({ imageWidth }) => imageWidth || "100%"};
-  height: ${({ imageHeight }) => imageHeight || "100%"};
-  border-radius: ${({ borderRadius }) => `${borderRadius}px` || "0"};
-  object-fit: ${({ objectFit }) => objectFit || "cover"};
-  display: ${({ centerImage }) => (centerImage ? "block" : "inline-block")};
-  margin: ${({ centerImage }) => (centerImage ? "0 auto" : "initial")};
-`;
 
 interface ImageElementComponentProps extends ImageElementProps {
   imageUrl: string;
@@ -17,19 +7,30 @@ interface ImageElementComponentProps extends ImageElementProps {
 
 const ImageElement: React.FC<ImageElementComponentProps> = ({
   imageUrl,
+  imageWidth = "100%",
+  imageHeight = "100%",
+  borderRadius = "0",
+  objectFit = "cover",
+  centerImage = false,
   ...props
 }) => {
-  const processedProps = {
-    ...props,
-    imageWidth: props.imageWidth?.includes("%")
-      ? props.imageWidth
-      : `${props.imageWidth}%`,
-    imageHeight: props.imageHeight?.includes("%")
-      ? props.imageHeight
-      : `${props.imageHeight}%`,
+  const processedImageWidth = imageWidth.includes("%")
+    ? imageWidth
+    : `${imageWidth}%`;
+  const processedImageHeight = imageHeight.includes("%")
+    ? imageHeight
+    : `${imageHeight}%`;
+
+  const style = {
+    width: processedImageWidth,
+    height: processedImageHeight,
+    borderRadius: `${borderRadius}px`,
+    objectFit,
+    display: centerImage ? "block" : "inline-block",
+    margin: centerImage ? "0 auto" : "initial",
   };
 
-  return <StyledImage src={imageUrl} alt="Image" {...processedProps} />;
+  return <img src={imageUrl} alt="Image" style={style} {...props} />;
 };
 
 export const defaultImageProps: Partial<ImageElementProps> = {

@@ -12,11 +12,6 @@ export default async function handler(
   if (req.method === "POST") {
     const { campaignId, amountFunded, token, oldAmount } = req.body; // Retrieve the token from the request body
 
-    console.log(`Creating checkout session for campaign ${campaignId}`);
-    console.log(`Amount: ${amountFunded}`);
-    console.log(`Token: ${token}`);
-    console.log(`Old Amount: ${oldAmount}`);
-
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],

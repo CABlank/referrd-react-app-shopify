@@ -29,7 +29,7 @@ const createDefaultButtonElement = (
 ): ButtonElementProps => {
   return {
     ...defaultButtonProps,
-    id: `button-${Date.now()}`,
+    id: `submit-button`,
     type: "button",
     buttonText: defaultButtonProps.buttonText || "Join Us",
     buttonLink: "#",
@@ -67,6 +67,8 @@ const createDefaultInputElement = (
   inputType: "text" | "email" | "tel",
   placeholder: string
 ): InputElementProps => {
+  const name =
+    inputType === "text" ? "name" : inputType === "email" ? "email" : "phone";
   return {
     id: `input-${inputType}-${Date.now()}`,
     type: "input",
@@ -76,6 +78,7 @@ const createDefaultInputElement = (
     textcolor: "#FFFFFF",
     borderwidth: 1,
     borderradius: 8,
+    name: name, // Assigning the name based on inputType
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {},
   };
 };
@@ -100,10 +103,8 @@ const StepOne: React.FC<StepOneProps> = ({
   const initialRender = useRef(true);
 
   const handleSubmit = useCallback(() => {
-    console.log("handleSubmit called");
     const uniqueUrl = `https://example.com/?name=${name}&email=${email}&number=${number}`;
     setUrl(uniqueUrl);
-    console.log("URL set to:", uniqueUrl);
 
     window.parent.postMessage("goToStep2", "*");
 
@@ -118,14 +119,10 @@ const StepOne: React.FC<StepOneProps> = ({
         },
       } as unknown as TextElementProps;
       setElements((prevElements) => [...prevElements, newElement]);
-      console.log("New element added in mobile view:", newElement);
     }
 
     if (allowStepChange) {
       setStep(2);
-      console.log("Step changed to 2");
-    } else {
-      console.log("Step change not allowed");
     }
   }, [
     name,
@@ -143,15 +140,11 @@ const StepOne: React.FC<StepOneProps> = ({
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = sanitizeInput(e.target.value);
         setter(value);
-        console.log(`Changing ${type} to ${value}`);
       },
     []
   );
 
   useEffect(() => {
-    console.log(
-      `StepOne useEffect triggered, elements.length: ${elements.length}`
-    );
     if (initialRender.current && elements.length === 0) {
       initialRender.current = false;
       const preloadedInputs: InputElementProps[] = [
@@ -160,28 +153,32 @@ const StepOne: React.FC<StepOneProps> = ({
         createDefaultInputElement("tel", "Number"),
       ];
 
-      const newButtonElement = createDefaultButtonElement(handleSubmit, true); // Set isPreloaded to true
-      console.log("Setting initial elements:", [
-        ...preloadedInputs,
-        newButtonElement,
-      ]);
+      const newButtonElement = createDefaultButtonElement(handleSubmit, true);
+
       setElements([...preloadedInputs, newButtonElement]);
     }
   }, [elements.length, handleSubmit, setElements]);
 
-  useEffect(() => {
-    console.log("Updated elements in StepOne:", elements);
-  }, [elements]);
-
   return (
     <>
-      <div className="flex justify-center items-center flex-grow-0 flex-shrink-0 gap-0">
+      <form
+        method="post"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexGrow: 0,
+          flexShrink: 0,
+          gap: "0px",
+          outline: "none",
+          boxShadow: "none",
+        }}
+      >
         {elements.map((element, index) => {
           if (!element || !("id" in element)) {
             console.error("Invalid element at index:", index, element);
             return null;
           }
-          console.log("Rendering element in ElementWrapper:", element);
           return (
             <ElementWrapper
               key={element.id}
@@ -202,17 +199,22 @@ const StepOne: React.FC<StepOneProps> = ({
               expandedId={expandedId}
               onExpand={setExpandedId}
               handleChange={handleChange}
-              handleSubmit={handleSubmit} // Pass handleSubmit
+              handleSubmit={handleSubmit}
             />
           );
         })}
         {hoverIndex === elements.length && (
           <div
             className="flex-shrink-0"
-            style={{ width: elementWidth, borderRight: "2px solid red" }}
+            style={{
+              width: elementWidth,
+              borderRight: "2px solid red",
+              outline: "none",
+              boxShadow: "none",
+            }}
           />
         )}
-      </div>
+      </form>
     </>
   );
 };

@@ -2,9 +2,11 @@ import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import bcrypt from "bcrypt";
 import { RequestedTokenType } from "@shopify/shopify-api";
 import shopify from "../shopify/shopifyClient";
-import prisma from "../database/prismaClient";
+import { PrismaClient } from "@prisma/client";
 import authService from "../../services/auth/auth";
 import jwtValidator from "../jwt/jwtValidator";
+
+const prisma = new PrismaClient();
 
 interface Context extends GetServerSidePropsContext {
   query: {
@@ -19,12 +21,56 @@ interface JwtPayload {
   [key: string]: any; // Include any additional properties
 }
 
-const decodeAndVerifyToken = (token: string): JwtPayload => {
-  const decodedPayload = jwtValidator(token) as JwtPayload;
+// Function to check if session is still valid
+const isSessionValid = (session: any) => {
+  return (
+    session &&
+    session.accessToken &&
+    (!session.expires || new Date(session.expires) > new Date())
+  );
+};
+
+const decodeAndVerifyToken = async (
+  token: string,
+  shop: string
+): Promise<JwtPayload> => {
+  let decodedPayload: JwtPayload;
+
+  try {
+    decodedPayload = jwtValidator(token) as JwtPayload;
+  } catch (error) {
+    throw new Error("Token validation failed");
+  }
+
   const currentTime = Math.floor(Date.now() / 1000);
   if (currentTime > decodedPayload.exp) {
-    throw new Error("Token has expired");
+    console.log("Token has expired, refreshing...");
+
+    // Refresh the token
+    const tokenExchange = shopify.auth.tokenExchange;
+
+    const { session: offlineSession } = await tokenExchange({
+      sessionToken: token,
+      shop,
+      requestedTokenType: RequestedTokenType.OfflineAccessToken,
+    });
+    console.log("New offline session obtained:", offlineSession);
+
+    const { session: onlineSession } = await tokenExchange({
+      sessionToken: token,
+      shop,
+      requestedTokenType: RequestedTokenType.OnlineAccessToken,
+    });
+    console.log("New online session obtained:", onlineSession);
+
+    // Assuming you want to use the online session's token
+    if (onlineSession.accessToken) {
+      return jwtValidator(onlineSession.accessToken) as JwtPayload;
+    } else {
+      throw new Error("Access token is undefined");
+    }
   }
+
   return decodedPayload;
 };
 
@@ -70,7 +116,7 @@ const handleError = (message: string, error?: unknown) => {
     props: {
       serverError: true,
     },
-  };
+  } as GetServerSidePropsResult<{ [key: string]: any }>;
 };
 
 const upsertUser = async (
@@ -206,16 +252,21 @@ const initialLoadChecker = async (
   try {
     const { shop, id_token: idToken } = context.query;
 
-    // Check if we are running inside a Shopify app
-    if (!shop) {
-      console.log("Not a Shopify app, skipping Shopify-specific logic.");
+    // Log the incoming query parameters
+    console.log("Received query parameters:", context.query);
+
+    // Validate 'shop' parameter
+    if (!shop || Array.isArray(shop) || !shop.endsWith(".myshopify.com")) {
+      console.error("Invalid or missing 'shop' parameter:", shop);
       return {
         props: {
-          data: "not_shopify",
+          serverError: true,
+          errorMessage: `Invalid or missing 'shop' parameter: ${shop}`,
         },
       };
     }
 
+    // Validate 'idToken'
     if (!idToken) {
       console.log("Missing idToken, redirecting...");
       return {
@@ -229,36 +280,71 @@ const initialLoadChecker = async (
     console.log("Shop:", shop);
     console.log("ID Token:", idToken);
 
-    const decodedToken = decodeAndVerifyToken(idToken);
-    const userId = context.req.cookies?.userId || "some_logic_to_get_user_id";
+    // Decode and verify the token, including handling expiration
+    const decodedToken = await decodeAndVerifyToken(idToken, shop);
 
+    const userId = context.req.cookies?.userId || "some_logic_to_get_user_id";
     if (!userId) {
       throw new Error("User ID is required and could not be determined.");
     }
-    console.log("User ID:", userId);
 
+    console.log("User ID:", userId);
     console.log("Performing token exchange...");
 
-    const tokenExchange = shopify.auth.tokenExchange;
-
-    const { session: offlineSession } = await tokenExchange({
-      sessionToken: idToken,
-      shop,
-      requestedTokenType: RequestedTokenType.OfflineAccessToken,
+    // Check if a valid session already exists before performing a token exchange
+    const existingOfflineSession = await prisma.session.findFirst({
+      where: { sessionId: `offline_${shop}` },
     });
-    console.log("Offline session obtained:", offlineSession);
-
-    const { session: onlineSession } = await tokenExchange({
-      sessionToken: idToken,
-      shop,
-      requestedTokenType: RequestedTokenType.OnlineAccessToken,
+    const existingOnlineSession = await prisma.session.findFirst({
+      where: { sessionId: `${shop}_${userId}` },
     });
-    console.log("Online session obtained:", onlineSession);
 
-    await upsertSession(offlineSession, shop);
-    await upsertSession(onlineSession, shop);
+    let offlineSession, onlineSession;
+
+    if (isSessionValid(existingOfflineSession)) {
+      console.log("Using cached offline session.");
+      offlineSession = existingOfflineSession;
+    } else {
+      const tokenExchange = shopify.auth.tokenExchange;
+      offlineSession = (
+        await tokenExchange({
+          sessionToken: idToken,
+          shop,
+          requestedTokenType: RequestedTokenType.OfflineAccessToken,
+        })
+      ).session;
+      console.log("Offline session obtained:", offlineSession);
+      await upsertSession(offlineSession, shop);
+    }
+
+    if (isSessionValid(existingOnlineSession)) {
+      console.log("Using cached online session.");
+      onlineSession = existingOnlineSession;
+    } else {
+      const tokenExchange = shopify.auth.tokenExchange;
+      onlineSession = (
+        await tokenExchange({
+          sessionToken: idToken,
+          shop,
+          requestedTokenType: RequestedTokenType.OnlineAccessToken,
+        })
+      ).session;
+      console.log("Online session obtained:", onlineSession);
+      await upsertSession(onlineSession, shop);
+    }
+
+    // Ensure the online session contains an access token
+    if (
+      !onlineSession ||
+      !("accessToken" in onlineSession) ||
+      !onlineSession.accessToken
+    ) {
+      throw new Error("Online session does not have an access token.");
+    }
 
     console.log("Fetching shop details to get the owner's email...");
+
+    // Use the online session to make an API request
     const client = new shopify.clients.Graphql({ session: onlineSession });
 
     const QUERY = `{
@@ -268,6 +354,7 @@ const initialLoadChecker = async (
       }
     }`;
 
+    // Execute the GraphQL query
     const response = await client.request(QUERY);
     const shopDetails = response.data;
 
@@ -281,6 +368,7 @@ const initialLoadChecker = async (
 
     console.log("Shop owner's email:", ownerEmail);
 
+    // Upsert user information in the database
     await upsertUser(ownerEmail, ownerFirstName, ownerLastName);
 
     // Find the user ID to save tokens
@@ -303,7 +391,7 @@ const initialLoadChecker = async (
     console.log("Obtained Directus Tokens:", { accessToken, refreshToken });
 
     // Save Directus tokens in the database
-    const expiresAt = new Date(); // Set the correct expiration time based on your requirements
+    const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1); // Example: tokens expire in 1 hour
     await saveDirectusTokens(user.id, accessToken, refreshToken, expiresAt);
 
@@ -315,10 +403,22 @@ const initialLoadChecker = async (
       },
     };
   } catch (error) {
+    if ((error as any).response?.code === 401) {
+      console.error(
+        `Unauthorized access when fetching data from Shopify: ${(error as any).response.statusText}`,
+        (error as any).response
+      );
+    } else {
+      console.error(
+        `An error occurred at initialLoadChecker: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        error
+      );
+    }
+
     return handleError(
-      `An error occurred at initialLoadChecker: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
+      "An error occurred while processing your request.",
       error
     );
   }

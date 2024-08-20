@@ -2,17 +2,34 @@ import React from "react";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 import useSettings from "../../hooks/useSettings";
 import SettingsForm from "../../components/Settings/SettingsForm";
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker";
+import {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  GetServerSidePropsResult,
+} from "next";
 
-// Main Settings component
-const Settings: React.FC = () => {
-  // Use custom hook to manage settings state and actions
-  const { settings, loading, error, handleChange, handleSave } = useSettings();
+interface SettingsProps {
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+  title: string;
+}
+
+const Settings: React.FC<SettingsProps> = ({
+  accessToken,
+  refreshToken,
+  userId,
+}) => {
+  const { settings, loading, error, handleChange, handleSave } = useSettings({
+    accessToken,
+    refreshToken,
+    userId,
+  });
 
   return (
     <div className={`relative ${loading ? "blur" : ""}`}>
-      {/* Show loading overlay if loading */}
       {loading && <LoadingOverlay />}
-      {/* Render SettingsForm with necessary props */}
       <SettingsForm
         settings={settings}
         error={error}
@@ -21,6 +38,31 @@ const Settings: React.FC = () => {
       />
     </div>
   );
+};
+
+export const getServerSideProps: GetServerSideProps<SettingsProps> = async (
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<SettingsProps>> => {
+  const result = await initialLoadChecker(context);
+
+  if ("redirect" in result || "notFound" in result) {
+    return result;
+  }
+
+  if (!("props" in result)) {
+    return {
+      props: {
+        title: "Settings",
+      },
+    };
+  }
+
+  return {
+    props: {
+      ...result.props,
+      title: "Settings",
+    },
+  };
 };
 
 export default Settings;

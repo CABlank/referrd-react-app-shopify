@@ -1,4 +1,4 @@
-import React, { useState, useRef, LegacyRef } from "react";
+import React, { useState, useRef, useEffect, LegacyRef } from "react";
 import { useDrop, DropTargetMonitor } from "react-dnd";
 import {
   ElementProps,
@@ -17,8 +17,8 @@ const defaultImageProps = {
   imageUrl: "",
   imageWidth: "100",
   imageHeight: "100",
-  borderRadius: "0", // Changed to string
-  objectFit: "cover" as "cover", // Ensuring objectFit is one of the specific string literals
+  borderRadius: "0",
+  objectFit: "cover" as "cover",
   centerImage: false,
 };
 
@@ -32,6 +32,7 @@ interface PopupPreviewProps {
   step: number;
   onImageAdd: () => void;
   setStep: React.Dispatch<React.SetStateAction<number>>;
+  onElementsChange?: () => void; // Make the onElementsChange prop optional
 }
 
 const PopupPreview: React.FC<PopupPreviewProps> = ({
@@ -44,11 +45,30 @@ const PopupPreview: React.FC<PopupPreviewProps> = ({
   step,
   onImageAdd,
   setStep,
+  onElementsChange = () => {}, // Provide a default empty function implementation
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [imageRecentlyAdded, setImageRecentlyAdded] = useState(false);
-  const [url, setUrl] = useState<string>(""); // Add url state
+  const [url, setUrl] = useState<string>("");
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === "goToStep2") {
+        setStep(2);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [setStep]);
+
+  useEffect(() => {
+    onElementsChange();
+  }, [step, stepOneElements, stepTwoElements, onElementsChange]);
 
   const imageExists = (elements: ElementProps[]) => {
     return elements.some((element) => element.type === "image");
@@ -84,7 +104,7 @@ const PopupPreview: React.FC<PopupPreviewProps> = ({
 
       const hoverBoundingRect = containerRef.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
-      if (!clientOffset) return; // Check if clientOffset is defined
+      if (!clientOffset) return;
       const hoverClientX = clientOffset.x - hoverBoundingRect.left;
       let newHoverIndex = Math.floor(
         (hoverClientX / hoverBoundingRect.width) *
@@ -141,7 +161,7 @@ const PopupPreview: React.FC<PopupPreviewProps> = ({
             marginRight: "0",
             marginBottom: "0",
             marginLeft: "0",
-          }; // Ensure all required properties are strings
+          };
         } else if (item.type === ItemTypes.BUTTON_ELEMENT) {
           newElement = {
             id: uuidv4(),
@@ -173,7 +193,7 @@ const PopupPreview: React.FC<PopupPreviewProps> = ({
             hoverTextColor: "",
             hoverBorderColor: "",
             buttonAlign: "flex-start",
-          }; // Ensure all required properties are strings
+          };
         } else if (item.type === ItemTypes.DIVIDER_ELEMENT) {
           newElement = {
             id: uuidv4(),
@@ -244,76 +264,73 @@ const PopupPreview: React.FC<PopupPreviewProps> = ({
   };
 
   return (
-    <div
-      ref={drop as unknown as LegacyRef<HTMLDivElement>}
-      className={`popup-preview flex items-center justify-center relative ${
-        isOver ? "bg-gray-100" : ""
-      }`}
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <div>
       <div
-        className={`flex h-full items-center justify-center ${
-          config.ImagePosition === "Left" ? "flex-row-reverse" : ""
-        }`}
-        ref={containerRef}
+        ref={drop as unknown as LegacyRef<HTMLDivElement>}
+        className={`popup-preview flex items-center justify-center relative ${isOver ? "bg-gray-100" : ""}`}
         style={{
-          flexWrap: "nowrap",
-          overflowX: view === "desktop" ? "hidden" : "hidden",
-          overflowY: "hidden",
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <div
-          className="popup-content"
-          style={view === "desktop" ? desktopStyle : mobileStyle}
+          className={`flex h-full items-center justify-center ${config.ImagePosition === "Left" ? "flex-row-reverse" : ""}`}
+          ref={containerRef}
+          style={{
+            flexWrap: "nowrap",
+            overflowX: "hidden",
+            overflowY: "hidden",
+          }}
         >
-          {step === 1 && (
-            <StepOne
-              elements={stepOneElements}
-              setElements={setStepOneElements}
-              moveElement={(dragIndex, hoverIndex) =>
-                moveElement(
-                  stepOneElements,
-                  setStepOneElements,
-                  dragIndex,
-                  hoverIndex
-                )
-              }
-              hoverIndex={hoverIndex}
-              elementWidth={elementWidth}
-              onRemove={handleRemoveElement}
-              imagePosition={config.ImagePosition}
-              view={view}
-              setUrl={setUrl} // Pass setUrl to StepOne
-              setStep={setStep} // Properly pass setStep
-              allowStepChange={true}
-            />
-          )}
-          {step === 2 && (
-            <StepTwo
-              elements={stepTwoElements}
-              setElements={setStepTwoElements}
-              moveElement={(dragIndex, hoverIndex) =>
-                moveElement(
-                  stepTwoElements,
-                  setStepTwoElements,
-                  dragIndex,
-                  hoverIndex
-                )
-              }
-              hoverIndex={hoverIndex}
-              elementWidth={elementWidth}
-              onRemove={handleRemoveElement}
-              view={view}
-              url={url} // Pass url to StepTwo
-              onClose={() => setStep(1)}
-            />
-          )}
+          <div
+            className="popup-content"
+            style={view === "desktop" ? desktopStyle : mobileStyle}
+          >
+            {step === 1 && (
+              <StepOne
+                elements={stepOneElements}
+                setElements={setStepOneElements}
+                moveElement={(dragIndex, hoverIndex) =>
+                  moveElement(
+                    stepOneElements,
+                    setStepOneElements,
+                    dragIndex,
+                    hoverIndex
+                  )
+                }
+                hoverIndex={hoverIndex}
+                elementWidth={elementWidth}
+                onRemove={handleRemoveElement}
+                imagePosition={config.ImagePosition}
+                view={view}
+                setUrl={setUrl}
+                setStep={setStep}
+              />
+            )}
+            {step === 2 && (
+              <StepTwo
+                elements={stepTwoElements}
+                setElements={setStepTwoElements}
+                moveElement={(dragIndex, hoverIndex) =>
+                  moveElement(
+                    stepTwoElements,
+                    setStepTwoElements,
+                    dragIndex,
+                    hoverIndex
+                  )
+                }
+                hoverIndex={hoverIndex}
+                elementWidth={elementWidth}
+                onRemove={handleRemoveElement}
+                view={view}
+                url={url}
+                onClose={() => setStep(1)}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

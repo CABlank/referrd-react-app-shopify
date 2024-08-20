@@ -33,6 +33,7 @@ const ButtonElement: React.FC<ButtonElementProps> = ({
   buttonLink,
   buttonAlign = "center",
   onClick,
+  id,
   ...props
 }) => {
   const {
@@ -87,16 +88,14 @@ const ButtonElement: React.FC<ButtonElementProps> = ({
 
   return (
     <button
+      id={id} // Assign the realButtonId here
       type="button"
       style={inlineStyles}
       onClick={(e) => {
         e.preventDefault();
-        console.log("Button clicked");
         if (onClick) {
-          console.log("onClick provided");
           onClick();
         } else {
-          console.log("onClick not provided");
         }
       }}
       onMouseOver={(e) => {

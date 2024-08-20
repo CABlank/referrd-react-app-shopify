@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import ArrowDropdownIcon from "../Icons/ArrowDropdownIcon";
 
 const CampaignCreativeSelector: React.FC<{
   className?: string;
   selectedFormat: string;
   onSelect: (format: string) => void;
-}> = ({ className, selectedFormat, onSelect }) => {
+  children?: React.ReactNode;
+}> = ({ className, selectedFormat, onSelect, children }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -16,25 +18,66 @@ const CampaignCreativeSelector: React.FC<{
     onSelect(format); // Call the onSelect callback with the selected format
   };
 
+  // Check if the click is inside the vertical scrollbar or within the scrollable container
+  const isClickInsideScrollbarOrScrollContainer = (event: MouseEvent) => {
+    const scrollContainer = document.getElementById("scroll");
+    if (scrollContainer) {
+      return (
+        event.target === scrollContainer ||
+        scrollContainer.contains(event.target as Node)
+      );
+    }
+    return false;
+  };
+
+  // Hook to detect clicks outside of the component
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node) &&
+        !isClickInsideScrollbarOrScrollContainer(event)
+      ) {
+        if (isOpen) {
+          handleToggle();
+        }
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, handleToggle]);
+
+  // Memoize children to prevent unnecessary re-renders
+  const memoizedChildren = useMemo(() => {
+    return <div>{children}</div>;
+  }, [children]);
+
   return (
     <div
-      className={`bg-white p-6 shadow rounded-lg border border-gray-200 ${className}`}
+      ref={wrapperRef}
+      className={`bg-white shadow rounded-lg border border-gray-200 ${className}`}
     >
-      <div
-        className="flex justify-between items-center mb-6 cursor-pointer"
-        onClick={handleToggle}
-      >
-        <h2 className="text-xl font-semibold text-green-500">
-          4. Campaign Creative
-        </h2>
-        <button className="focus:outline-none">
-          <ArrowDropdownIcon isOpen={isOpen} />
-        </button>
+      <div className="px-6 pt-6">
+        <div
+          className="flex justify-between items-center mb-6 cursor-pointer"
+          onClick={handleToggle}
+        >
+          <h2 className="text-xl font-semibold text-green-500">
+            4. Campaign Creative
+          </h2>
+          <button className="focus:outline-none">
+            <ArrowDropdownIcon isOpen={isOpen} />
+          </button>
+        </div>
+        <hr className="border-gray-200 mb-6" />
       </div>
-      <hr className="border-gray-200 mb-6" />
 
-      {isOpen ? (
-        <div className="space-y-6">
+      {/* Always render children but control visibility */}
+      <div className={isOpen ? "block" : "hidden"}>
+        <div className="px-6 pb-6 space-y-6">
           <div className="flex flex-col space-y-4">
             <p className="font-medium text-black/80 self-center">
               Choose your preferred format
@@ -87,8 +130,13 @@ const CampaignCreativeSelector: React.FC<{
             </div>
           </div>
         </div>
-      ) : (
-        <div className="text-sm text-gray-500">
+        {/* Use the memoized children */}
+        {memoizedChildren}
+      </div>
+
+      {/* Show selected format when closed */}
+      {!isOpen && (
+        <div className="text-sm text-gray-500 px-6 pb-6">
           <p>
             <strong>Selected format:</strong> {selectedFormat}
           </p>

@@ -15,10 +15,8 @@ import { moveElement } from "./MoveElement";
 export const useDropWrapper = (
   enableDragAndDrop: boolean,
   step: number,
-  stepOneElements: ElementProps[],
-  setStepOneElements: React.Dispatch<React.SetStateAction<ElementProps[]>>,
-  stepTwoElements: ElementProps[],
-  setStepTwoElements: React.Dispatch<React.SetStateAction<ElementProps[]>>,
+  currentElements: ElementProps[],
+  setCurrentElements: React.Dispatch<React.SetStateAction<ElementProps[]>>,
   setHoverIndex: React.Dispatch<React.SetStateAction<number | null>>,
   hoverIndex: number | null
 ) => {
@@ -36,16 +34,12 @@ export const useDropWrapper = (
         : 0;
 
       let newHoverIndex = Math.floor(
-        (hoverClientX / hoverBoundingRect.width) *
-          (step === 1 ? stepOneElements.length : stepTwoElements.length)
+        (hoverClientX / hoverBoundingRect.width) * currentElements.length
       );
 
       newHoverIndex = Math.max(
         0,
-        Math.min(
-          step === 1 ? stepOneElements.length : stepTwoElements.length,
-          newHoverIndex
-        )
+        Math.min(currentElements.length, newHoverIndex)
       );
 
       setHoverIndex(newHoverIndex);
@@ -53,8 +47,8 @@ export const useDropWrapper = (
     drop: (item: DragItem) => {
       if (!enableDragAndDrop) return;
 
-      const elements = step === 1 ? [...stepOneElements] : [...stepTwoElements];
-      const setElements = step === 1 ? setStepOneElements : setStepTwoElements;
+      const elements = [...currentElements];
+      const setElements = setCurrentElements;
 
       const newIndex = hoverIndex !== null ? hoverIndex : elements.length;
 

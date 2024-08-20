@@ -1,13 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import prisma from "../../utils/database/prismaClient";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const updateTokens = async ({
-  PrismaUserId,
+  userId,
   accessToken,
   refreshToken,
   expires,
 }: {
-  PrismaUserId: number;
+  userId: number;
   accessToken: string;
   refreshToken: string;
   expires: number;
@@ -17,7 +19,7 @@ export const updateTokens = async ({
     expiresAt.setSeconds(expiresAt.getSeconds() + expires);
     await prisma.token.updateMany({
       where: {
-        userId: PrismaUserId,
+        userId: userId,
       },
       data: {
         accessToken: accessToken,
@@ -26,7 +28,7 @@ export const updateTokens = async ({
         updatedAt: new Date(),
       },
     });
-    console.log("Updated tokens in Prisma for user:", PrismaUserId);
+    console.log("Updated tokens in Prisma for user:", userId);
   } catch (error) {
     console.error("Error updating tokens in Prisma:", error);
     throw error;
@@ -35,11 +37,26 @@ export const updateTokens = async ({
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
-    const { PrismaUserId, accessToken, refreshToken, expires } = req.body;
+    const { userId, accessToken, refreshToken, expires } = req.body;
 
     try {
-      await updateTokens({ PrismaUserId, accessToken, refreshToken, expires });
-      res.status(200).json({ message: "Tokens updated successfully" });
+      if (accessToken && refreshToken && expires) {
+        await updateTokens({ userId, accessToken, refreshToken, expires });
+        res.status(200).json({ message: "Tokens updated successfully" });
+      } else {
+        const tokenRecord = await prisma.token.findFirst({
+          where: {
+            userId: userId,
+          },
+        });
+        if (tokenRecord) {
+          res.status(200).json({ refreshToken: tokenRecord.refreshToken });
+        } else {
+          res
+            .status(404)
+            .json({ error: "No token found for the provided userId" });
+        }
+      }
     } catch (error) {
       console.error("Error updating tokens:", error);
       res.status(500).json({ error: "Failed to update tokens" });

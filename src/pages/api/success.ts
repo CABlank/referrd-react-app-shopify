@@ -32,16 +32,15 @@ export default async function handler(
         newTotalAmount,
         token ?? ""
       );
-      console.log(
-        `Updated campaign ${campaignId} with amount ${newTotalAmount}`
-      );
-    } else {
-      console.log(`No campaign ID found in session metadata`);
-    }
 
-    // Redirect to the campaigns page
-    res.writeHead(302, { Location: "/brand/campaigns" });
-    res.end();
+      // Redirect to the campaign edit page with the campaignId as a query parameter
+      res.writeHead(302, {
+        Location: `/brand/campaigns/edit?campaignId=${campaignId}`,
+      });
+      res.end();
+    } else {
+      res.status(400).json({ error: "Invalid campaign ID" });
+    }
   } catch (err) {
     console.error("Error retrieving session:", err);
     res.status(500).json({ error: "Failed to retrieve session" });

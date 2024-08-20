@@ -137,7 +137,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
+        className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5 hidden"
       >
         <GoogleIcon />
         <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">

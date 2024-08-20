@@ -6,19 +6,23 @@ import { TopBarConfig } from "../../CommonComponents/Types";
 
 export const initialDesktopConfigStep1: TopBarConfig = {
   backgroundColor: "#464ADF",
-  height: "70px",
+  height: "50px",
+  width: undefined,
 };
 export const initialDesktopConfigStep2: TopBarConfig = {
   backgroundColor: "#464ADF",
-  height: "110px",
+  height: "50px",
+  width: undefined,
 };
 export const initialMobileConfigStep1: TopBarConfig = {
   backgroundColor: "#464ADF",
-  height: "70px",
+  height: "50px",
+  width: undefined,
 };
 export const initialMobileConfigStep2: TopBarConfig = {
   backgroundColor: "#464ADF",
-  height: "160px",
+  height: "120px",
+  width: undefined,
 };
 
 interface SettingsPanelProps {

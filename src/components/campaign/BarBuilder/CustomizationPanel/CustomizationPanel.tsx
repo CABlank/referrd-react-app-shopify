@@ -47,7 +47,6 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
       name === "buttonBorderWidth" || name === "buttonBorderRadius"
         ? parseInt(value, 10).toString()
         : value;
-    console.log("Updating element:", element.id, "with", name, parsedValue);
     onUpdate({ ...element, [name]: parsedValue });
   };
 

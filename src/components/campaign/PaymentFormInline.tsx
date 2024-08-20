@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
-import { useSession } from "../../contexts/SessionContext";
+import { useSession } from "../../context/SessionContext";
 
 const PaymentFormInlineContent = ({
   campaign,

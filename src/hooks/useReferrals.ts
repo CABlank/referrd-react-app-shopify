@@ -1,54 +1,59 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  fetchReferrals,
   fetchCustomers,
-  fetchReferralCodes,
   fetchCampaigns,
+  fetchCompanies,
 } from "../services/referrals/referrals";
-import { useSession } from "../contexts/SessionContext";
+import { useSession } from "../context/SessionContext";
 
 // Define interfaces for the data structures
-interface Referral {
-  id: number;
-  date_created: string;
-  referrer: number;
-  campaign: number;
-  referralCode: number;
-  location: string;
-  spend: number;
-  conversion: string;
-}
-
 interface Customer {
   id: number;
+  date_created: string;
+  uuid: string;
   name: string;
+  email: string;
+  mobile: string;
+  referred_by: string;
+  conversion_count: number;
+  signup_count: number;
+  location: string;
+  click_count: number;
+  company_id: string;
+  campaign_uuid: string;
 }
 
 interface Campaign {
-  id: number;
+  [x: string]: string;
+  id: string;
   name: string;
 }
 
-interface ReferralCode {
+interface Company {
   id: number;
-  code: string;
+  name: string;
+  UUID: string;
 }
 
-interface ReferralState {
-  referrals: Referral[];
+interface CustomerState {
   customers: Customer[];
-  referralCodes: ReferralCode[];
   campaigns: Campaign[];
   loading: boolean;
   error: string | null;
 }
 
-const useReferrals = () => {
+const useCustomers = ({
+  accessToken,
+  refreshToken,
+  userId,
+}: {
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+}) => {
   const { session, withTokenRefresh } = useSession();
-  const [state, setState] = useState<ReferralState>({
-    referrals: [],
+  const [state, setState] = useState<CustomerState>({
     customers: [],
-    referralCodes: [],
     campaigns: [],
     loading: true,
     error: null,
@@ -57,26 +62,45 @@ const useReferrals = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (session?.token && !loadExecutedRef.current) {
+      if ((session?.token || accessToken) && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
-          const [
-            referralsData,
-            customersData,
-            referralCodesData,
-            campaignsData,
-          ] = await Promise.all([
-            withTokenRefresh((token) => fetchReferrals(token)),
-            withTokenRefresh((token) => fetchCustomers(token)),
-            withTokenRefresh((token) => fetchReferralCodes(token)),
-            withTokenRefresh((token) => fetchCampaigns(token)),
+          // Fetch all companies and find the desired one based on some logic
+          const companiesData: Company[] = await withTokenRefresh(
+            (token) => fetchCompanies(token),
+            refreshToken,
+            userId
+          );
+
+          if (!companiesData || companiesData.length === 0) {
+            throw new Error("No companies found");
+          }
+
+          // Assume you want to use the first company or have logic to determine which one
+          const companyUUID = companiesData[0].UUID; // Replace with logic to select the correct company
+
+          if (!companyUUID) {
+            throw new Error("Company UUID is undefined");
+          }
+
+          // Fetch customers and campaigns using the company UUID
+          const [customersData, campaignsData] = await Promise.all([
+            withTokenRefresh(
+              (token) => fetchCustomers(token, companyUUID),
+              refreshToken,
+              userId
+            ),
+            withTokenRefresh(
+              (token) => fetchCampaigns(token),
+              refreshToken,
+              userId
+            ),
           ]);
 
+          // Set the state with the fetched data
           setState({
-            referrals: referralsData,
             customers: customersData,
-            referralCodes: referralCodesData,
             campaigns: campaignsData,
             loading: false,
             error: null,
@@ -84,21 +108,19 @@ const useReferrals = () => {
         } catch (err) {
           console.error("Error fetching data:", err);
           setState({
-            referrals: [],
             customers: [],
-            referralCodes: [],
             campaigns: [],
             loading: false,
-            error: "Failed to fetch referrals. Please try again.",
+            error: "Failed to fetch customers. Please try again.",
           });
         }
       }
     };
 
     loadData();
-  }, [session, withTokenRefresh]);
+  }, [session, accessToken, refreshToken, userId, withTokenRefresh]);
 
   return state;
 };
 
-export default useReferrals;
+export default useCustomers;

@@ -2,8 +2,19 @@ import React from "react";
 const XIcon = () => {
   return (
     <div
-      className="flex justify-center items-center flex-grow-0 flex-shrink-0 relative gap-[13.333333969116211px] rounded-[5.33px] bg-black"
-      style={{ boxShadow: "0px 0px 2px 0 rgba(255,255,255,0.5)" }}
+      style={{
+        boxShadow: "0px 0px 2px 0 rgba(255,255,255,0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexGrow: 0,
+        flexShrink: 0,
+        position: "relative",
+        gap: "13.33px",
+        borderRadius: "5.33px",
+        backgroundColor: "black",
+        cursor: "pointer",
+      }}
     >
       <svg
         width={33}

@@ -1,152 +1,175 @@
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 import SearchSortSection from "../../../components/common/SearchSortSection";
 import DataTableHeader from "../../../components/common/DataTableHeader";
 import PerformanceSummary from "../../../components/common/PerformanceSummary";
 import Pagination from "../../../components/common/Pagination";
 import EyeIconDetail from "../../../components/Icons/EyeIconDetail";
-import { useRouter } from "next/router";
 import ScrollableContainer from "../../../components/common/ScrollableContainer";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import DataTableRows from "../../../components/common/DataTableRows";
 import useReferrals from "../../../hooks/useReferrals";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
+import {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  GetServerSidePropsResult,
+} from "next"; // Import types from Next.js
 
-// Define an interface for the referral data structure
-interface ReferralData {
+interface CustomerData {
   id: number;
+  uuid: string; // Added uuid here
   date: string;
-  referrer: string;
+  name: string;
   campaign: string;
-  referralCode: string;
   location: string;
+  signup_count: number;
+  click_count: number;
+  conversion_count: number;
   spend: number;
-  conversion: boolean;
 }
 
-const ReferralsIndex: React.FC = () => {
-  const router = useRouter(); // Hook to programmatically navigate
-  const { referrals, customers, referralCodes, campaigns, loading, error } =
-    useReferrals(); // Custom hook to fetch referral-related data
+interface CustomersIndexProps {
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+  title: string;
+}
 
-  // State for search query, sort order, and pagination
+const parseLocation = (location: string): string => {
+  try {
+    const parsedLocation = JSON.parse(location);
+    return `${parsedLocation.city}, ${parsedLocation.country}`;
+  } catch {
+    return "Unknown";
+  }
+};
+
+const CustomersIndex: React.FC<CustomersIndexProps> = ({
+  accessToken,
+  refreshToken,
+  userId,
+}) => {
+  const router = useRouter();
+  const { customers, campaigns, loading } = useReferrals({
+    accessToken,
+    refreshToken,
+    userId,
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState<keyof ReferralData>("date");
+  const [sortOrder, setSortOrder] = useState<keyof CustomerData>("date");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Map raw referral data to a structured format
-  const mapReferralData = (): ReferralData[] => {
-    return referrals.map((referral) => {
-      const customer = customers.find((c) => c.id === referral.referrer);
-      const campaign = campaigns.find((c) => c.id === referral.campaign);
-      const referralCode = referralCodes.find(
-        (code) => code.id === referral.referralCode
-      );
+  const mapCustomerData = (): CustomerData[] =>
+    customers.map((customer) => ({
+      id: customer.id,
+      uuid: customer.uuid, // Map the uuid for routing
+      date: new Date(customer.date_created).toLocaleString(),
+      name: customer.name || "N/A",
+      campaign:
+        campaigns.find((c) => c.uuid === customer.campaign_uuid)?.name || "N/A",
+      location: parseLocation(customer.location),
+      signup_count: customer.signup_count,
+      click_count: customer.click_count,
+      conversion_count: customer.conversion_count,
+      spend: customer.conversion_count * 10, // Example spend calculation
+    }));
 
-      return {
-        id: referral.id,
-        date: new Date(referral.date_created).toLocaleString(),
-        referrer: customer ? customer.name : "N/A",
-        campaign: campaign ? campaign.name : "N/A",
-        referralCode: referralCode ? referralCode.code : "N/A",
-        location: referral.location,
-        spend: referral.spend,
-        conversion: referral.conversion === "true",
-      };
-    });
-  };
+  const handleSearch = (query: string) => setSearchQuery(query);
+  const handleSort = (order: string) =>
+    setSortOrder(order as keyof CustomerData);
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
-  // Handle search query change
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
+  const filteredCustomers = mapCustomerData().filter(
+    (customer) =>
+      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.campaign.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Handle sort order change
-  const handleSort = (order: string) => {
-    setSortOrder(order as keyof ReferralData);
-  };
+  const sortedCustomers = filteredCustomers.sort((a, b) =>
+    sortOrder === "date"
+      ? new Date(b.date).getTime() - new Date(a.date).getTime()
+      : (a[sortOrder] as string).localeCompare(b[sortOrder] as string)
+  );
 
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  // Filter and sort referral data based on search query and sort order
-  const filteredReferrals = mapReferralData().filter((referral) => {
-    return (
-      referral.referrer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.campaign.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
-
-  const sortedReferrals = filteredReferrals.sort((a, b) => {
-    if (sortOrder === "date") {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    }
-    return (a[sortOrder] as string).localeCompare(b[sortOrder] as string);
-  });
-
-  // Paginate sorted referrals
-  const paginatedReferrals = sortedReferrals.slice(
+  const paginatedCustomers = sortedCustomers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Define table columns
-  const columns = [
-    { dataIndex: "date", className: "text-center text-sm" },
-    { dataIndex: "referrer", className: "text-center" },
-    { dataIndex: "campaign", className: "text-center" },
-    { dataIndex: "referralCode", className: "text-center text-xs" },
-    { dataIndex: "location", className: "text-center" },
-    {
-      dataIndex: "id",
-      className: "text-center flex justify-center items-center",
-      customRender: (id: number) => (
-        <button
-          className="text-[#3f59e4] flex items-center justify-center gap-2"
-          onClick={() => router.push(`/brand/referrals/${id}`)}
-        >
-          <EyeIconDetail />
-          Details
-        </button>
-      ),
-    },
-  ];
-
-  // Compute performance metrics for referrals
   const computePerformanceMetrics = () => {
-    const clicks = sortedReferrals.length;
-    const conversions = sortedReferrals.filter((r) => r.conversion).length;
-    const totalSpends = sortedReferrals.reduce((acc, r) => acc + r.spend, 0);
-    const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
-    const cpa = conversions > 0 ? totalSpends / conversions : 0;
+    const totalSignups = sortedCustomers.reduce(
+      (acc, c) => acc + c.signup_count,
+      0
+    );
+    const totalClicks = sortedCustomers.reduce(
+      (acc, c) => acc + c.click_count,
+      0
+    );
+    const totalConversions = sortedCustomers.reduce(
+      (acc, c) => acc + c.conversion_count,
+      0
+    );
+    const totalSpends = sortedCustomers.reduce((acc, c) => acc + c.spend, 0);
+    const conversionRate =
+      totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+    const cpa = totalConversions > 0 ? totalSpends / totalConversions : 0;
 
     return {
-      clicks,
-      conversions,
-      totalSpends,
+      totalSignups,
+      totalClicks,
+      totalConversions,
       conversionRate: conversionRate.toFixed(2),
+      totalSpends: totalSpends.toFixed(2),
       cpa: cpa.toFixed(2),
     };
   };
 
   const metrics = computePerformanceMetrics();
 
+  const columns = [
+    { dataIndex: "date", className: "text-center text-xs", title: "Date" },
+    { dataIndex: "name", className: "text-center", title: "Name" },
+    { dataIndex: "campaign", className: "text-center", title: "Campaign" },
+    { dataIndex: "location", className: "text-center", title: "Location" },
+    { dataIndex: "signup_count", className: "text-center", title: "Sign Ups" },
+    { dataIndex: "click_count", className: "text-center", title: "Clicks" },
+    {
+      dataIndex: "uuid", // Change to uuid here
+      className: "text-center flex justify-center items-center",
+      customRender: (uuid: string) => (
+        <button
+          className="text-[#3f59e4] flex items-center justify-center gap-2"
+          onClick={() => router.push(`/brand/referrals/${uuid}`)} // Navigate using uuid
+        >
+          <EyeIconDetail />
+          Details
+        </button>
+      ),
+      title: "Actions", // Updated title
+    },
+  ];
+
   return (
     <div className={`relative ${loading ? "blur" : ""}`}>
       {loading && <LoadingOverlay />}
-
       <div className="flex flex-col justify-center items-center mx-auto gap-4 sm:p-4">
-        {/* Performance Metrics */}
         <ScrollableContainer>
           <PerformanceSummary
+            metricName="Sign Ups"
+            value={metrics.totalSignups.toString()}
+            iconName=""
+          />
+          <PerformanceSummary
             metricName="Clicks"
-            value={metrics.clicks.toString()}
+            value={metrics.totalClicks.toString()}
             iconName="MouseClickIcon"
           />
           <PerformanceSummary
             metricName="Conversions"
-            value={metrics.conversions.toString()}
+            value={metrics.totalConversions.toString()}
             iconName="Conversions"
           />
           <PerformanceSummary
@@ -165,24 +188,21 @@ const ReferralsIndex: React.FC = () => {
             iconName="MouseClickedIcon"
           />
         </ScrollableContainer>
-        {/* Search and Sort */}
         <SearchSortSection onSearch={handleSearch} onSort={handleSort} />
-        {/* Data Table and Pagination */}
         <div className="flex flex-col w-full overflow-x-auto lg:overflow-hidden rounded-2xl bg-white text-center mobile-scroll">
           <DataTableHeader
-            headers={[
-              { title: "Date", align: "center" },
-              { title: "Referrer", align: "center" },
-              { title: "Campaign", align: "center" },
-              { title: "Referral Code", align: "center" },
-              { title: "Location", align: "center" },
-              { title: "Action", align: "center", className: "extra-styles" },
-            ]}
+            headers={{
+              columns: columns.map((col) => ({
+                title: col.title,
+                align: "center",
+                className: col.className,
+              })),
+            }}
           />
-          <DataTableRows rowData={paginatedReferrals} columns={columns} />
-          {sortedReferrals.length > 0 && (
+          <DataTableRows rowData={paginatedCustomers} columns={columns} />
+          {sortedCustomers.length > 0 && (
             <Pagination
-              totalItems={sortedReferrals.length}
+              totalItems={sortedCustomers.length}
               itemsPerPage={itemsPerPage}
               currentPage={currentPage}
               onPageChange={handlePageChange}
@@ -194,12 +214,32 @@ const ReferralsIndex: React.FC = () => {
   );
 };
 
-export const getStaticProps = async () => {
+// Modify getServerSideProps to pass tokens and user ID to the component
+export const getServerSideProps: GetServerSideProps<
+  CustomersIndexProps
+> = async (
+  context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<CustomersIndexProps>> => {
+  const result = await initialLoadChecker(context);
+
+  if ("redirect" in result || "notFound" in result) {
+    return result;
+  }
+
+  if (!("props" in result)) {
+    return {
+      props: {
+        title: "Referrals",
+      },
+    };
+  }
+
   return {
     props: {
+      ...result.props,
       title: "Referrals",
     },
   };
 };
 
-export default ReferralsIndex;
+export default CustomersIndex;

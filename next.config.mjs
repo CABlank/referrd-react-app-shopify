@@ -13,6 +13,7 @@ const nextConfig = {
     CONFIG_SHOPIFY_APP_URL: process.env.SHOPIFY_APP_URL,
     ENCRYPTION_STRING: process.env.ENCRYPTION_STRING,
     BOT_TOKEN: process.env.BOT_TOKEN,
+    GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   },
   images: {
     remotePatterns: [

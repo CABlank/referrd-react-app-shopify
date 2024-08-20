@@ -1,7 +1,20 @@
 import React from "react";
 const RedditIcon = () => {
   return (
-    <div className="flex justify-center items-center flex-grow-0 flex-shrink-0 relative gap-[13.333333969116211px] rounded-[5.33px] bg-[#ff4500]">
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexGrow: 0,
+        flexShrink: 0,
+        position: "relative",
+        gap: "13.33px",
+        borderRadius: "5.33px",
+        backgroundColor: "#ff4500",
+        cursor: "pointer",
+      }}
+    >
       <svg
         width={33}
         height={32}

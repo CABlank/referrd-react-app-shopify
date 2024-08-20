@@ -106,6 +106,13 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     return null;
   }
 
+  // Determine the type of input and set the appropriate name attribute
+  const inputType = element.id.includes("text")
+    ? "name"
+    : element.id.includes("email")
+      ? "email"
+      : "phone";
+
   return (
     <div
       ref={ref}
@@ -138,20 +145,23 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
       {element.type === "input" && (
         <InputElement
           {...(element as InputElementProps)}
+          name={inputType} // Ensure the correct name attribute is passed
           view={view}
           expandedId={expandedId}
           onExpand={onExpand}
           onChange={handleChange(
-            element.id.includes("text")
-              ? (value) => console.log("Set name value", value)
-              : element.id.includes("email")
-                ? (value) => console.log("Set email value", value)
-                : (value) => console.log("Set number value", value),
-            element.id.includes("text")
-              ? "text"
-              : element.id.includes("email")
-                ? "email"
-                : "tel"
+            inputType === "name"
+              ? (value) => {
+                  /* handle name change */
+                }
+              : inputType === "email"
+                ? (value) => {
+                    /* handle email change */
+                  }
+                : (value) => {
+                    /* handle phone change */
+                  },
+            inputType
           )}
         />
       )}

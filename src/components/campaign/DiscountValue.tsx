@@ -18,6 +18,7 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
 }) => {
   const [resourceType, setResourceType] = useState("product");
   const [selectedResources, setSelectedResources] = useState<any[]>([]);
+  const [isComingSoon, setIsComingSoon] = useState(true); // Add this state
 
   const handleResourceSelection = (selection: any[]) => {
     setSelectedResources(selection);
@@ -25,14 +26,14 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
 
   return (
     <div
-      className={`bg-white p-4 shadow rounded-lg border border-gray-200 ${className}`}
+      className={`relative bg-white p-4 shadow rounded-lg border border-gray-200 ${className}`}
     >
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-green-500">
           3. Discount Details
         </h2>
 
-        <div className="grid grid-cols-2 ">
+        <div className="grid grid-cols-2">
           <div className="space-y-4">
             <label className="block font-medium text-gray-700 inline-flex">
               Discount Type <span className="ml-1 text-red-500">*</span>
@@ -40,7 +41,7 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
             <select
               name="discountType"
               value={discount.type || ""}
-              className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700"
+              className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700 overflow-hidden"
               onChange={handleChange}
             >
               <option value="fixed">Fixed amount</option>
@@ -50,7 +51,7 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
 
           <div className="space-y-4">
             <label className="block font-medium text-gray-700 inline-flex items-center"></label>
-            <div className="flex items-center h-10 border border-gray-300 bg-white px-2.5">
+            <div className="flex items-center h-10 border border-gray-300 bg-white px-2.5 overflow-hidden">
               <span className="text-gray-700">
                 {discount.type === "percentage" ? "%" : "$"}
               </span>
@@ -59,7 +60,7 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
                 name="discountValue"
                 value={discount.value || ""}
                 placeholder="Enter discount value"
-                className="flex-1 px-2 py-2 bg-transparent text-gray-700 border-0 focus:outline-none"
+                className="flex-1 px-2 py-2 bg-transparent text-gray-700 border-0 focus:outline-none overflow-hidden whitespace-nowrap"
                 onChange={handleChange}
               />
             </div>
@@ -159,20 +160,37 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
         {discount.minimumRequirementType !== "none" && (
           <div className="space-y-4">
             <label className="block font-medium text-gray-700 inline-flex">
-              Minimum Requirement Value{" "}
+              Minimum Order Value For Discount{" "}
               <span className="ml-1 text-red-500">*</span>
             </label>
             <input
               type="text"
               name="minimumRequirementValue"
-              value={discount.minimumRequirementValue || ""}
-              placeholder="Enter minimum requirement value"
+              value={discount.minimumOrderValue || ""}
+              placeholder="Minimum Order Value For Discount"
               className="w-full h-10 px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md"
               onChange={handleChange}
             />
           </div>
         )}
       </div>
+
+      {/* Overlay blur and "Coming Soon..." message */}
+      {isComingSoon && (
+        <div className="absolute inset-0 flex mt-5 justify-center bg-white bg-opacity-10 backdrop-blur-md rounded-lg">
+          <span className="text-2xl font-semibold text-gray-700 w-[70%]">
+            <h2 className="text-xl font-semibold text-green-500">
+              3. Discount Details
+            </h2>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <span className="p-6 mt-5">Coming Soon...</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 };

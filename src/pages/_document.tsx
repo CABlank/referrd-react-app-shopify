@@ -6,7 +6,6 @@ import Document, {
   NextScript,
   DocumentContext,
 } from "next/document";
-import Script from "next/script";
 
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -22,9 +21,10 @@ class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {shop && host && (
-            <Script
+            // Shopify App Bridge script should be directly inserted as the first script
+            <script
               src={`https://cdn.shopify.com/shopifycloud/app-bridge.js?apiKey=${process.env.CONFIG_SHOPIFY_API_KEY}`}
-              strategy="afterInteractive"
+              // This must be the first script and should not have async or defer attributes
             />
           )}
         </Head>

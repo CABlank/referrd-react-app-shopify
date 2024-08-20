@@ -18,7 +18,6 @@ interface StepOneProps {
   view: "desktop" | "mobile";
   setUrl: React.Dispatch<React.SetStateAction<string>>;
   setStep: React.Dispatch<React.SetStateAction<number>>;
-  allowStepChange: boolean;
 }
 
 const StepOne: React.FC<StepOneProps> = ({
@@ -32,46 +31,10 @@ const StepOne: React.FC<StepOneProps> = ({
   view,
   setUrl,
   setStep,
-  allowStepChange,
 }) => {
   const imageElement = elements.find(
     (element): element is ImageElementProps => element.type === "image"
   );
-
-  const handleSubmit = async (
-    name: string,
-    email: string,
-    number: string
-  ): Promise<boolean> => {
-    const uniqueUrl = `https://example.com/?name=${name}&email=${email}&number=${number}`;
-    setUrl(uniqueUrl);
-
-    if (view === "mobile") {
-      const newElement: TextElementProps = {
-        id: `${Date.now()}`, // Generate a unique ID for the new element
-        type: "text",
-        text: `${name} ${email} ${number}`,
-        fontFamily: "",
-        fontSize: "",
-        textColor: "",
-        textTransform: "none",
-        fontWeight: "normal",
-        letterSpacing: "",
-        marginTop: "",
-        marginRight: "",
-        marginBottom: "",
-        marginLeft: "",
-      };
-      setElements((prevElements) => [...prevElements, newElement]);
-    }
-
-    if (allowStepChange) {
-      setStep(2);
-    }
-
-    // Simulate an asynchronous operation and return true
-    return Promise.resolve(true);
-  };
 
   return (
     <ReferAndEarn
@@ -79,7 +42,6 @@ const StepOne: React.FC<StepOneProps> = ({
       imageUrl={imageElement?.imageUrl}
       imageProps={imageElement}
       view={view}
-      onSubmit={handleSubmit}
       onClose={() => setStep(0)}
     >
       <div

@@ -23,6 +23,9 @@ export interface Campaign {
   serializedPopupState?: string;
   amountFunded?: number;
   url?: string;
+  compiledHtml?: string;
+  company_id?: string;
+  uuid?: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -83,6 +86,9 @@ const duplicateCampaignToPublicPage = async (
     status: campaign.status,
     commission: campaign.commission,
     commissionType: campaign.commissionType,
+    compiledHtml: campaign.compiledHtml,
+    company_id: campaign.company_id,
+    campaign_uuid: campaign.uuid,
   };
 
   const method = isUpdate ? "PATCH" : "POST";
@@ -95,9 +101,45 @@ const duplicateCampaignToPublicPage = async (
       method: method,
       body: JSON.stringify(publicPageData),
     });
-    console.log(
-      `Public page data ${isUpdate ? "updated" : "created"} successfully.`
+  } catch (error) {
+    console.error(
+      `Failed to ${isUpdate ? "update" : "create"} public page data`,
+      error
     );
+  }
+};
+
+// Duplicate campaign data to the public page collection
+const duplicateCampaignToMetaData = async (
+  campaign: Campaign,
+  token: string,
+  isUpdate: boolean
+): Promise<void> => {
+  const publicPageData = {
+    campaign_id: campaign.id,
+    name: campaign.name,
+    closeDate: campaign.closeDate,
+    discountType: campaign.discountType,
+    discountValue: campaign.discountValue,
+    format: campaign.format,
+    amountFunded: campaign.amountFunded,
+    status: campaign.status,
+    commission: campaign.commission,
+    commissionType: campaign.commissionType,
+    company_id: campaign.company_id,
+    campaign_uuid: campaign.uuid,
+  };
+
+  const method = isUpdate ? "PATCH" : "POST";
+  const endpoint = isUpdate
+    ? `/items/campaign_metadata/${campaign.id}`
+    : `/items/campaign_metadata`;
+
+  try {
+    await fetchFromAPI(endpoint, token, {
+      method: method,
+      body: JSON.stringify(publicPageData),
+    });
   } catch (error) {
     console.error(
       `Failed to ${isUpdate ? "update" : "create"} public page data`,
@@ -128,8 +170,16 @@ export const createCampaign = async (
     }
   );
 
-  // Duplicate the created campaign to the public page collection
+  // Ensure the created campaign has a UUID
+  if (!createdCampaign.uuid) {
+    throw new Error("Failed to retrieve campaign UUID after creation.");
+  }
+
+  // Duplicate the created campaign to the public page collection with the UUID
   await duplicateCampaignToPublicPage(createdCampaign, token, false);
+
+  // Duplicate the created campaign to the meta data collection with the UUID
+  await duplicateCampaignToMetaData(createdCampaign, token, false);
 
   return createdCampaign;
 };
@@ -144,10 +194,12 @@ export const updateCampaign = async (
       method: "PATCH",
       body: JSON.stringify(campaign),
     });
-    console.log("Campaign updated successfully.");
 
     // Duplicate the updated campaign to the public page collection
     await duplicateCampaignToPublicPage(campaign, token, true);
+
+    // Duplicate the updated campaign to the meta data collection
+    await duplicateCampaignToMetaData(campaign, token, true);
   } catch (error) {
     console.error("Failed to update campaign", error);
   }
@@ -189,7 +241,10 @@ export const deleteCampaign = async (
     await fetchFromAPI<void>(`/items/campaign_public_page/${id}`, token, {
       method: "DELETE",
     });
-    console.log("Public page data deleted successfully.");
+
+    await fetchFromAPI<void>(`/items/campaign_metadata/${id}`, token, {
+      method: "DELETE",
+    });
   } catch (error) {
     console.error("Failed to delete public page data", error);
   }

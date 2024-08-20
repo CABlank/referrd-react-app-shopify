@@ -9,7 +9,7 @@ import {
   uploadFile,
   Company,
 } from "../../../services/company/company";
-import { useSession } from "../../../contexts/SessionContext";
+import { useSession } from "../../../context/SessionContext";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import FallbackLogo from "../../../components/Icons/FallbackLogo";
 
@@ -22,6 +22,7 @@ const EditCompany: React.FC = () => {
     domain: "",
     logo: null,
     date_created: "",
+    UUID: "", // Add the UUID property with an empty string value
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -189,14 +190,6 @@ const EditCompany: React.FC = () => {
             >
               Save
             </button>
-            {companyId && (
-              <button
-                onClick={handleDelete}
-                className="h-12 w-1/6 px-6 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700"
-              >
-                Delete
-              </button>
-            )}
           </div>
         </div>
       </div>

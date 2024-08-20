@@ -15,10 +15,7 @@ const CampaignDetail: React.FC<{
         <h2 className="text-xl font-semibold text-green-500">
           1. Campaign Details
         </h2>
-        <div className="flex items-center space-x-3">
-          <span className="font-bold text-gray-700">#{campaign.id}</span>
-          <span className="font-bold text-gray-700">ID</span>
-        </div>
+
         <div className="space-y-4">
           <label className="block font-medium text-gray-700 inline-flex">
             Campaign name <span className="ml-1 text-red-500">*</span>
@@ -70,7 +67,7 @@ const CampaignDetail: React.FC<{
             value={campaign.company}
             placeholder="Company name"
             className="w-full form-input px-4 py-2 border border-gray-300 rounded-md"
-            onChange={handleChange}
+            readOnly
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+/*import React, { useState, useEffect } from "react";
 import { ElementProps } from "../../CommonComponents/Types";
 import FormField from "../FormField";
 import ArrowDropdownIcon from "../../../Icons/ArrowDropdownIcon";
@@ -172,3 +172,4 @@ const MobileCustomizationPanel: React.FC<CustomizationPanelProps> = ({
 };
 
 export default MobileCustomizationPanel;
+*/

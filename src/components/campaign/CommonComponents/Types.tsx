@@ -19,9 +19,10 @@ export interface TextElementProps extends BaseElementProps {
 }
 
 export interface InputElementProps {
-  id: string;
-  type: "input";
+  name: string;
   placeholder: string;
+  id: string;
+  type: "text" | "email" | "tel" | "password" | "number" | "input"; // Add more if needed  placeholder: string;
   value: string;
   bordercolor?: string;
   textcolor?: string;
@@ -60,6 +61,7 @@ export interface ButtonElementProps extends BaseElementProps {
   buttonAlign: "flex-start" | "center" | "flex-end";
   onClick?: () => void;
   isPreloaded?: boolean;
+  realButtonId?: string;
 }
 
 export interface ImageElementProps extends BaseElementProps {
@@ -136,6 +138,7 @@ export interface PopupConfig {
 }
 
 export interface TopBarConfig {
+  width: any;
   backgroundColor: string;
   height: string;
 }

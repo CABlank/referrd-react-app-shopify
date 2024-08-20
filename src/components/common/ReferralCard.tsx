@@ -1,12 +1,12 @@
 import React from "react";
+import Link from "next/link";
 import ArrowSeeMoreIcon from "../Icons/ArrowSeeMoreIcon";
 import MoneyIconReferrals from "../Icons/MoneyIconReferrals";
-import Link from "next/link";
 
 interface ReferralItemProps {
   name: string;
-  test: string;
-  code: string;
+  location: string;
+  email: string;
   date: string;
 }
 
@@ -16,51 +16,60 @@ interface ReferralCardProps {
 
 const ReferralCard: React.FC<ReferralCardProps> = ({ data }) => {
   return (
-    <div className="flex flex-col overflow-hidden gap-4 rounded-2xl bg-white w-full">
-      <div className="flex justify-between items-start w-full">
-        <p className="text-2xl font-medium text-[#10ad1b]">Referrals</p>
-        <Link href="/brand/referrals" passHref>
-          <div className="flex items-center gap-1 cursor-pointer">
-            <p className="text-base font-medium text-[#851087]/80">See More</p>
-            <ArrowSeeMoreIcon />
-          </div>
-        </Link>
+    <div className="flex flex-col overflow-hidden gap-2 rounded-2xl bg-white w-full">
+      <Header />
+      <div className="1">
+        {data.map((item, index) => (
+          <React.Fragment key={index}>
+            <ReferralItem {...item} />
+            {index < data.length - 1 && (
+              <hr className="w-full border-t border-black/15 my-4" />
+            )}
+          </React.Fragment>
+        ))}
       </div>
-      <hr className="w-full border-t border-black/15" />
-      {data.map((item, index) => (
-        <React.Fragment key={index}>
-          <ReferralItem {...item} />
-          {index < data.length - 1 && (
-            <hr className="w-full border-t border-black/15" />
-          )}
-        </React.Fragment>
-      ))}
     </div>
   );
 };
 
+const Header: React.FC = () => (
+  <>
+    <div className="flex justify-between items-center w-full mb-2">
+      <p className="text-2xl font-medium text-[#10ad1b]">Referrals</p>
+      <Link href="/brand/referrals" passHref>
+        <div className="flex items-center gap-1 cursor-pointer">
+          <p className="text-base font-medium text-[#851087]/80">See More</p>
+          <ArrowSeeMoreIcon />
+        </div>
+      </Link>
+    </div>
+    <hr className="w-full border-t border-black/15 mb-4" />
+  </>
+);
+
 const ReferralItem: React.FC<ReferralItemProps> = ({
   name,
-  test,
-  code,
+  location,
+  email,
   date,
 }) => (
   <div className="flex justify-between items-start w-full">
     <div className="flex items-center gap-4">
-      <div className="flex items-center justify-center h-12 w-12 bg-[#851087]/[0.15] rounded-full">
-        <MoneyIconReferrals />
-      </div>
-      <div className="flex flex-col gap-3">
-        <p className="text-base font-medium text-black/80">{name}</p>
-        <div className="flex items-center gap-4">
-          <p className="text-base text-black/80">{test}</p>
-        </div>
+      <Avatar />
+      <div className="flex flex-col gap-1">
+        <p className="text-base font-medium text-black">{name}</p>
+        <p className="text-sm text-gray-500">{location}</p>
       </div>
     </div>
-    <div className="flex flex-col items-end gap-1  w-[150px]">
-      <p className="text-sm text-[#851087] text-right">{code}</p>
+    <div className="flex flex-col items-end gap-1 w-[150px]">
       <p className="text-sm text-black/50">{date}</p>
     </div>
+  </div>
+);
+
+const Avatar: React.FC = () => (
+  <div className="flex items-center justify-center h-12 w-12 bg-[#851087]/[0.15] rounded-full">
+    <MoneyIconReferrals />
   </div>
 );
 
