@@ -51,8 +51,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { Session } from "@shopify/shopify-api";
 import { encrypt, decrypt } from "../security/encryption";
 import fetch from "node-fetch";
-import { PrismaClient } from "@prisma/client";
-var prisma = new PrismaClient();
 import { getTokensFromShopify } from "../shopify/shopifyClient"; // Importing getTokensFromShopify
 var DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";
 var DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || "po4uje7gIaooHBbh7EAncPd2aBSH5wwL";

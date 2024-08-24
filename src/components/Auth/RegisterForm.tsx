@@ -18,7 +18,7 @@ const RegisterForm = () => {
     email: "",
     mobile: "",
     password: "",
-    shopifyStoreUrl: "",
+    shopifyStoreName: "", // Changed from shopifyStoreUrl to shopifyStoreName
   });
   const [passwordRequirements, setPasswordRequirements] = useState({
     length: false,
@@ -31,6 +31,11 @@ const RegisterForm = () => {
   );
 
   const router = useRouter();
+
+  const validateShopifyStoreName = (name: string) => {
+    // Simple validation to check if the store name is non-empty and contains no spaces
+    return name.length > 0 && !name.includes(" ");
+  };
 
   const handleOAuthRegister = (url: string) => {
     window.location.href = url;
@@ -50,6 +55,22 @@ const RegisterForm = () => {
       ...prev,
       [field]: typeof value === "function" ? value(prev[field]) : value,
     }));
+  };
+
+  const handleShopifyRegister = () => {
+    // Validate the Shopify store name
+    if (!validateShopifyStoreName(formData.shopifyStoreName)) {
+      alert("Please enter a valid Shopify store name.");
+      return;
+    }
+
+    // Construct the installation URL using the store name
+    const storeName = formData.shopifyStoreName.trim();
+    const clientId = "5c8e8b211dab8be3d06c888e36df66a0";
+    const shopifyInstallURL = `https://${storeName}.myshopify.com/admin/oauth/install?client_id=${clientId}`;
+
+    // Redirect the user to the installation URL
+    handleOAuthRegister(shopifyInstallURL);
   };
 
   return (
@@ -118,17 +139,17 @@ const RegisterForm = () => {
         <>
           <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
             <p className="text-base font-medium text-left text-black/80">
-              Shopify Store URL
+              Shopify Store Name
             </p>
             <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
               <ShopifyGreenIcon />
               <input
                 type="text"
-                value={formData.shopifyStoreUrl}
+                value={formData.shopifyStoreName}
                 onChange={(e) =>
-                  handleChange("shopifyStoreUrl", e.target.value)
+                  handleChange("shopifyStoreName", e.target.value)
                 }
-                placeholder="your-store"
+                placeholder="your-store-name"
                 className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"
               />
               <p className="text-base text-left text-[#7f7f7f]">
@@ -139,11 +160,7 @@ const RegisterForm = () => {
 
           <button
             type="button"
-            onClick={() =>
-              handleOAuthRegister(
-                `https://yourshopifyapp.com/auth/shopify?shop=${formData.shopifyStoreUrl}.myshopify.com`
-              )
-            }
+            onClick={handleShopifyRegister}
             className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
           >
             <p className="text-base font-semibold text-left text-white">

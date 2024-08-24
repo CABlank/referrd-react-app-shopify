@@ -85,9 +85,10 @@ var MyDocument = /** @class */ (function (_super) {
         var _a = this.props, shop = _a.shop, host = _a.host;
         return (<Html lang="en">
         <Head>
-          {shop && host && (<script dangerouslySetInnerHTML={{
-                    __html: "\n                  (function() {\n                    var script = document.createElement('script');\n                    script.src = 'https://cdn.shopify.com/shopifycloud/app-bridge.js?apiKey=".concat(process.env.CONFIG_SHOPIFY_API_KEY, "';\n                    document.head.insertBefore(script, document.head.firstChild);\n                  })();\n                "),
-                }}/>)}
+          {shop && host && (
+            // Shopify App Bridge script should be directly inserted as the first script
+            // eslint-disable-next-line @next/next/no-sync-scripts
+            <script src={"https://cdn.shopify.com/shopifycloud/app-bridge.js?apiKey=".concat(process.env.CONFIG_SHOPIFY_API_KEY)}/>)}
         </Head>
         <body>
           <Main />

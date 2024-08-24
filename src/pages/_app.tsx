@@ -10,7 +10,6 @@ import BrandLayout from "./layouts/BrandLayout/BrandLayout";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import Link from "next/link";
 import createApp from "@shopify/app-bridge";
-import { Toast } from "@shopify/app-bridge/actions";
 
 declare global {
   interface Window {
@@ -81,6 +80,13 @@ const ContentWrapper: React.FC<{
   const [sessionChecked, setSessionChecked] = useState(false);
   const router = useRouter();
 
+  // Log whenever the session is updated
+  useEffect(() => {
+    if (session) {
+      console.log("Session has been defined with new information:", session);
+    }
+  }, [session]);
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -115,13 +121,6 @@ const ContentWrapper: React.FC<{
 
       // Attach app instance to window for debugging if needed
       window.shopify = app;
-
-      // Example: Show a toast notification when the app initializes
-      const toast = Toast.create(app, {
-        message: "App initialized successfully!",
-        duration: 5000,
-      });
-      toast.dispatch(Toast.Action.SHOW);
     }
   }, [isShopify, pageProps.shop, pageProps.host]);
 
@@ -131,10 +130,27 @@ const ContentWrapper: React.FC<{
 
   const isBrandRoute = router.pathname.startsWith("/brand");
 
-  const createLink = (path: string) => {
+  // Function to append session data to URLs
+  const createLinkWithSession = (path: string) => {
     const url = new URL(path, window.location.href);
     if (pageProps.shop) url.searchParams.set("shop", pageProps.shop);
     if (pageProps.idToken) url.searchParams.set("id_token", pageProps.idToken);
+
+    // Add session parameters
+    if (session) {
+      url.searchParams.set("token", session.token);
+      url.searchParams.set("refreshToken", session.refreshToken);
+      url.searchParams.set(
+        "sessionAccessTokenExpiresAt",
+        session.sessionAccessTokenExpiresAt
+      );
+      url.searchParams.set("userId", session.user?.id?.toString() || "");
+      url.searchParams.set("expires", session.expires.toString());
+    }
+
+    // Log the final URL
+    console.log("Final URL with session data:", url.toString());
+
     return url.toString();
   };
 
@@ -142,15 +158,18 @@ const ContentWrapper: React.FC<{
     return (
       <>
         <ui-nav-menu style={{ display: "none" }}>
-          <Link href={createLink("/brand/dashboard")}>Dashboard</Link>
-          <Link href={createLink("/brand/campaigns")}>Campaigns</Link>
-          <Link href={createLink("/brand/referrals")}>Referrals</Link>
-          <Link href={createLink("/brand/settings")}>Settings</Link>
-          <Link href={createLink("/brand/payments")}>Payments</Link>
-          <Link href={createLink("/brand/support")}>Support</Link>
+          <Link href={createLinkWithSession("/brand/campaigns")}>
+            Campaigns
+          </Link>
+          <Link href={createLinkWithSession("/brand/referrals")}>
+            Referrals
+          </Link>
+          <Link href={createLinkWithSession("/brand/settings")}>Settings</Link>
+          <Link href={createLinkWithSession("/brand/payments")}>Payments</Link>
+          <Link href={createLinkWithSession("/brand/support")}>Support</Link>
         </ui-nav-menu>
         <div className="flex-1 overflow-y-auto">
-          <main className="p-12">
+          <main className="p-6">
             <Component {...pageProps} />
           </main>
         </div>

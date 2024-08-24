@@ -18,7 +18,7 @@ export interface Campaign {
   discountType: "FixedAmount" | "Percentage";
   discountValue: string | null;
   appliesTo: string | null;
-  format: "Popup" | "Topbar";
+  format: "Popup" | "Both";
   serializedTopbarState?: string;
   serializedPopupState?: string;
   amountFunded?: number;
@@ -206,26 +206,54 @@ export const updateCampaign = async (
 };
 
 // Update the status of a campaign
-export const updateCampaignStatus = (
+export const updateCampaignStatus = async (
   id: number,
   status: string,
   token: string
-): Promise<void> =>
-  fetchFromAPI<void>(`/items/campaigns/${id}`, token, {
+): Promise<void> => {
+  // Update the campaign's status
+  await fetchFromAPI<void>(`/items/campaigns/${id}`, token, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 
+  // Duplicate the action for `campaign_public_page`
+  await fetchFromAPI<void>(`/items/campaign_public_page/${id}`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+
+  // Duplicate the action for `campaign_metadata`
+  await fetchFromAPI<void>(`/items/campaign_metadata/${id}`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+};
+
 // Update the amount funded for a campaign
-export const updateCampaignStatusAndAmount = (
+export const updateCampaignStatusAndAmount = async (
   id: number,
   amountFunded: number,
   token: string
-): Promise<void> =>
-  fetchFromAPI<void>(`/items/campaigns/${id}`, token, {
+): Promise<void> => {
+  // Update the campaign's amount funded
+  await fetchFromAPI<void>(`/items/campaigns/${id}`, token, {
     method: "PATCH",
     body: JSON.stringify({ amountFunded }),
   });
+
+  // Duplicate the action for `campaign_public_page`
+  await fetchFromAPI<void>(`/items/campaign_public_page/${id}`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ amountFunded }),
+  });
+
+  // Duplicate the action for `campaign_metadata`
+  await fetchFromAPI<void>(`/items/campaign_metadata/${id}`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ amountFunded }),
+  });
+};
 
 // Delete a campaign
 export const deleteCampaign = async (

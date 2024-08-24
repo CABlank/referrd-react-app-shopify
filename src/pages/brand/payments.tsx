@@ -18,7 +18,7 @@ import DeclineIcon from "@/components/Icons/DeclineIcon";
 import AcceptIcon from "@/components/Icons/AcceptIcon";
 import SeparatorIcon from "@/components/Icons/SeparatorIcon";
 import ScrollableContainer from "@/components/common/ScrollableContainer";
-import initialLoadChecker from "@/utils/middleware/initialLoadChecker";
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 import {
   GetServerSideProps,
   GetServerSidePropsContext,

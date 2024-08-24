@@ -71,16 +71,18 @@ var login = function (credentials) { return __awaiter(void 0, void 0, void 0, fu
     });
 }); };
 var refreshToken = function (refreshToken) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, error, data;
+    var response, error, data, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, fetch("".concat(API_URL, "/auth/refresh"), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ refresh_token: refreshToken }),
-                })];
+            case 0:
+                _a.trys.push([0, 5, , 6]);
+                return [4 /*yield*/, fetch("".concat(API_URL, "/auth/refresh"), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ refresh_token: refreshToken }),
+                    })];
             case 1:
                 response = _a.sent();
                 if (!!response.ok) return [3 /*break*/, 3];
@@ -88,11 +90,16 @@ var refreshToken = function (refreshToken) { return __awaiter(void 0, void 0, vo
             case 2:
                 error = _a.sent();
                 console.error("Token refresh failed:", error);
-                throw new Error("Token refresh failed: ".concat(error.message));
+                throw new Error("Token refresh failed: ".concat(error.message || "No error message returned"));
             case 3: return [4 /*yield*/, response.json()];
             case 4:
                 data = _a.sent();
                 return [2 /*return*/, data];
+            case 5:
+                error_1 = _a.sent();
+                console.error("Error refreshing access token:", error_1);
+                throw error_1; // Re-throw the error to be caught by the calling function
+            case 6: return [2 /*return*/];
         }
     });
 }); };

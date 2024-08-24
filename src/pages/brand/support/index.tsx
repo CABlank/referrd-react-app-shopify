@@ -7,7 +7,7 @@ import {
   GetServerSidePropsContext,
   GetServerSidePropsResult,
 } from "next";
-import initialLoadChecker from "@/utils/middleware/initialLoadChecker";
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 interface SupportProps {
   accessToken?: string;

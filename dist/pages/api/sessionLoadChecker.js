@@ -34,21 +34,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { PrismaClient } from "@prisma/client";
-var prisma = new PrismaClient();
-export var updateTokens = function (_a) { return __awaiter(void 0, [_a], void 0, function (_b) {
+import { prisma } from "../../lib/prisma"; // Ensure this is the correct path to your singleton Prisma client
+// Function to update tokens in the database
+var updateTokens = function (_a) { return __awaiter(void 0, [_a], void 0, function (_b) {
     var expiresAt, error_1;
-    var PrismaUserId = _b.PrismaUserId, accessToken = _b.accessToken, refreshToken = _b.refreshToken, expires = _b.expires;
+    var userId = _b.userId, accessToken = _b.accessToken, refreshToken = _b.refreshToken, expires = _b.expires;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
-                _c.trys.push([0, 2, , 3]);
                 expiresAt = new Date();
                 expiresAt.setSeconds(expiresAt.getSeconds() + expires);
+                _c.label = 1;
+            case 1:
+                _c.trys.push([1, 3, , 4]);
                 return [4 /*yield*/, prisma.token.updateMany({
-                        where: {
-                            userId: PrismaUserId,
-                        },
+                        where: { userId: userId },
                         data: {
                             accessToken: accessToken,
                             refreshToken: refreshToken,
@@ -56,43 +56,84 @@ export var updateTokens = function (_a) { return __awaiter(void 0, [_a], void 0,
                             updatedAt: new Date(),
                         },
                     })];
-            case 1:
-                _c.sent();
-                console.log("Updated tokens in Prisma for user:", PrismaUserId);
-                return [3 /*break*/, 3];
             case 2:
+                _c.sent();
+                console.log("Updated tokens in Prisma for user:", userId);
+                return [3 /*break*/, 4];
+            case 3:
                 error_1 = _c.sent();
-                console.error("Error updating tokens in Prisma:", error_1);
+                console.error("Error updating tokens for userId: ".concat(userId), error_1);
                 throw error_1;
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+// Function to get the refresh token from the database
+var getRefreshToken = function (userId) { return __awaiter(void 0, void 0, void 0, function () {
+    var tokenRecord, error_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, prisma.token.findFirst({
+                        where: { userId: userId },
+                    })];
+            case 1:
+                tokenRecord = _a.sent();
+                if (!tokenRecord) {
+                    throw new Error("No token found for the provided userId");
+                }
+                return [2 /*return*/, tokenRecord.refreshToken];
+            case 2:
+                error_2 = _a.sent();
+                console.error("Error fetching refresh token for userId: ".concat(userId), error_2);
+                throw error_2;
             case 3: return [2 /*return*/];
         }
     });
 }); };
 export default (function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, PrismaUserId, accessToken, refreshToken, expires, error_2;
+    var _a, apiRequestUserId, accessToken, refreshToken, expires, token, error_3;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                if (!(req.method === "POST")) return [3 /*break*/, 5];
-                _a = req.body, PrismaUserId = _a.PrismaUserId, accessToken = _a.accessToken, refreshToken = _a.refreshToken, expires = _a.expires;
-                _b.label = 1;
+                _b.trys.push([0, 5, 6, 8]);
+                if (req.method !== "POST") {
+                    return [2 /*return*/, res.status(405).json({ error: "Method not allowed" })];
+                }
+                _a = req.body, apiRequestUserId = _a.apiRequestUserId, accessToken = _a.accessToken, refreshToken = _a.refreshToken, expires = _a.expires;
+                if (!apiRequestUserId || isNaN(apiRequestUserId)) {
+                    return [2 /*return*/, res.status(400).json({ error: "Invalid or missing userId" })];
+                }
+                if (!(accessToken && refreshToken && expires)) return [3 /*break*/, 2];
+                return [4 /*yield*/, updateTokens({
+                        userId: apiRequestUserId,
+                        accessToken: accessToken,
+                        refreshToken: refreshToken,
+                        expires: expires,
+                    })];
             case 1:
-                _b.trys.push([1, 3, , 4]);
-                return [4 /*yield*/, updateTokens({ PrismaUserId: PrismaUserId, accessToken: accessToken, refreshToken: refreshToken, expires: expires })];
-            case 2:
                 _b.sent();
-                res.status(200).json({ message: "Tokens updated successfully" });
-                return [3 /*break*/, 4];
+                return [2 /*return*/, res.status(200).json({ message: "Tokens updated successfully" })];
+            case 2: return [4 /*yield*/, getRefreshToken(apiRequestUserId)];
             case 3:
-                error_2 = _b.sent();
-                console.error("Error updating tokens:", error_2);
-                res.status(500).json({ error: "Failed to update tokens" });
-                return [3 /*break*/, 4];
-            case 4: return [3 /*break*/, 6];
+                token = _b.sent();
+                return [2 /*return*/, res.status(200).json({ refreshToken: token })];
+            case 4: return [3 /*break*/, 8];
             case 5:
-                res.status(405).json({ error: "Method not allowed" });
-                _b.label = 6;
-            case 6: return [2 /*return*/];
+                error_3 = _b.sent();
+                console.error("Error handling token update:", error_3);
+                return [2 /*return*/, res
+                        .status(500)
+                        .json({ error: error_3.message || "Internal Server Error" })];
+            case 6: 
+            // Ensure the Prisma client is disconnected after handling the request
+            return [4 /*yield*/, prisma.$disconnect()];
+            case 7:
+                // Ensure the Prisma client is disconnected after handling the request
+                _b.sent();
+                return [7 /*endfinally*/];
+            case 8: return [2 /*return*/];
         }
     });
 }); });

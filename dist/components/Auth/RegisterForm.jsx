@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,36 +47,37 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import ArrowLoginIcon from "../Icons/ArrowLoginIcon";
 import FullNameInput from "../common/FullNameInput";
 import EmailInput from "../common/EmailInput";
 import MobileInput from "../common/MobileInput";
 import PasswordInput from "../common/PasswordInput";
 import GoogleIcon from "../Icons/GoogleIcon";
+import ArrowLoginIcon from "../Icons/ArrowLoginIcon";
 import ShopifyPurpleIcon from "../Icons/ShopifyPurpleIcon";
 import ShopifyGreenIcon from "../Icons/ShopifyGreenIcon";
 import WorkEmailPurpleIcon from "../Icons/WorkEmailPurpleIcon";
 var RegisterForm = function () {
-    var _a = useState(""), fullName = _a[0], setFullName = _a[1];
-    var _b = useState(""), email = _b[0], setEmail = _b[1];
-    var _c = useState(""), mobile = _c[0], setMobile = _c[1];
-    var _d = useState(""), password = _d[0], setPassword = _d[1];
-    var _e = useState({
+    var _a = useState({
+        fullName: "",
+        email: "",
+        mobile: "",
+        password: "",
+        shopifyStoreName: "", // Changed from shopifyStoreUrl to shopifyStoreName
+    }), formData = _a[0], setFormData = _a[1];
+    var _b = useState({
         length: false,
         number: false,
         specialChar: false,
         noWhitespace: true,
-    }), passwordRequirements = _e[0], setPasswordRequirements = _e[1];
-    var _f = useState(""), shopifyStoreUrl = _f[0], setShopifyStoreUrl = _f[1];
-    var _g = useState("email"), registerMethod = _g[0], setRegisterMethod = _g[1];
+    }), passwordRequirements = _b[0], setPasswordRequirements = _b[1];
+    var _c = useState("email"), registerMethod = _c[0], setRegisterMethod = _c[1];
     var router = useRouter();
-    var handleGoogleRegister = function () {
-        var directusOAuthURL = "http://localhost:8055/auth/login/google?redirect=".concat(encodeURIComponent("http://localhost:3000/auth/google"));
-        window.location.href = directusOAuthURL;
+    var validateShopifyStoreName = function (name) {
+        // Simple validation to check if the store name is non-empty and contains no spaces
+        return name.length > 0 && !name.includes(" ");
     };
-    var handleShopifyRegister = function () {
-        var shopifyOAuthURL = "https://yourshopifyapp.com/auth/shopify?shop=".concat(shopifyStoreUrl, ".myshopify.com");
-        window.location.href = shopifyOAuthURL;
+    var handleOAuthRegister = function (url) {
+        window.location.href = url;
     };
     var handleRegister = function (event) { return __awaiter(void 0, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -75,38 +87,47 @@ var RegisterForm = function () {
             return [2 /*return*/];
         });
     }); };
+    var handleChange = function (field, value) {
+        setFormData(function (prev) {
+            var _a;
+            return (__assign(__assign({}, prev), (_a = {}, _a[field] = typeof value === "function" ? value(prev[field]) : value, _a)));
+        });
+    };
+    var handleShopifyRegister = function () {
+        // Validate the Shopify store name
+        if (!validateShopifyStoreName(formData.shopifyStoreName)) {
+            alert("Please enter a valid Shopify store name.");
+            return;
+        }
+        // Construct the installation URL using the store name
+        var storeName = formData.shopifyStoreName.trim();
+        var clientId = "5c8e8b211dab8be3d06c888e36df66a0";
+        var shopifyInstallURL = "https://".concat(storeName, ".myshopify.com/admin/oauth/install?client_id=").concat(clientId);
+        // Redirect the user to the installation URL
+        handleOAuthRegister(shopifyInstallURL);
+    };
     return (<form className="flex flex-col justify-start self-stretch flex-grow-0 flex-shrink-0 gap-4 px-8" onSubmit={handleRegister}>
       {registerMethod === "email" ? (<>
-          {/* Google Register Button */}
-          <button type="button" // Ensure this is set so it doesn't submit the form
-         onClick={handleGoogleRegister} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5 hidden">
+          <button type="button" onClick={function () {
+                return handleOAuthRegister("http://localhost:8055/auth/login/google?redirect=".concat(encodeURIComponent("http://localhost:3000/auth/google")));
+            }} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5 hidden">
             <GoogleIcon />
-            <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
+            <p className="text-base font-medium text-left text-[#851087]">
               Sign Up with Google
             </p>
           </button>
 
-          {/* Shopify Register Button */}
           <button type="button" onClick={function () { return setRegisterMethod("shopify"); }} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5">
             <ShopifyPurpleIcon />
-            <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
+            <p className="text-base font-medium text-left text-[#851087]">
               Sign Up with Shopify
             </p>
           </button>
+          <FullNameInput fullName={formData.fullName} setFullName={function (value) { return handleChange("fullName", value); }}/>
+          <EmailInput email={formData.email} setEmail={function (value) { return handleChange("email", value); }}/>
+          <MobileInput mobile={formData.mobile} setMobile={function (value) { return handleChange("mobile", value); }}/>
+          <PasswordInput password={formData.password} setPassword={function (value) { return handleChange("password", value); }} setPasswordRequirements={setPasswordRequirements}/>
 
-          {/* Full Name Input */}
-          <FullNameInput fullName={fullName} setFullName={setFullName}/>
-
-          {/* Email Input */}
-          <EmailInput email={email} setEmail={setEmail}/>
-
-          {/* Mobile Number Input */}
-          <MobileInput mobile={mobile} setMobile={setMobile}/>
-
-          {/* Password Input */}
-          <PasswordInput password={password} setPassword={setPassword} setPasswordRequirements={setPasswordRequirements}/>
-
-          {/* Submit Button */}
           <button type="submit" className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]">
             <p className="text-base font-semibold text-left text-white">
               Sign Up With Email
@@ -114,21 +135,21 @@ var RegisterForm = function () {
             <ArrowLoginIcon />
           </button>
         </>) : (<>
-          {/* Shopify Store URL Input */}
           <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
             <p className="text-base font-medium text-left text-black/80">
-              Shopify Store URL
+              Shopify Store Name
             </p>
             <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
               <ShopifyGreenIcon />
-              <input type="text" value={shopifyStoreUrl} onChange={function (e) { return setShopifyStoreUrl(e.target.value); }} placeholder="your-store" className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"/>
-              <p className="flex-grow-0 flex-shrink-0 text-base text-left text-[#7f7f7f]">
+              <input type="text" value={formData.shopifyStoreName} onChange={function (e) {
+                return handleChange("shopifyStoreName", e.target.value);
+            }} placeholder="your-store-name" className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"/>
+              <p className="text-base text-left text-[#7f7f7f]">
                 .myshopify.com
               </p>
             </div>
           </div>
 
-          {/* Submit Button for Shopify */}
           <button type="button" onClick={handleShopifyRegister} className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]">
             <p className="text-base font-semibold text-left text-white">
               Sign Up With Shopify
@@ -136,24 +157,10 @@ var RegisterForm = function () {
             <ArrowLoginIcon />
           </button>
 
-          {/* Option to switch back to email registration */}
-          <div className="flex justify-center items-center flex-grow-0 flex-shrink-0 relative mt-4">
-            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">
-              or
-            </p>
-          </div>
           <button type="button" onClick={function () { return setRegisterMethod("email"); }} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5">
             <WorkEmailPurpleIcon />
-            <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
+            <p className="text-base font-medium text-left text-[#851087]">
               Work Email Address
-            </p>
-          </button>
-
-          <button type="button" // Ensure this is set so it doesn't submit the form
-         onClick={handleGoogleRegister} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5 hidden">
-            <GoogleIcon />
-            <p className="flex-grow-0 flex-shrink-0 text-base font-medium text-left text-[#851087]">
-              Sign Up with Google
             </p>
           </button>
         </>)}

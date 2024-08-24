@@ -48,14 +48,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { useState, useEffect, useRef } from "react";
 import { fetchCustomers, fetchCampaigns, fetchCompanies, } from "../services/referrals/referrals";
 import { useSession } from "../context/SessionContext";
-var useCustomers = function () {
-    var _a = useSession(), session = _a.session, withTokenRefresh = _a.withTokenRefresh;
-    var _b = useState({
+var useCustomers = function (_a) {
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, userId = _a.userId;
+    var _b = useSession(), session = _b.session, withTokenRefresh = _b.withTokenRefresh;
+    var _c = useState({
         customers: [],
         campaigns: [],
         loading: true,
         error: null,
-    }), state = _b[0], setState = _b[1];
+    }), state = _c[0], setState = _c[1];
     var loadExecutedRef = useRef(false);
     useEffect(function () {
         var loadData = function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -63,15 +64,13 @@ var useCustomers = function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        if (!((session === null || session === void 0 ? void 0 : session.token) && !loadExecutedRef.current)) return [3 /*break*/, 5];
+                        if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) && !loadExecutedRef.current)) return [3 /*break*/, 5];
                         setState(function (prevState) { return (__assign(__assign({}, prevState), { loading: true })); });
                         loadExecutedRef.current = true;
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 4, , 5]);
-                        return [4 /*yield*/, withTokenRefresh(function (token) {
-                                return fetchCompanies(token);
-                            })];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchCompanies(token); }, refreshToken, userId)];
                     case 2:
                         companiesData = _b.sent();
                         if (!companiesData || companiesData.length === 0) {
@@ -82,8 +81,8 @@ var useCustomers = function () {
                             throw new Error("Company UUID is undefined");
                         }
                         return [4 /*yield*/, Promise.all([
-                                withTokenRefresh(function (token) { return fetchCustomers(token, companyUUID_1); }),
-                                withTokenRefresh(function (token) { return fetchCampaigns(token); }),
+                                withTokenRefresh(function (token) { return fetchCustomers(token, companyUUID_1); }, refreshToken, userId),
+                                withTokenRefresh(function (token) { return fetchCampaigns(token); }, refreshToken, userId),
                             ])];
                     case 3:
                         _a = _b.sent(), customersData = _a[0], campaignsData = _a[1];
@@ -110,7 +109,7 @@ var useCustomers = function () {
             });
         }); };
         loadData();
-    }, [session, withTokenRefresh]);
+    }, [session, accessToken, refreshToken, userId, withTokenRefresh]);
     return state;
 };
 export default useCustomers;

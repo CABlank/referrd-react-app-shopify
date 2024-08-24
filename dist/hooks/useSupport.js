@@ -48,11 +48,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { fetchSupportQueries, submitSupportQuery, fetchSupportQuery, fetchSupportResponses, submitResponse, updateSupportQueryStatus, } from "../services/support/support";
+import { useSession } from "../context/SessionContext";
 // Custom hook to manage support queries and responses
-var useSupport = function () {
-    // const { session, withTokenRefresh } = useSession(); // No longer needed since we're using a hardcoded token
-    var router = useRouter(); // Add router here
-    var _a = useState({
+var useSupport = function (_a) {
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, userId = _a.userId;
+    var _b = useSession(), session = _b.session, withTokenRefresh = _b.withTokenRefresh;
+    var router = useRouter();
+    var _c = useState({
         queries: [],
         query: null,
         responses: [],
@@ -62,22 +64,21 @@ var useSupport = function () {
         queryTitle: "",
         question: "",
         topic: "Payment",
-    }), state = _a[0], setState = _a[1];
+    }), state = _c[0], setState = _c[1];
     var loadExecutedRef = useRef(false);
     useEffect(function () {
         var loadQueries = function () { return __awaiter(void 0, void 0, void 0, function () {
-            var hardcodedToken, data_1, err_1;
+            var data_1, err_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        hardcodedToken = "s3-ZWWXB2aPvx_nIShLlF2a12mafupCk";
-                        if (!(hardcodedToken && !loadExecutedRef.current)) return [3 /*break*/, 4];
+                        if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) && !loadExecutedRef.current)) return [3 /*break*/, 4];
                         setState(function (prevState) { return (__assign(__assign({}, prevState), { loading: true })); });
                         loadExecutedRef.current = true;
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, fetchSupportQueries(hardcodedToken)];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchSupportQueries(token); }, refreshToken, userId)];
                     case 2:
                         data_1 = _a.sent();
                         setState(function (prevState) { return (__assign(__assign({}, prevState), { queries: data_1, loading: false, error: null })); });
@@ -92,7 +93,7 @@ var useSupport = function () {
             });
         }); };
         loadQueries();
-    }, []);
+    }, [session, accessToken, refreshToken, userId, withTokenRefresh]);
     // Handle input changes
     var handleChange = function (field, value) {
         setState(function (prevState) {
@@ -102,26 +103,25 @@ var useSupport = function () {
     };
     // Submit a new support query
     var handleSubmit = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var hardcodedToken, data, updatedQueries_1, err_2;
+        var data_2, updatedQueries_1, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-                    if (!hardcodedToken) return [3 /*break*/, 5];
+                    if (!((session === null || session === void 0 ? void 0 : session.token) || accessToken)) return [3 /*break*/, 5];
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
-                    data = {
+                    data_2 = {
                         title: state.queryTitle,
                         question: state.question,
                         topic: state.topic,
                         status: "Pending",
                     };
-                    return [4 /*yield*/, submitSupportQuery(data, hardcodedToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return submitSupportQuery(data_2, token); }, refreshToken, userId)];
                 case 2:
                     _a.sent();
                     setState(function (prevState) { return (__assign(__assign({}, prevState), { queryTitle: "", question: "", topic: "Payment" })); });
-                    return [4 /*yield*/, fetchSupportQueries(hardcodedToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return fetchSupportQueries(token); }, refreshToken, userId)];
                 case 3:
                     updatedQueries_1 = _a.sent();
                     setState(function (prevState) { return (__assign(__assign({}, prevState), { queries: updatedQueries_1 })); });
@@ -137,24 +137,23 @@ var useSupport = function () {
     }); };
     // Submit a new message for a specific support query
     var handleNewMessageSubmit = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var hardcodedToken, response, responsesData_1, err_3;
+        var response_1, responsesData_1, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-                    if (!(state.query && hardcodedToken)) return [3 /*break*/, 5];
+                    if (!(state.query && ((session === null || session === void 0 ? void 0 : session.token) || accessToken))) return [3 /*break*/, 5];
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
-                    response = {
+                    response_1 = {
                         support_query_id: state.query.id,
                         message: state.newMessage,
                     };
-                    return [4 /*yield*/, submitResponse(response, hardcodedToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return submitResponse(response_1, token); }, refreshToken, userId)];
                 case 2:
                     _a.sent();
                     setState(function (prevState) { return (__assign(__assign({}, prevState), { newMessage: "" })); });
-                    return [4 /*yield*/, fetchSupportResponses(hardcodedToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return fetchSupportResponses(token); }, refreshToken, userId)];
                 case 3:
                     responsesData_1 = _a.sent();
                     setState(function (prevState) { return (__assign(__assign({}, prevState), { responses: responsesData_1.filter(function (response) { return response.support_query_id === state.query.id; }) })); });
@@ -170,19 +169,20 @@ var useSupport = function () {
     }); };
     // Update the status of a specific support query
     var handleStatusChange = function (status) { return __awaiter(void 0, void 0, void 0, function () {
-        var hardcodedToken, updatedQuery_1, err_4;
+        var updatedQuery_1, err_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    hardcodedToken = "KMH1iScAlNZQO_cZ3FrqRzy8Zn6T91CV";
-                    if (!(state.query && hardcodedToken)) return [3 /*break*/, 5];
+                    if (!(state.query && ((session === null || session === void 0 ? void 0 : session.token) || accessToken))) return [3 /*break*/, 5];
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
-                    return [4 /*yield*/, updateSupportQueryStatus(state.query.id, { status: status }, hardcodedToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) {
+                            return updateSupportQueryStatus(state.query.id, { status: status }, token);
+                        }, refreshToken, userId)];
                 case 2:
                     _a.sent();
-                    return [4 /*yield*/, fetchSupportQuery(state.query.id, hardcodedToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return fetchSupportQuery(state.query.id, token); }, refreshToken, userId)];
                 case 3:
                     updatedQuery_1 = _a.sent();
                     setState(function (prevState) { return (__assign(__assign({}, prevState), { query: updatedQuery_1 })); });
@@ -198,7 +198,20 @@ var useSupport = function () {
     }); };
     // Handle selecting a query
     var handleQuerySelect = function (query) {
-        router.push("/brand/support/".concat(query.id)); // Navigate to the support detail page
+        var _a = router.query, shop = _a.shop, host = _a.host, id_token = _a.id_token; // Extract existing query parameters
+        var url = "/brand/support/".concat(query.id);
+        // If the environment is a Shopify store, append the required query parameters
+        if (shop || host || id_token) {
+            var urlObj = new URL(window.location.origin + url);
+            if (shop)
+                urlObj.searchParams.set("shop", shop);
+            if (host)
+                urlObj.searchParams.set("host", host);
+            if (id_token)
+                urlObj.searchParams.set("id_token", id_token);
+            url = urlObj.toString().replace(window.location.origin, "");
+        }
+        router.push(url); // Navigate to the support detail page with the updated URL
     };
     return {
         state: state,
@@ -210,4 +223,3 @@ var useSupport = function () {
     };
 };
 export default useSupport;
-// };

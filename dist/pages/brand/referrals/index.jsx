@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -45,6 +56,7 @@ import ScrollableContainer from "../../../components/common/ScrollableContainer"
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import DataTableRows from "../../../components/common/DataTableRows";
 import useReferrals from "../../../hooks/useReferrals";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
 var parseLocation = function (location) {
     try {
         var parsedLocation = JSON.parse(location);
@@ -54,12 +66,17 @@ var parseLocation = function (location) {
         return "Unknown";
     }
 };
-var CustomersIndex = function () {
+var CustomersIndex = function (_a) {
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, userId = _a.userId;
     var router = useRouter();
-    var _a = useReferrals(), customers = _a.customers, campaigns = _a.campaigns, loading = _a.loading;
-    var _b = useState(""), searchQuery = _b[0], setSearchQuery = _b[1];
-    var _c = useState("date"), sortOrder = _c[0], setSortOrder = _c[1];
-    var _d = useState(1), currentPage = _d[0], setCurrentPage = _d[1];
+    var _b = useReferrals({
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        userId: userId,
+    }), customers = _b.customers, campaigns = _b.campaigns, loading = _b.loading;
+    var _c = useState(""), searchQuery = _c[0], setSearchQuery = _c[1];
+    var _d = useState("date"), sortOrder = _d[0], setSortOrder = _d[1];
+    var _e = useState(1), currentPage = _e[0], setCurrentPage = _e[1];
     var itemsPerPage = 10;
     var mapCustomerData = function () {
         return customers.map(function (customer) {
@@ -154,13 +171,28 @@ var CustomersIndex = function () {
       </div>
     </div>);
 };
-export var getStaticProps = function () { return __awaiter(void 0, void 0, void 0, function () {
+// Modify getServerSideProps to pass tokens and user ID to the component
+export var getServerSideProps = function (context) { return __awaiter(void 0, void 0, void 0, function () {
+    var result;
     return __generator(this, function (_a) {
-        return [2 /*return*/, ({
-                props: {
-                    title: "Referrals",
-                },
-            })];
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, initialLoadChecker(context)];
+            case 1:
+                result = _a.sent();
+                if ("redirect" in result || "notFound" in result) {
+                    return [2 /*return*/, result];
+                }
+                if (!("props" in result)) {
+                    return [2 /*return*/, {
+                            props: {
+                                title: "Referrals",
+                            },
+                        }];
+                }
+                return [2 /*return*/, {
+                        props: __assign(__assign({}, result.props), { title: "Referrals" }),
+                    }];
+        }
     });
 }); };
 export default CustomersIndex;

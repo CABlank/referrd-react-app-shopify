@@ -17,9 +17,20 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [shopifyStoreUrl, setShopifyStoreUrl] = useState("");
+  const [shopifyStoreName, setShopifyStoreName] = useState("");
   const [loginMethod, setLoginMethod] = useState<"email" | "shopify">("email");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const validateEmail = (email: string) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
+  const validateShopifyStoreName = (name: string) => {
+    // Simple validation to check if the store name is non-empty and contains no spaces
+    return name.length > 0 && !name.includes(" ");
+  };
 
   const handleGoogleLogin = () => {
     const directusOAuthURL = `https://api.referrd.com.au/auth/login/google?redirect=${encodeURIComponent(
@@ -29,13 +40,43 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
   };
 
   const handleShopifyLogin = () => {
-    const shopifyOAuthURL = `https://yourshopifyapp.com/auth/shopify?shop=${shopifyStoreUrl}.myshopify.com`;
-    window.location.href = shopifyOAuthURL;
+    // Validate the Shopify store name
+    if (!validateShopifyStoreName(shopifyStoreName)) {
+      setError("Please enter a valid Shopify store name.");
+      return;
+    }
+
+    // Construct the installation URL using the store name
+    const storeName = shopifyStoreName.trim();
+    const clientId = "5c8e8b211dab8be3d06c888e36df66a0";
+    const shopifyInstallURL = `https://${storeName}.myshopify.com/admin/oauth/install?client_id=${clientId}`;
+
+    // Redirect the user to the installation URL
+    window.location.href = shopifyInstallURL;
   };
 
   const handleLogin = async (event: FormEvent) => {
     event.preventDefault();
-    await onLogin(email, password);
+    setError(null); // Reset error message
+
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    try {
+      await onLogin(email, password);
+      router.push("/dashboard"); // Redirect to the dashboard or relevant page after successful login
+    } catch (err) {
+      setError(
+        "Failed to log in. Please check your credentials and try again."
+      );
+    }
   };
 
   return (
@@ -43,6 +84,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
       className="flex flex-col justify-start items-center self-stretch flex-grow-0 flex-shrink-0 gap-4 px-8"
       onSubmit={handleLogin}
     >
+      {error && <div className="text-red-500 text-sm text-center">{error}</div>}
       {loginMethod === "email" ? (
         <>
           <EmailInput email={email} setEmail={setEmail} />
@@ -89,15 +131,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
         <>
           <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
             <p className="text-base font-medium text-left text-black/80">
-              Shopify Store URL
+              Shopify Store Name
             </p>
             <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
               <ShopifyGreenIcon />
               <input
                 type="text"
-                value={shopifyStoreUrl}
-                onChange={(e) => setShopifyStoreUrl(e.target.value)}
-                placeholder="your-store"
+                value={shopifyStoreName}
+                onChange={(e) => setShopifyStoreName(e.target.value)}
+                placeholder="your-store-name"
                 className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"
               />
               <p className="flex-grow-0 flex-shrink-0 text-base text-left text-[#7f7f7f]">
@@ -106,7 +148,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
             </div>
           </div>
           <button
-            type="submit"
+            type="button"
             onClick={handleShopifyLogin}
             className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
             disabled={loading}

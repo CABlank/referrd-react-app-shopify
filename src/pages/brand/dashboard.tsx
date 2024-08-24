@@ -19,7 +19,7 @@ import {
 } from "../../services/payments/payments";
 import ScrollableContainer from "@/components/common/ScrollableContainer";
 import ArrowSeeMoreIcon from "@/components/Icons/ArrowSeeMoreIcon";
-import initialLoadChecker from "../../utils/middleware/initialLoadChecker";
+import initialLoadChecker from "../../utils/middleware/initialLoadChecker/initialLoadChecker";
 import {
   GetServerSideProps,
   GetServerSidePropsContext,

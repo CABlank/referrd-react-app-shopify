@@ -48,30 +48,68 @@ var LoginForm = function (_a) {
     var onLogin = _a.onLogin, loading = _a.loading;
     var _b = useState(""), email = _b[0], setEmail = _b[1];
     var _c = useState(""), password = _c[0], setPassword = _c[1];
-    var _d = useState(""), shopifyStoreUrl = _d[0], setShopifyStoreUrl = _d[1];
+    var _d = useState(""), shopifyStoreName = _d[0], setShopifyStoreName = _d[1];
     var _e = useState("email"), loginMethod = _e[0], setLoginMethod = _e[1];
+    var _f = useState(null), error = _f[0], setError = _f[1];
     var router = useRouter();
+    var validateEmail = function (email) {
+        var re = /\S+@\S+\.\S+/;
+        return re.test(email);
+    };
+    var validateShopifyStoreName = function (name) {
+        // Simple validation to check if the store name is non-empty and contains no spaces
+        return name.length > 0 && !name.includes(" ");
+    };
     var handleGoogleLogin = function () {
         var directusOAuthURL = "https://api.referrd.com.au/auth/login/google?redirect=".concat(encodeURIComponent("http://localhost:3000/auth/google"));
         window.location.href = directusOAuthURL;
     };
     var handleShopifyLogin = function () {
-        var shopifyOAuthURL = "https://yourshopifyapp.com/auth/shopify?shop=".concat(shopifyStoreUrl, ".myshopify.com");
-        window.location.href = shopifyOAuthURL;
+        // Validate the Shopify store name
+        if (!validateShopifyStoreName(shopifyStoreName)) {
+            setError("Please enter a valid Shopify store name.");
+            return;
+        }
+        // Construct the installation URL using the store name
+        var storeName = shopifyStoreName.trim();
+        var clientId = "5c8e8b211dab8be3d06c888e36df66a0";
+        var shopifyInstallURL = "https://".concat(storeName, ".myshopify.com/admin/oauth/install?client_id=").concat(clientId);
+        // Redirect the user to the installation URL
+        window.location.href = shopifyInstallURL;
     };
     var handleLogin = function (event) { return __awaiter(void 0, void 0, void 0, function () {
+        var err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     event.preventDefault();
-                    return [4 /*yield*/, onLogin(email, password)];
+                    setError(null); // Reset error message
+                    if (!validateEmail(email)) {
+                        setError("Please enter a valid email address.");
+                        return [2 /*return*/];
+                    }
+                    if (!password) {
+                        setError("Please enter your password.");
+                        return [2 /*return*/];
+                    }
+                    _a.label = 1;
                 case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, onLogin(email, password)];
+                case 2:
                     _a.sent();
-                    return [2 /*return*/];
+                    router.push("/dashboard"); // Redirect to the dashboard or relevant page after successful login
+                    return [3 /*break*/, 4];
+                case 3:
+                    err_1 = _a.sent();
+                    setError("Failed to log in. Please check your credentials and try again.");
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     }); };
     return (<form className="flex flex-col justify-start items-center self-stretch flex-grow-0 flex-shrink-0 gap-4 px-8" onSubmit={handleLogin}>
+      {error && <div className="text-red-500 text-sm text-center">{error}</div>}
       {loginMethod === "email" ? (<>
           <EmailInput email={email} setEmail={setEmail}/>
           <PasswordInput password={password} setPassword={setPassword} showRequirements={false}/>
@@ -103,17 +141,17 @@ var LoginForm = function (_a) {
         </>) : (<>
           <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
             <p className="text-base font-medium text-left text-black/80">
-              Shopify Store URL
+              Shopify Store Name
             </p>
             <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
               <ShopifyGreenIcon />
-              <input type="text" value={shopifyStoreUrl} onChange={function (e) { return setShopifyStoreUrl(e.target.value); }} placeholder="your-store" className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"/>
+              <input type="text" value={shopifyStoreName} onChange={function (e) { return setShopifyStoreName(e.target.value); }} placeholder="your-store-name" className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"/>
               <p className="flex-grow-0 flex-shrink-0 text-base text-left text-[#7f7f7f]">
                 .myshopify.com
               </p>
             </div>
           </div>
-          <button type="submit" onClick={handleShopifyLogin} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]" disabled={loading}>
+          <button type="button" onClick={handleShopifyLogin} className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]" disabled={loading}>
             <p className="text-base font-semibold text-left text-white">
               {loading ? "Logging in..." : "Log In"}
             </p>

@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,22 +45,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import jwt from "jsonwebtoken";
+import jwtValidator from "../jwt/jwtValidator";
 import shopify from "../shopify/shopifyClient";
-import { PrismaClient } from "@prisma/client";
 import { RequestedTokenType } from "@shopify/shopify-api";
-var prisma = new PrismaClient();
+import { prisma } from "../../lib/prisma"; // Adjust the path as needed
 var lastOrderId = null; // Store the last order ID in memory
+// Function to decode and verify the JWT token
 var decodeAndVerifyToken = function (token) {
     try {
-        var decodedPayload = jwt.decode(token);
+        console.log("Starting JWT validation...");
+        var decodedPayload = jwtValidator(token); // Use the jwtValidator function
         var currentTime = Math.floor(Date.now() / 1000);
         if (!decodedPayload || currentTime > decodedPayload.exp) {
             throw new Error("Token has expired or is invalid");
         }
-        return decodedPayload;
+        console.log("JWT validation successful:", decodedPayload);
+        return __assign(__assign({}, decodedPayload), { exp: decodedPayload.exp || 0 });
     }
     catch (error) {
+        console.error("JWT validation failed:", error);
         throw new Error("Token validation failed");
     }
 };
@@ -94,11 +108,11 @@ var getTokensByUserId = function (userId) { return __awaiter(void 0, void 0, voi
     });
 }); };
 var sessionLoadCheckerUtil = function (context) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, shop, idToken, decodedToken, tokenExchange, onlineSession, client, SHOP_QUERY, shopResponse, shopDetails, shopEmail, userId, accessToken, refreshToken, tokens, ORDERS_QUERY, ordersResponse, orders, newOrders, _i, orders_1, order, error_3;
+    var _a, shop, idToken, decodedToken, tokenExchange, onlineSession, client, SHOP_QUERY, shopResponse, shopDetails, shopEmail, userId, accessToken, refreshToken, tokens, error_3;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 8, , 9]);
+                _b.trys.push([0, 7, , 8]);
                 _a = context.query, shop = _a.shop, idToken = _a.id_token;
                 if (!shop) {
                     console.log("Missing shop parameter");
@@ -158,46 +172,14 @@ var sessionLoadCheckerUtil = function (context) { return __awaiter(void 0, void 
             case 5:
                 console.log("User ID not found for email:", shopEmail);
                 _b.label = 6;
-            case 6:
-                ORDERS_QUERY = "{\n      orders(first: 10, sortKey: CREATED_AT, reverse: true) {\n        edges {\n          node {\n            id\n            name\n            email\n            createdAt\n            totalPriceSet {\n              shopMoney {\n                amount\n                currencyCode\n              }\n            }\n          }\n        }\n      }\n    }";
-                return [4 /*yield*/, client.request(ORDERS_QUERY)];
+            case 6: return [2 /*return*/, {
+                    props: {
+                        userId: userId, // Pass the user ID as a prop
+                        accessToken: accessToken, // Pass the access token as a prop
+                        refreshToken: refreshToken,
+                    },
+                }];
             case 7:
-                ordersResponse = _b.sent();
-                orders = ordersResponse.data.orders.edges.map(function (edge) { return edge.node; });
-                // Log new orders
-                if (orders.length > 0) {
-                    newOrders = [];
-                    for (_i = 0, orders_1 = orders; _i < orders_1.length; _i++) {
-                        order = orders_1[_i];
-                        if (!lastOrderId || order.id > lastOrderId) {
-                            newOrders.push(order);
-                        }
-                    }
-                    if (newOrders.length > 0) {
-                        console.log("New orders detected:");
-                        newOrders.forEach(function (order) {
-                            console.log("Order ID: ".concat(order.id));
-                            console.log("Name: ".concat(order.name));
-                            console.log("Email: ".concat(order.email));
-                            console.log("Created At: ".concat(order.createdAt));
-                            console.log("Total: ".concat(order.totalPriceSet.shopMoney.amount, " ").concat(order.totalPriceSet.shopMoney.currencyCode));
-                            console.log("---");
-                        });
-                        lastOrderId = orders[0].id; // Update the last order ID to the latest one
-                    }
-                    else {
-                        console.log("No new orders since the last check.");
-                    }
-                }
-                return [2 /*return*/, {
-                        props: {
-                            userId: userId, // Pass the user ID as a prop
-                            accessToken: accessToken, // Pass the access token as a prop
-                            refreshToken: refreshToken,
-                            orders: orders,
-                        },
-                    }];
-            case 8:
                 error_3 = _b.sent();
                 console.error("An error occurred at sessionLoadCheckerUtil:", error_3);
                 return [2 /*return*/, {
@@ -205,7 +187,7 @@ var sessionLoadCheckerUtil = function (context) { return __awaiter(void 0, void 
                             error: "An error occurred",
                         },
                     }];
-            case 9: return [2 /*return*/];
+            case 8: return [2 /*return*/];
         }
     });
 }); };

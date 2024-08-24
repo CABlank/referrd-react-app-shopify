@@ -14,7 +14,7 @@ import { useSession } from "../../../context/SessionContext";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import Spinner from "../../../components/common/Spinner";
 import DesktopCreativeHide from "@/components/campaign/DesktopCreativeHide";
-import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker/initialLoadChecker";
 import {
   GetServerSideProps,
   GetServerSidePropsContext,
@@ -82,12 +82,14 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
         try {
           const data = await withTokenRefresh(
             (token) => fetchCampaign(Number(campaignId), token),
-            refreshToken
+            refreshToken,
+            userId
           );
 
           const url = await withTokenRefresh(
             (token) => fetchCompanyUrl(token),
-            refreshToken
+            refreshToken,
+            userId
           );
           setCompanyUrl(url);
 
@@ -146,16 +148,33 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
     campaignId,
     sessionLoading,
     withTokenRefresh,
+    userId,
   ]);
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
-
   const handlePaymentSuccess = () => {
-    router.push(`/brand/campaigns/edit?campaignId=${campaignId}`);
-  };
+    const { shop, host, id_token } = router.query; // Extract existing query parameters
 
+    let url = `/brand/campaigns/edit?campaignId=${campaignId}`;
+
+    // Check if any query parameter exists
+    if (shop || host || id_token) {
+      const urlObj = new URL(window.location.origin + url);
+
+      // Append the required query parameters if they exist
+      if (shop) urlObj.searchParams.set("shop", shop as string);
+      if (host) urlObj.searchParams.set("host", host as string);
+      if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+      // Generate the final URL string with parameters
+      url = urlObj.toString().replace(window.location.origin, "");
+    }
+
+    // Redirect to the generated URL
+    router.push(url);
+  };
   const handleChange = (
     e: React.ChangeEvent<
       HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
@@ -171,10 +190,10 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
   };
 
   const handleFormatSelect = (format: string) => {
-    if (campaignData && (format === "Popup" || format === "Topbar")) {
+    if (campaignData && (format === "Popup" || format === "Both")) {
       setCampaignData((prevData) => ({
         ...prevData!,
-        format: format as "Popup" | "Topbar",
+        format: format as "Popup" | "Both",
       }));
     }
   };
@@ -216,9 +235,13 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
             campaignData.compiledHtml = JSON.stringify(compiledHtml);
           }
 
-          await withTokenRefresh(async (token) => {
-            await updateCampaign(campaignData, token);
-          }, refreshToken);
+          await withTokenRefresh(
+            async (token) => {
+              await updateCampaign(campaignData, token);
+            },
+            refreshToken,
+            userId
+          );
 
           setShowFundPopup(true);
         }
@@ -282,7 +305,7 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
               selectedFormat={campaignData.format}
               onSelect={handleFormatSelect}
             >
-              {campaignData.format === "Topbar" ? (
+              {campaignData.format === "Both" ? (
                 <BarBuilder
                   ref={barBuilderRef}
                   campaign={campaignDataWithNonNullableUrl}

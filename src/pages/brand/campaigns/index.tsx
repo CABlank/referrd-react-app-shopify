@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { Redirect } from "@shopify/app-bridge/actions"; // Import Redirect from Shopify App Bridge
 import CalendarIcon from "../../../components/Icons/CalendarIcon";
 import DeleteIcon from "../../../components/Icons/DeleteIcon";
 import EditIcon from "../../../components/Icons/EditIcon";
@@ -23,7 +22,9 @@ import LiveStatusIcon from "@/components/Icons/LiveStatusIcon";
 import EndedStatusIcon from "@/components/Icons/EndedStatusIcon";
 import DraftStatusIcon from "@/components/Icons/DraftStatusIcon";
 import PendingStatusIcon from "@/components/Icons/PendingStatusIcon";
-import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker/initialLoadChecker";
+import { fetchCompanyId } from "@/services/company/company";
+import { fetchUserData } from "@/services/auth/auth";
 
 import {
   GetServerSideProps,
@@ -127,7 +128,27 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
         setShowDeletePopup(false);
         setDeleteCampaignId(null);
         setDeleting(false);
-        router.reload(); // Reload the page after deletion
+
+        // Extract existing query parameters
+        const { shop, host, id_token } = router.query;
+
+        let reloadUrl = window.location.pathname;
+
+        // If the environment is a Shopify store, append the required query parameters
+        if (shop || host || id_token) {
+          const urlObj = new URL(window.location.origin + reloadUrl);
+          if (shop) urlObj.searchParams.set("shop", shop as string);
+          if (host) urlObj.searchParams.set("host", host as string);
+          if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+          reloadUrl = urlObj.toString().replace(window.location.origin, "");
+        }
+
+        // Replace the current URL to ensure the page reloads with the query parameters
+        router.replace(reloadUrl);
+
+        // Force a full page reload
+        window.location.reload();
       } catch (err) {
         setDeleting(false);
         console.error("Error deleting campaign:", err);
@@ -139,12 +160,23 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
   const handleCreateCampaign = async () => {
     if (session?.token || accessToken) {
       setLoading(true);
+
       try {
+        // fetch company id
+        const companyId = await withTokenRefresh(
+          (token) => fetchCompanyId(token),
+          refreshToken,
+          userId
+        );
+
+        // Extract existing query parameters
+        const { shop, host, id_token } = router.query;
+
         const newCampaign: Campaign = {
           name: "New Campaign",
           startDate: null,
           closeDate: null,
-          company: null,
+          company: Array.isArray(shop) ? shop[0] : shop || null,
           terms: null,
           discountType: "FixedAmount",
           discountValue: null,
@@ -153,24 +185,52 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
           commission: null,
           commissionType: "FixedAmount",
           amountFunded: 0,
+          company_id: companyId,
         };
+
         const createdCampaign = await withTokenRefresh(
           (token) => createCampaign(newCampaign, token),
           refreshToken,
           userId // Pass userId here
         );
 
-        // Use Shopify App Bridge for navigation if in Shopify
-        if (shop && host) {
-          const appBridge = window.shopify;
-          const redirect = Redirect.create(appBridge);
-          redirect.dispatch(
-            Redirect.Action.APP,
-            `/brand/campaigns/edit?campaignId=${createdCampaign.id}&shop=${shop}&host=${host}`
-          );
-        } else {
-          router.push(`/brand/campaigns/edit?campaignId=${createdCampaign.id}`);
+        let url = `/brand/campaigns/edit?campaignId=${createdCampaign.id}`;
+
+        // If the environment is a Shopify store, append the required query parameters
+        if (shop || host || id_token) {
+          const urlObj = new URL(window.location.origin + url);
+          if (shop) urlObj.searchParams.set("shop", shop as string);
+          if (host) urlObj.searchParams.set("host", host as string);
+          if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+          url = urlObj.toString().replace(window.location.origin, "");
         }
+
+        // fetch shopify token
+        const shopifyTokenResponse = await withTokenRefresh(
+          (token) => fetchUserData(token),
+          refreshToken,
+          userId
+        );
+
+        const shopifyToken = shopifyTokenResponse.ShopifyToken;
+
+        // Call the backend API route to create the Shopify page using fetch
+        await fetch("/api/create-shopify-page", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            shopifyToken,
+            shopName: shop?.toString() ?? "",
+            campaignUuid: createdCampaign.uuid,
+            pageTitle: `Referral Page `,
+            pageBodyHtml: ``,
+          }),
+        });
+
+        router.push(url); // Navigate to the campaign edit page with the updated URL
       } catch (err) {
         console.error("Error creating campaign:", err);
         setError("Failed to create campaign. Please try again.");
@@ -210,6 +270,8 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
   };
 
   const downloadQR = (campaignId: number) => {
+    alert("Download QR Code for campaign: " + campaignId);
+
     const canvas = document.getElementById(
       `qr-${campaignId}`
     ) as HTMLCanvasElement;
@@ -252,7 +314,10 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
       {showQRPopup !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-8 rounded-lg shadow-lg z-60 flex flex-col items-center">
-            <QRCode id={`qr-${showQRPopup}`} value="https://example.com" />
+            <QRCode
+              id={`qr-${showQRPopup}`}
+              value={`${campaigns.find((campaign) => campaign.id === showQRPopup)?.company}/pages/referrd-${campaigns.find((campaign) => campaign.id === showQRPopup)?.uuid}`}
+            />
             <div className="flex justify-end mt-4 w-full">
               <button
                 onClick={() => setShowQRPopup(null)}
@@ -295,18 +360,36 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
-                      if (shop && host) {
-                        const appBridge = window.shopify;
-                        const redirect = Redirect.create(appBridge);
-                        redirect.dispatch(
-                          Redirect.Action.APP,
-                          `/brand/campaigns/edit?campaignId=${campaign.id}&shop=${shop}&host=${host}`
-                        );
+                      const { shop, host, id_token } = router.query; // Extract existing query parameters
+
+                      let url = `/brand/campaigns/edit?campaignId=${campaign.id}`;
+
+                      // Check if any query parameter exists
+                      if (shop || host || id_token) {
+                        const urlObj = new URL(window.location.origin + url);
+
+                        // Append the required query parameters if they exist
+                        if (shop)
+                          urlObj.searchParams.set("shop", shop as string);
+                        if (host)
+                          urlObj.searchParams.set("host", host as string);
+                        if (id_token)
+                          urlObj.searchParams.set(
+                            "id_token",
+                            id_token as string
+                          );
+
+                        // Generate the final URL string with parameters
+                        url = urlObj
+                          .toString()
+                          .replace(window.location.origin, "");
                       } else {
-                        router.push(
-                          `/brand/campaigns/edit?campaignId=${campaign.id}`
-                        );
+                        // If no query parameters, remove the query part from the URL
+                        url = `/brand/campaigns/edit?campaignId=${campaign.id}`;
                       }
+
+                      // Redirect to the URL
+                      router.push(url);
                     }}
                     className="p-2 bg-gray-200 rounded-full hover:bg-gray-300"
                   >

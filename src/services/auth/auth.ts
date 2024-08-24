@@ -20,22 +20,29 @@ const login = async (credentials: { email: string; password: string }) => {
 };
 
 const refreshToken = async (refreshToken: string) => {
-  const response = await fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  });
+  try {
+    const response = await fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    console.error("Token refresh failed:", error);
-    throw new Error(`Token refresh failed: ${error.message}`);
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Token refresh failed:", error);
+      throw new Error(
+        `Token refresh failed: ${error.message || "No error message returned"}`
+      );
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error refreshing access token:", error);
+    throw error; // Re-throw the error to be caught by the calling function
   }
-
-  const data = await response.json();
-  return data;
 };
 
 const logout = async (refreshToken: string, mode: string = "json") => {
@@ -67,7 +74,7 @@ const logout = async (refreshToken: string, mode: string = "json") => {
   }
 };
 
-const fetchUserData = async (token: string) => {
+export const fetchUserData = async (token: string) => {
   const response = await fetch(`${API_URL}/users/me`, {
     method: "GET",
     headers: {
@@ -114,6 +121,7 @@ const createUser = async (userData: {
   password: string;
   first_name: string;
   last_name: string;
+  ShopifyToken?: string;
 }) => {
   const response = await fetch(`${API_URL}/users/register`, {
     method: "POST",

@@ -187,7 +187,7 @@ const DiscountValue: React.FC<DiscountValueProps> = ({
             <br />
             <br />
             <br />
-            <span className="p-6 mt-5">Coming Soon...</span>
+            <span className=" mt-5 w-full ">Coming Soon...</span>
           </span>
         </div>
       )}

@@ -48,7 +48,26 @@ const FundCampaignModal: React.FC<FundCampaignModalProps> = ({
     try {
       // Optionally, update the campaign status to "Draft" or another status
       await updateCampaignStatus(Number(campaignId), "Draft", token);
-      router.push("/brand/campaigns"); // Redirect to the campaigns page
+      const { shop, host, id_token } = router.query; // Extract existing query parameters
+
+      let url = `/brand/campaigns/edit?campaignId=${campaignId}`;
+
+      // Check if any query parameter exists
+      if (shop || host || id_token) {
+        const urlObj = new URL(window.location.origin + url);
+
+        // Append the required query parameters if they exist
+        if (shop) urlObj.searchParams.set("shop", shop as string);
+        if (host) urlObj.searchParams.set("host", host as string);
+        if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+        // Generate the final URL string with parameters
+        url = urlObj.toString().replace(window.location.origin, "");
+      }
+
+      // Redirect to the generated URL
+      router.push(url);
+      setShowFundPopup(false);
     } catch (error) {
       console.error("Failed to save campaign without funding", error);
     } finally {

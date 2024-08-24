@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import SaveButton from "./SaveButton";
+import { useRouter } from "next/router";
 
 interface CampaignHeaderProps {
   saving: boolean;
@@ -11,11 +12,26 @@ const CampaignHeader: React.FC<CampaignHeaderProps> = ({
   saving,
   handleSaveChanges,
 }) => {
+  const router = useRouter();
+  const { shop, host, id_token } = router.query; // Extract existing query parameters
+
+  let campaignsUrl = "/brand/campaigns";
+
+  // If the environment is a Shopify store, append the required query parameters
+  if (shop || host || id_token) {
+    const urlObj = new URL(window.location.origin + campaignsUrl);
+    if (shop) urlObj.searchParams.set("shop", shop as string);
+    if (host) urlObj.searchParams.set("host", host as string);
+    if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+    campaignsUrl = urlObj.toString().replace(window.location.origin, "");
+  }
+
   return (
     <div className="flex justify-between items-center">
       <div className="flex justify-start items-center relative gap-2">
         <Link
-          href="/brand/campaigns"
+          href={campaignsUrl}
           className="flex-grow-0 flex-shrink-0 text-sm font-medium text-left text-black/50"
         >
           Campaigns

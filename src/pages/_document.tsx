@@ -22,6 +22,7 @@ class MyDocument extends Document {
         <Head>
           {shop && host && (
             // Shopify App Bridge script should be directly inserted as the first script
+            // eslint-disable-next-line @next/next/no-sync-scripts
             <script
               src={`https://cdn.shopify.com/shopifycloud/app-bridge.js?apiKey=${process.env.CONFIG_SHOPIFY_API_KEY}`}
               // This must be the first script and should not have async or defer attributes

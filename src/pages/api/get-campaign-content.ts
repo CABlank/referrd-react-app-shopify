@@ -30,12 +30,22 @@ export default async function handler(
     const fullUrl = req.query.fullUrl as string;
     console.log("Full URL:", fullUrl);
 
-    // 3. Initialize request by extracting company ID and BOT_TOKEN.
+    // 3. Check if the URL includes the path `/pages/referrd`.
+    const isReferrdPage = fullUrl.includes("/pages/referrd");
+
+    // 4. Extract the UUID from the URL if it is a referral page.
+    const referralUuidFromUrl = isReferrdPage
+      ? fullUrl.split("/pages/referrd-")[1] // Split at 'referrd-' and get the UUID
+      : null;
+
+    console.log("Extracted UUID:", referralUuidFromUrl);
+
+    // 5. Initialize request by extracting company ID and BOT_TOKEN.
     console.log("Initializing request...");
     const { companyId, BOT_TOKEN } = initialize(req);
     console.log("Company ID:", companyId);
 
-    // 4. Fetch and validate campaign data based on the company ID.
+    // 6. Fetch and validate campaign data based on the company ID.
     const campaignDetails = await fetchCampaign(companyId, BOT_TOKEN);
     if (!campaignDetails) {
       // If no valid campaign is found, notify the website and stop here.
@@ -46,7 +56,7 @@ export default async function handler(
 
     const { campaign, format, campaignData } = campaignDetails;
 
-    // 5. Handle referral logic (if applicable).
+    // 7. Handle referral logic (if applicable).
     // Check if there's a referral in the URL or saved in cookies.
     const referralUuid = extractReferralUuid(fullUrl);
 
@@ -55,9 +65,13 @@ export default async function handler(
       return; // Stop if there's an issue with the referral.
     }
 
-    // 6. Generate script content based on the campaign format and send the response.
-    // This is where the actual content (like a pop-up) is created and sent back to the website.
-    const scriptContent = generateScriptContent(format, campaignData);
+    // 8. Generate script content based on the campaign format and whether it's a referrd page.
+    const scriptContent = generateScriptContent(
+      format,
+      campaignData,
+      isReferrdPage,
+      referralUuidFromUrl
+    );
     res.setHeader("Content-Type", "application/javascript");
     res.status(200).send(scriptContent);
   } catch (error) {

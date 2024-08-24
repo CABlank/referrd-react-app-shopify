@@ -88,7 +88,7 @@ export interface Campaign {
   discountType: "FixedAmount" | "Percentage";
   discountValue: string | null;
   appliesTo: string | null;
-  format: "Popup" | "Topbar";
+  format: "Popup" | "Both";
   serializedTopbarState?: string;
   serializedPopupState?: string;
   amountFunded?: number;

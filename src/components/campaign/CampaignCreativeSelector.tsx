@@ -18,7 +18,6 @@ const CampaignCreativeSelector: React.FC<{
     onSelect(format); // Call the onSelect callback with the selected format
   };
 
-  // Check if the click is inside the vertical scrollbar or within the scrollable container
   const isClickInsideScrollbarOrScrollContainer = (event: MouseEvent) => {
     const scrollContainer = document.getElementById("scroll");
     if (scrollContainer) {
@@ -30,7 +29,6 @@ const CampaignCreativeSelector: React.FC<{
     return false;
   };
 
-  // Hook to detect clicks outside of the component
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -48,9 +46,8 @@ const CampaignCreativeSelector: React.FC<{
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, handleToggle]);
+  }, [isOpen]);
 
-  // Memoize children to prevent unnecessary re-renders
   const memoizedChildren = useMemo(() => {
     return <div>{children}</div>;
   }, [children]);
@@ -80,9 +77,10 @@ const CampaignCreativeSelector: React.FC<{
         <div className="px-6 pb-6 space-y-6">
           <div className="flex flex-col space-y-4">
             <p className="font-medium text-black/80 self-center">
-              Choose your preferred format
+              Customize your campaign display
             </p>
             <div className="flex gap-8">
+              {/* Popup Option */}
               <div
                 className={`flex justify-center items-center flex-1 gap-8 p-8 rounded-lg border border-gray-300 cursor-pointer ${
                   selectedFormat === "Popup" ? "border-green-500" : ""
@@ -101,15 +99,16 @@ const CampaignCreativeSelector: React.FC<{
                 <div className="flex flex-col justify-center items-start">
                   <p className="font-medium text-black/80">Popup</p>
                   <p className="text-sm text-black/50">
-                    Grab your visitors’ attention with a striking popup.
+                    A fixed popup that will grab your visitors’ attention.
                   </p>
                 </div>
               </div>
+              {/* Popup + Topbar Option */}
               <div
                 className={`flex justify-center items-center flex-1 gap-8 p-8 rounded-lg border border-gray-300 cursor-pointer ${
-                  selectedFormat === "Topbar" ? "border-green-500" : ""
+                  selectedFormat === "Both" ? "border-green-500" : ""
                 }`}
-                onClick={() => handleSelectFormat("Topbar")}
+                onClick={() => handleSelectFormat("Both")}
               >
                 <div className="flex flex-col items-center justify-start h-[67.5px] w-[76.5px] bg-neutral-200 rounded p-[5px] gap-[2.5px]">
                   <div className="w-[66.5px] h-1.5 rounded-[1px] bg-[#5c5c5c] mb-[2.5px]" />
@@ -120,10 +119,9 @@ const CampaignCreativeSelector: React.FC<{
                   <div className="w-[66.5px] h-[40.5px] rounded-[1px] bg-[#b7b6b6] mt-[2.5px]" />
                 </div>
                 <div className="flex flex-col justify-center items-start">
-                  <p className="font-medium text-black/80">Bar</p>
+                  <p className="font-medium text-black/80">Popup + Bar</p>
                   <p className="text-sm text-black/50">
-                    Display an unobtrusive message at the top or bottom of your
-                    site.
+                    Combine a popup with a top bar for extra visibility.
                   </p>
                 </div>
               </div>
@@ -138,7 +136,8 @@ const CampaignCreativeSelector: React.FC<{
       {!isOpen && (
         <div className="text-sm text-gray-500 px-6 pb-6">
           <p>
-            <strong>Selected format:</strong> {selectedFormat}
+            <strong>Selected format:</strong>{" "}
+            {selectedFormat === "Both" ? "Popup + Bar" : "Popup"}
           </p>
         </div>
       )}

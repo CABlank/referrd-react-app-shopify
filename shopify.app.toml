@@ -3,7 +3,7 @@
 client_id = "5c8e8b211dab8be3d06c888e36df66a0"
 name = "Staging Referrd App"
 handle = "staging-referrd-app"
-application_url = "https://d1fb-2a0c-5a81-506-d900-10c5-f3f3-cedc-84fe.ngrok-free.app"
+application_url = "https://bfc7b8e384a4.ngrok.app"
 embedded = true
 
 [build]
@@ -16,17 +16,17 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://d1fb-2a0c-5a81-506-d900-10c5-f3f3-cedc-84fe.ngrok-free.app/api/auth/tokens",
-  "https://d1fb-2a0c-5a81-506-d900-10c5-f3f3-cedc-84fe.ngrok-free.app/api/auth/callback"
+  "https://bfc7b8e384a4.ngrok.app/api/auth/tokens",
+  "https://bfc7b8e384a4.ngrok.app/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-01"
 
   [webhooks.privacy_compliance]
-  customer_deletion_url = "https://d1fb-2a0c-5a81-506-d900-10c5-f3f3-cedc-84fe.ngrok-free.app/api/shopify/compliance/customerRedact"
-  customer_data_request_url = "https://d1fb-2a0c-5a81-506-d900-10c5-f3f3-cedc-84fe.ngrok-free.app/api/shopify/compliance/customerDataRequest"
-  shop_deletion_url = "https://d1fb-2a0c-5a81-506-d900-10c5-f3f3-cedc-84fe.ngrok-free.app/api/shopify/compliance/shopRedact"
+  customer_deletion_url = "https://bfc7b8e384a4.ngrok.app/api/shopify/compliance/customerRedact"
+  customer_data_request_url = "https://bfc7b8e384a4.ngrok.app/api/shopify/compliance/customerDataRequest"
+  shop_deletion_url = "https://bfc7b8e384a4.ngrok.app/api/shopify/compliance/shopRedact"
 
   [[webhooks.subscriptions]]
   topics = [ "orders/create" ]

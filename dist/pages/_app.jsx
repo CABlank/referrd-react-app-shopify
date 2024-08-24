@@ -60,9 +60,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-// pages/_app.tsx
-import AppBridgeProvider from "../components/providers/AppBridgeProvider";
-import { AppProvider, AppProvider as PolarisProvider } from "@shopify/polaris";
+import { AppProvider as PolarisProvider } from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
 import App from "next/app";
@@ -73,6 +71,7 @@ import "../styles/globals.css";
 import BrandLayout from "./layouts/BrandLayout/BrandLayout";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import Link from "next/link";
+import createApp from "@shopify/app-bridge";
 var MyApp = /** @class */ (function (_super) {
     __extends(MyApp, _super);
     function MyApp() {
@@ -80,45 +79,62 @@ var MyApp = /** @class */ (function (_super) {
     }
     MyApp.getInitialProps = function (appContext) {
         return __awaiter(this, void 0, void 0, function () {
-            var appProps, _a, shop, host, idToken;
+            var appProps, ctx, _a, shop, host, idToken, error_1;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0: return [4 /*yield*/, App.getInitialProps(appContext).catch(function (error) {
-                            console.error("Error in getInitialProps:", error);
-                            return { pageProps: {} };
-                        })];
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, App.getInitialProps(appContext)];
                     case 1:
                         appProps = _b.sent();
-                        _a = appContext.ctx.query, shop = _a.shop, host = _a.host, idToken = _a.id_token;
+                        ctx = appContext.ctx;
+                        _a = ctx.query, shop = _a.shop, host = _a.host, idToken = _a.id_token;
                         return [2 /*return*/, __assign(__assign({}, appProps), { pageProps: __assign(__assign({}, appProps.pageProps), { shop: shop, host: host, idToken: idToken }) })];
+                    case 2:
+                        error_1 = _b.sent();
+                        console.error("Error in getInitialProps:", error_1);
+                        return [2 /*return*/, { pageProps: {} }];
+                    case 3: return [2 /*return*/];
                 }
             });
         });
     };
     MyApp.prototype.isShopify = function () {
-        var _a = this.props.pageProps, shop = _a.shop, host = _a.host;
-        return Boolean(shop && shop.length > 0) || Boolean(host && host.length > 0);
+        var pageProps = this.props.pageProps;
+        return ((typeof pageProps.shop === "string" && pageProps.shop.length > 0) ||
+            (typeof pageProps.host === "string" && pageProps.host.length > 0));
     };
     MyApp.prototype.render = function () {
         var _a = this.props, Component = _a.Component, pageProps = _a.pageProps;
-        return (<AppProvider i18n={translations}>
-        <PolarisProvider i18n={translations}>
-          <SessionProvider>
-            <ContentWrapper isShopify={this.isShopify()} Component={Component} pageProps={pageProps}/>
-          </SessionProvider>
-        </PolarisProvider>
-      </AppProvider>);
+        var isShopify = this.isShopify();
+        return (<PolarisProvider i18n={translations}>
+        <SessionProvider>
+          <ContentWrapper isShopify={isShopify} Component={Component} pageProps={pageProps}/>
+        </SessionProvider>
+      </PolarisProvider>);
     };
     return MyApp;
 }(App));
 var ContentWrapper = function (_a) {
     var isShopify = _a.isShopify, Component = _a.Component, pageProps = _a.pageProps;
     var _b = useSession(), session = _b.session, loading = _b.loading;
-    var router = useRouter();
     var _c = useState(false), sessionChecked = _c[0], setSessionChecked = _c[1];
+    var router = useRouter();
     useEffect(function () {
-        if (!loading)
-            setSessionChecked(true);
+        var checkSession = function () { return __awaiter(void 0, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                try {
+                    if (!loading) {
+                        setSessionChecked(true);
+                    }
+                }
+                catch (error) {
+                    console.error("Error during session check:", error);
+                }
+                return [2 /*return*/];
+            });
+        }); };
+        checkSession();
     }, [loading]);
     useEffect(function () {
         if (sessionChecked) {
@@ -126,12 +142,25 @@ var ContentWrapper = function (_a) {
                 router.replace("/brand/dashboard");
             }
             else if (!session && router.pathname.startsWith("/brand")) {
-                router.push("/login");
+                // Additional logic can be added here
             }
         }
     }, [sessionChecked, session, router]);
-    if (loading || !sessionChecked)
+    // Initialize App Bridge and trigger actions
+    useEffect(function () {
+        if (isShopify && pageProps.shop && pageProps.host) {
+            var app = createApp({
+                apiKey: process.env.CONFIG_SHOPIFY_API_KEY,
+                host: pageProps.host, // Use `host` instead of `shopOrigin`
+            });
+            // Attach app instance to window for debugging if needed
+            window.shopify = app;
+        }
+    }, [isShopify, pageProps.shop, pageProps.host]);
+    if (loading || !sessionChecked) {
         return <LoadingOverlay />;
+    }
+    var isBrandRoute = router.pathname.startsWith("/brand");
     var createLink = function (path) {
         var url = new URL(path, window.location.href);
         if (pageProps.shop)
@@ -141,35 +170,25 @@ var ContentWrapper = function (_a) {
         return url.toString();
     };
     if (isShopify) {
-        return (<AppBridgeProvider>
-        <PolarisProvider i18n={translations}>
-          <ui-nav-menu style={{ display: "none" }}>
-            {[
-                "/",
-                "/brand/dashboard",
-                "/brand/campaigns",
-                "/brand/support",
-                "/brand/referrals",
-                "/brand/settings",
-                "/brand/payments",
-                "/brand/faqs",
-            ].map(function (path, index) { return (<Link key={index} href={createLink(path)}>
-                {path.split("/").pop()}
-              </Link>); })}
-          </ui-nav-menu>
-          <div className="flex-1 overflow-y-auto">
-            <main className="p-12">
-              <Component {...pageProps}/>
-            </main>
-          </div>
-        </PolarisProvider>
-      </AppBridgeProvider>);
+        return (<>
+        <ui-nav-menu style={{ display: "none" }}>
+          <Link href={createLink("/brand/campaigns")}>Campaigns</Link>
+          <Link href={createLink("/brand/referrals")}>Referrals</Link>
+          <Link href={createLink("/brand/settings")}>Settings</Link>
+          <Link href={createLink("/brand/payments")}>Payments</Link>
+          <Link href={createLink("/brand/support")}>Support</Link>
+        </ui-nav-menu>
+        <div className="flex-1 overflow-y-auto">
+          <main className="p-12">
+            <Component {...pageProps}/>
+          </main>
+        </div>
+      </>);
     }
     else if (Component.noLayout) {
         return <Component {...pageProps}/>;
     }
     else {
-        var isBrandRoute = router.pathname.startsWith("/brand");
         return isBrandRoute ? (<BrandLayout title={pageProps.title}>
         <Component {...pageProps}/>
       </BrandLayout>) : (<Component {...pageProps}/>);

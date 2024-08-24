@@ -67,36 +67,38 @@ import DeclineIcon from "@/components/Icons/DeclineIcon";
 import AcceptIcon from "@/components/Icons/AcceptIcon";
 import SeparatorIcon from "@/components/Icons/SeparatorIcon";
 import ScrollableContainer from "@/components/common/ScrollableContainer";
-var Payments = function () {
-    var _a = useSession(), session = _a.session, withTokenRefresh = _a.withTokenRefresh;
-    var _b = useState([]), payments = _b[0], setPayments = _b[1];
-    var _c = useState(true), loading = _c[0], setLoading = _c[1];
-    var _d = useState(null), error = _d[0], setError = _d[1];
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker";
+var Payments = function (_a) {
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, userId = _a.userId;
+    var _b = useSession(), session = _b.session, withTokenRefresh = _b.withTokenRefresh;
+    var _c = useState([]), payments = _c[0], setPayments = _c[1];
+    var _d = useState(true), loading = _d[0], setLoading = _d[1];
+    var _e = useState(null), error = _e[0], setError = _e[1];
     var loadExecutedRef = useRef(false);
-    var _e = useState(""), searchQuery = _e[0], setSearchQuery = _e[1];
-    var _f = useState("date"), sortOrder = _f[0], setSortOrder = _f[1];
-    var _g = useState(1), currentPage = _g[0], setCurrentPage = _g[1];
-    var _h = useState(10), itemsPerPage = _h[0], setItemsPerPage = _h[1];
-    var _j = useState(null), buttonClicked = _j[0], setButtonClicked = _j[1];
-    var _k = useState([]), selectedPayments = _k[0], setSelectedPayments = _k[1];
-    var _l = useState(false), selectAll = _l[0], setSelectAll = _l[1];
+    var _f = useState(""), searchQuery = _f[0], setSearchQuery = _f[1];
+    var _g = useState("date"), sortOrder = _g[0], setSortOrder = _g[1];
+    var _h = useState(1), currentPage = _h[0], setCurrentPage = _h[1];
+    var _j = useState(10), itemsPerPage = _j[0], setItemsPerPage = _j[1];
+    var _k = useState(null), buttonClicked = _k[0], setButtonClicked = _k[1];
+    var _l = useState([]), selectedPayments = _l[0], setSelectedPayments = _l[1];
+    var _m = useState(false), selectAll = _m[0], setSelectAll = _m[1];
     useEffect(function () {
         var loadData = function () { return __awaiter(void 0, void 0, void 0, function () {
-            var companyUUID, paymentsData, mappedPayments, err_1;
+            var companyUUID_1, paymentsData, mappedPayments, err_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!((session === null || session === void 0 ? void 0 : session.token) && !loadExecutedRef.current)) return [3 /*break*/, 10];
+                        if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) && !loadExecutedRef.current)) return [3 /*break*/, 10];
                         setLoading(true);
                         loadExecutedRef.current = true;
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 8, 9, 10]);
-                        return [4 /*yield*/, fetchCompanyUUID(session.token)];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchCompanyUUID(token); }, refreshToken, userId)];
                     case 2:
-                        companyUUID = _a.sent();
-                        if (!companyUUID) return [3 /*break*/, 6];
-                        return [4 /*yield*/, fetchPaymentsByCompanyId(companyUUID, session.token)];
+                        companyUUID_1 = _a.sent();
+                        if (!companyUUID_1) return [3 /*break*/, 6];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchPaymentsByCompanyId(companyUUID_1, token); }, refreshToken, userId)];
                     case 3:
                         paymentsData = _a.sent();
                         if (!paymentsData) return [3 /*break*/, 5];
@@ -106,7 +108,9 @@ var Payments = function () {
                                     switch (_c.label) {
                                         case 0:
                                             if (!payment.referral_uuid) return [3 /*break*/, 2];
-                                            return [4 /*yield*/, fetchReferrer(payment.referral_uuid, session.token)];
+                                            return [4 /*yield*/, withTokenRefresh(function (token) {
+                                                    return fetchReferrer(payment.referral_uuid, token);
+                                                }, refreshToken, userId)];
                                         case 1:
                                             _a = _c.sent();
                                             return [3 /*break*/, 3];
@@ -116,7 +120,9 @@ var Payments = function () {
                                         case 3:
                                             referrer = _a;
                                             if (!payment.campaign_uuid) return [3 /*break*/, 5];
-                                            return [4 /*yield*/, fetchCampaignMetadata(payment.campaign_uuid, session.token)];
+                                            return [4 /*yield*/, withTokenRefresh(function (token) {
+                                                    return fetchCampaignMetadata(payment.campaign_uuid, token);
+                                                }, refreshToken, userId)];
                                         case 4:
                                             _b = _c.sent();
                                             return [3 /*break*/, 6];
@@ -156,7 +162,7 @@ var Payments = function () {
             });
         }); };
         loadData();
-    }, [session === null || session === void 0 ? void 0 : session.token]);
+    }, [session === null || session === void 0 ? void 0 : session.token, accessToken, refreshToken, userId, withTokenRefresh]);
     var calculateReferralFee = function (totalPrice, commission, commissionType) {
         if (commissionType === "FixedAmount") {
             return commission;
@@ -171,14 +177,12 @@ var Payments = function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (!(session === null || session === void 0 ? void 0 : session.token)) return [3 /*break*/, 5];
+                    if (!((session === null || session === void 0 ? void 0 : session.token) || accessToken)) return [3 /*break*/, 5];
                     setLoading(true);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, 4, 5]);
-                    return [4 /*yield*/, withTokenRefresh(function (token) {
-                            return updatePaymentStatusService(paymentId, action, token);
-                        })];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return updatePaymentStatusService(paymentId, action, token); }, refreshToken, userId)];
                 case 2:
                     _a.sent();
                     setPayments(function (prevPayments) {
@@ -204,7 +208,7 @@ var Payments = function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (!((session === null || session === void 0 ? void 0 : session.token) && selectedPayments.length > 0)) return [3 /*break*/, 5];
+                    if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) && selectedPayments.length > 0)) return [3 /*break*/, 5];
                     setLoading(true);
                     setButtonClicked(action);
                     _a.label = 1;
@@ -214,7 +218,7 @@ var Payments = function () {
                             return Promise.all(selectedPayments.map(function (paymentId) {
                                 return updatePaymentStatusService(paymentId, action, token);
                             }));
-                        })];
+                        }, refreshToken, userId)];
                 case 2:
                     _a.sent();
                     setPayments(function (prevPayments) {
@@ -442,13 +446,27 @@ var Payments = function () {
       </div>
     </div>);
 };
-export var getStaticProps = function () { return __awaiter(void 0, void 0, void 0, function () {
+export var getServerSideProps = function (context) { return __awaiter(void 0, void 0, void 0, function () {
+    var result;
     return __generator(this, function (_a) {
-        return [2 /*return*/, {
-                props: {
-                    title: "Payments",
-                },
-            }];
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, initialLoadChecker(context)];
+            case 1:
+                result = _a.sent();
+                if ("redirect" in result || "notFound" in result) {
+                    return [2 /*return*/, result];
+                }
+                if (!("props" in result)) {
+                    return [2 /*return*/, {
+                            props: {
+                                title: "Payments",
+                            },
+                        }];
+                }
+                return [2 /*return*/, {
+                        props: __assign(__assign({}, result.props), { title: "Payments" }),
+                    }];
+        }
     });
 }); };
 export default Payments;

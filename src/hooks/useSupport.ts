@@ -195,7 +195,21 @@ const useSupport = ({
 
   // Handle selecting a query
   const handleQuerySelect = (query: any) => {
-    router.push(`/brand/support/${query.id}`); // Navigate to the support detail page
+    const { shop, host, id_token } = router.query; // Extract existing query parameters
+
+    let url = `/brand/support/${query.id}`;
+
+    // If the environment is a Shopify store, append the required query parameters
+    if (shop || host || id_token) {
+      const urlObj = new URL(window.location.origin + url);
+      if (shop) urlObj.searchParams.set("shop", shop as string);
+      if (host) urlObj.searchParams.set("host", host as string);
+      if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+      url = urlObj.toString().replace(window.location.origin, "");
+    }
+
+    router.push(url); // Navigate to the support detail page with the updated URL
   };
 
   return {

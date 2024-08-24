@@ -2,7 +2,7 @@ import React from "react";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 import useSettings from "../../hooks/useSettings";
 import SettingsForm from "../../components/Settings/SettingsForm";
-import initialLoadChecker from "@/utils/middleware/initialLoadChecker";
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 import {
   GetServerSideProps,
   GetServerSidePropsContext,

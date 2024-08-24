@@ -36,7 +36,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import { DeliveryMethod, LogSeverity, shopifyApi, } from "@shopify/shopify-api";
 import "@shopify/shopify-api/adapters/node";
-// import appUninstalledHandler from "../webhooks/appUninstallHandler"; // Corrected import path
 // Determine if the app is running in development mode
 var isDev = process.env.NODE_ENV === "development";
 // Extract necessary environment variables and validate them

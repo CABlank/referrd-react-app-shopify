@@ -48,9 +48,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import { useState, useEffect, useRef } from "react";
 import { fetchSettings, updateSettings, createSettings, } from "../services/settings";
 import { useSession } from "../context/SessionContext";
-// Custom hook to manage settings
-var useSettings = function () {
-    var _a = useSession(), session = _a.session, withTokenRefresh = _a.withTokenRefresh;
+var useSettings = function (_a) {
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, userId = _a.userId;
+    var _b = useSession(), session = _b.session, withTokenRefresh = _b.withTokenRefresh;
     var initialSettings = {
         id: undefined,
         contactName: "",
@@ -64,11 +64,11 @@ var useSettings = function () {
         notify_payment_notifications: null,
         no_payment_notifications: null,
     };
-    var _b = useState({
+    var _c = useState({
         settings: initialSettings,
         loading: true,
         error: null,
-    }), settingsState = _b[0], setSettingsState = _b[1];
+    }), settingsState = _c[0], setSettingsState = _c[1];
     var loadExecutedRef = useRef(false);
     useEffect(function () {
         var loadSettings = function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -76,13 +76,13 @@ var useSettings = function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!((session === null || session === void 0 ? void 0 : session.token) && !loadExecutedRef.current)) return [3 /*break*/, 4];
+                        if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) && !loadExecutedRef.current)) return [3 /*break*/, 4];
                         setSettingsState(function (prevState) { return (__assign(__assign({}, prevState), { loading: true })); });
                         loadExecutedRef.current = true;
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchSettings(token); })];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchSettings(token); }, refreshToken, userId)];
                     case 2:
                         data = _a.sent();
                         setSettingsState({ settings: data, loading: false, error: null });
@@ -100,10 +100,8 @@ var useSettings = function () {
                 }
             });
         }); };
-        if (session) {
-            loadSettings();
-        }
-    }, [session, withTokenRefresh]);
+        loadSettings();
+    }, [session, accessToken, refreshToken, userId, withTokenRefresh]);
     var handleChange = function (field, value) {
         setSettingsState(function (prevState) {
             var _a, _b;
@@ -116,21 +114,17 @@ var useSettings = function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (!((session === null || session === void 0 ? void 0 : session.token) && settingsState.settings)) return [3 /*break*/, 8];
+                    if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) && settingsState.settings)) return [3 /*break*/, 8];
                     setSettingsState(function (prevState) { return (__assign(__assign({}, prevState), { loading: true })); });
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 6, 7, 8]);
                     if (!settingsState.settings.id) return [3 /*break*/, 3];
-                    return [4 /*yield*/, withTokenRefresh(function (token) {
-                            return updateSettings(settingsState.settings, token);
-                        })];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return updateSettings(settingsState.settings, token); }, refreshToken, userId)];
                 case 2:
                     _a.sent();
                     return [3 /*break*/, 5];
-                case 3: return [4 /*yield*/, withTokenRefresh(function (token) {
-                        return createSettings(settingsState.settings, token);
-                    })];
+                case 3: return [4 /*yield*/, withTokenRefresh(function (token) { return createSettings(settingsState.settings, token); }, refreshToken, userId)];
                 case 4:
                     newSettings_1 = _a.sent();
                     setSettingsState(function (prevState) { return (__assign(__assign({}, prevState), { settings: newSettings_1 })); });

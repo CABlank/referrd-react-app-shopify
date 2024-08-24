@@ -11,7 +11,12 @@ export interface Session {
   token: string;
   refreshToken: string;
   expires: number;
+  sessionAccessTokenExpiresAt: string; // Add the new property
 }
+
+export type SetSessionFunction = React.Dispatch<
+  React.SetStateAction<Session | null>
+>;
 
 export interface SessionContextType {
   session: Session | null;
@@ -26,4 +31,5 @@ export interface SessionContextType {
   ) => Promise<any>;
   loading: boolean;
   name?: string;
+  sessionAccessTokenExpiresAt: string; // Add the new property
 }

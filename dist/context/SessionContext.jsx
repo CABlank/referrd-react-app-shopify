@@ -48,8 +48,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 import React, { createContext, useContext, useState, useEffect, useRef, } from "react";
 import authService from "../services/auth/auth";
 import Cookies from "js-cookie";
-import { PrismaClient } from "@prisma/client";
-var prisma = new PrismaClient();
+import { prisma } from "../lib/prisma"; // Adjust the path as needed
+import { saveTokensToCookies, logout, handleFetchUserDataError, login, } from "./sessionUtils";
 var SessionContext = createContext(undefined);
 export var SessionProvider = function (_a) {
     var children = _a.children;
@@ -57,283 +57,206 @@ export var SessionProvider = function (_a) {
     var _c = useState(true), loading = _c[0], setLoading = _c[1];
     var _d = useState(undefined), name = _d[0], setName = _d[1];
     var refreshPromiseRef = useRef(null);
+    var refreshQueue = [];
     var hasInitialized = useRef(false);
-    var saveTokensToCookies = function (token, refreshToken, expires) {
-        var expirationTime = Date.now() + expires * 1000;
-        Cookies.set("token_expiration", String(expirationTime), {
-            secure: true,
-            sameSite: "Strict",
-        });
-        Cookies.set("access_token", token, { secure: true, sameSite: "Strict" });
-        Cookies.set("refresh_token", refreshToken, {
-            secure: true,
-            sameSite: "Strict",
-        });
-    };
-    var clearSession = function () {
-        setSession(null);
-        setName(undefined);
-        Cookies.remove("access_token");
-        Cookies.remove("refresh_token");
-        Cookies.remove("token_expiration");
-        Cookies.remove("__stripe_mid");
-        Cookies.remove("__stripe_sid");
-    };
-    var login = function (credentials) { return __awaiter(void 0, void 0, void 0, function () {
-        var data, token, refreshToken, expires, user, role, error_1;
+    var withTokenRefresh = function (makeApiCall, overrideRefreshToken, userIdForApiCall) { return __awaiter(void 0, void 0, void 0, function () {
+        var newToken;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    setLoading(true);
+                    console.log("Current User ID:", userIdForApiCall);
+                    return [4 /*yield*/, refreshAccessToken(overrideRefreshToken, session === null || session === void 0 ? void 0 : session.user.id, userIdForApiCall)];
+                case 1:
+                    newToken = _a.sent();
+                    if (!newToken) {
+                        throw new Error("Could not refresh the token");
+                    }
+                    console.log("New token for API call:", newToken);
+                    return [4 /*yield*/, makeApiCall(newToken, session === null || session === void 0 ? void 0 : session.user.id)];
+                case 2: return [2 /*return*/, _a.sent()];
+            }
+        });
+    }); };
+    // Updated refreshAccessToken function in SessionContext.tsx
+    var refreshAccessToken = function (overrideToken, sessionUserId, apiRequestUserId) { return __awaiter(void 0, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            if (refreshPromiseRef.current) {
+                return [2 /*return*/, refreshPromiseRef.current];
+            }
+            refreshPromiseRef.current = new Promise(function (resolve, reject) { return __awaiter(void 0, void 0, void 0, function () {
+                var tokenToUse, newToken, error_1, error_2, nextInQueue;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            _a.trys.push([0, 10, 11, 12]);
+                            return [4 /*yield*/, getRefreshToken(overrideToken, apiRequestUserId)];
+                        case 1:
+                            tokenToUse = _a.sent();
+                            if (!tokenToUse) {
+                                console.error("No refresh token found");
+                                resolve(null);
+                                return [2 /*return*/];
+                            }
+                            _a.label = 2;
+                        case 2:
+                            _a.trys.push([2, 7, , 9]);
+                            return [4 /*yield*/, requestNewTokens(tokenToUse)];
+                        case 3:
+                            newToken = _a.sent();
+                            console.log("API Request User ID:", apiRequestUserId);
+                            console.log("New Token:", newToken);
+                            if (!apiRequestUserId) return [3 /*break*/, 5];
+                            // Save the new tokens to the database
+                            return [4 /*yield*/, updateTokensInDatabase(apiRequestUserId, newToken)];
+                        case 4:
+                            // Save the new tokens to the database
+                            _a.sent();
+                            _a.label = 5;
+                        case 5: return [4 /*yield*/, updateSessionWithNewToken(newToken)];
+                        case 6:
+                            _a.sent();
+                            resolve(newToken.access_token);
+                            return [3 /*break*/, 9];
+                        case 7:
+                            error_1 = _a.sent();
+                            console.error("Failed to refresh access token:", error_1);
+                            return [4 /*yield*/, logout(setSession, setName, session)];
+                        case 8:
+                            _a.sent();
+                            resolve(null);
+                            return [3 /*break*/, 9];
+                        case 9: return [3 /*break*/, 12];
+                        case 10:
+                            error_2 = _a.sent();
+                            console.error("Error during token refresh:", error_2);
+                            reject(null);
+                            return [3 /*break*/, 12];
+                        case 11:
+                            refreshPromiseRef.current = null;
+                            // Process the next request in the queue
+                            if (refreshQueue.length > 0) {
+                                nextInQueue = refreshQueue.shift();
+                                nextInQueue && nextInQueue();
+                            }
+                            return [7 /*endfinally*/];
+                        case 12: return [2 /*return*/];
+                    }
+                });
+            }); });
+            return [2 /*return*/, new Promise(function (resolve) {
+                    refreshQueue.push(function () {
+                        resolve(refreshPromiseRef.current);
+                    });
+                    // If we're the only item in the queue, execute immediately
+                    if (refreshQueue.length === 1) {
+                        refreshQueue[0]();
+                    }
+                })];
+        });
+    }); };
+    var updateTokensInDatabase = function (userId, newToken) { return __awaiter(void 0, void 0, void 0, function () {
+        var error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    // Update the tokens in the database using Prisma
+                    return [4 /*yield*/, prisma.token.updateMany({
+                            where: { userId: userId },
+                            data: {
+                                accessToken: newToken.access_token,
+                                refreshToken: newToken.refresh_token,
+                                expiresAt: new Date(Date.now() + newToken.expires * 1000),
+                                updatedAt: new Date(),
+                            },
+                        })];
+                case 1:
+                    // Update the tokens in the database using Prisma
+                    _a.sent();
+                    console.log("Tokens updated successfully in the database");
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_3 = _a.sent();
+                    console.error("Error updating tokens in the database:", error_3);
+                    throw new Error("Failed to update tokens in the database");
+                case 3: return [2 /*return*/];
+            }
+        });
+    }); };
+    var getRefreshToken = function (overrideToken, apiRequestUserId) { return __awaiter(void 0, void 0, void 0, function () {
+        var response, result, error_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!apiRequestUserId) return [3 /*break*/, 5];
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 5, 6, 7]);
-                    return [4 /*yield*/, authService.login(credentials)];
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, fetch("/api/sessionLoadChecker", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ apiRequestUserId: apiRequestUserId }),
+                        })];
                 case 2:
-                    data = (_a.sent()).data;
-                    token = data.access_token, refreshToken = data.refresh_token, expires = data.expires;
-                    saveTokensToCookies(token, refreshToken, expires);
-                    return [4 /*yield*/, authService.fetchUserData(token)];
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
                 case 3:
-                    user = _a.sent();
-                    return [4 /*yield*/, authService.fetchUserRole(token, user.role)];
-                case 4:
-                    role = _a.sent();
-                    setSession({
-                        user: {
-                            id: user.id,
-                            name: user.first_name,
-                            email: user.email,
-                            role: role.name,
-                        },
-                        token: token,
-                        refreshToken: refreshToken,
-                        expires: expires,
-                    });
-                    setName(user.first_name);
-                    return [3 /*break*/, 7];
-                case 5:
-                    error_1 = _a.sent();
-                    console.error("Login error:", error_1);
-                    return [3 /*break*/, 7];
-                case 6:
-                    setLoading(false);
-                    return [7 /*endfinally*/];
-                case 7: return [2 /*return*/];
-            }
-        });
-    }); };
-    var logout = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var refreshToken, error_2;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 3, 4, 5]);
-                    refreshToken = Cookies.get("refresh_token") || (session === null || session === void 0 ? void 0 : session.refreshToken);
-                    if (!refreshToken) return [3 /*break*/, 2];
-                    return [4 /*yield*/, authService.logout(refreshToken)];
-                case 1:
-                    _a.sent();
-                    _a.label = 2;
-                case 2: return [3 /*break*/, 5];
-                case 3:
-                    error_2 = _a.sent();
-                    console.error("Logout error:", error_2);
+                    result = _a.sent();
+                    if (result.refreshToken) {
+                        console.log("Found refresh token in the database");
+                        return [2 /*return*/, result.refreshToken];
+                    }
                     return [3 /*break*/, 5];
                 case 4:
-                    clearSession();
-                    return [7 /*endfinally*/];
-                case 5: return [2 /*return*/];
+                    error_4 = _a.sent();
+                    console.error("Error fetching refresh token from database:", error_4);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/, (overrideToken || Cookies.get("refresh_token") || (session === null || session === void 0 ? void 0 : session.refreshToken))];
             }
         });
     }); };
-    var isRefreshing = false;
-    var withTokenRefresh = function (apiCall, // Accept optional userId
-    propsRefreshToken, userId) { return __awaiter(void 0, void 0, void 0, function () {
-        var PrismaUserId, token;
+    var requestNewTokens = function (refreshToken) { return __awaiter(void 0, void 0, void 0, function () {
+        var data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    console.log("user id SESSIONCONTEXT:", userId); // Log the userId
-                    PrismaUserId = userId;
-                    console.log("Prisma user id:", PrismaUserId); // Log the userId
-                    return [4 /*yield*/, refreshAccessToken(propsRefreshToken, session === null || session === void 0 ? void 0 : session.user.id, PrismaUserId)];
+                case 0: return [4 /*yield*/, authService.refreshToken(refreshToken)];
                 case 1:
-                    token = _a.sent();
-                    if (!token)
-                        throw new Error("Failed to refresh token");
-                    console.log("Using access token for API call:", token);
-                    return [4 /*yield*/, apiCall(token, session === null || session === void 0 ? void 0 : session.user.id)];
-                case 2: return [2 /*return*/, _a.sent()]; // Pass userId to the API call
+                    data = (_a.sent()).data;
+                    return [2 /*return*/, {
+                            access_token: data.access_token,
+                            refresh_token: data.refresh_token,
+                            expires: data.expires,
+                        }];
             }
         });
     }); };
-    var refreshAccessToken = function (propsRefreshToken, userId, // Optional userId parameter
-    PrismaUserId // Optional userId parameter
-    ) { return __awaiter(void 0, void 0, void 0, function () {
-        var refreshPromise, token;
+    var updateSessionWithNewToken = function (newToken) { return __awaiter(void 0, void 0, void 0, function () {
+        var user, role;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    if (refreshPromiseRef.current)
-                        return [2 /*return*/, refreshPromiseRef.current];
-                    refreshPromise = (function () { return __awaiter(void 0, void 0, void 0, function () {
-                        var refreshTokenToUse, tokenRecord, data, token_1, newRefreshToken_1, expires_1, user_1, role_1, error_3;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    refreshTokenToUse = propsRefreshToken ||
-                                        Cookies.get("refresh_token") ||
-                                        (session === null || session === void 0 ? void 0 : session.refreshToken);
-                                    if (!(!refreshTokenToUse && (session === null || session === void 0 ? void 0 : session.token))) return [3 /*break*/, 2];
-                                    return [4 /*yield*/, prisma.token.findFirst({
-                                            where: {
-                                                accessToken: session.token,
-                                            },
-                                        })];
-                                case 1:
-                                    tokenRecord = _a.sent();
-                                    if (tokenRecord) {
-                                        refreshTokenToUse = tokenRecord.refreshToken;
-                                    }
-                                    _a.label = 2;
-                                case 2:
-                                    if (!refreshTokenToUse) {
-                                        console.error("No refresh token found");
-                                        return [2 /*return*/, null];
-                                    }
-                                    console.log("Using refresh token:", refreshTokenToUse);
-                                    _a.label = 3;
-                                case 3:
-                                    _a.trys.push([3, 9, , 11]);
-                                    console.log("PrismaUserId id:", PrismaUserId); // Log the userId
-                                    return [4 /*yield*/, authService.refreshToken(refreshTokenToUse)];
-                                case 4:
-                                    data = (_a.sent()).data;
-                                    token_1 = data.access_token, newRefreshToken_1 = data.refresh_token, expires_1 = data.expires;
-                                    console.log("New access token obtained:", token_1);
-                                    console.log("New refresh token obtained:", newRefreshToken_1);
-                                    return [4 /*yield*/, authService.fetchUserData(token_1)];
-                                case 5:
-                                    user_1 = _a.sent();
-                                    return [4 /*yield*/, authService.fetchUserRole(token_1, user_1.role)];
-                                case 6:
-                                    role_1 = _a.sent();
-                                    setSession(function (prev) {
-                                        return prev
-                                            ? __assign(__assign({}, prev), { token: token_1, refreshToken: newRefreshToken_1, expires: expires_1, user: {
-                                                    id: user_1.id,
-                                                    name: user_1.first_name,
-                                                    email: user_1.email,
-                                                    role: role_1.name,
-                                                } }) : {
-                                            user: {
-                                                id: user_1.id,
-                                                name: user_1.first_name,
-                                                email: user_1.email,
-                                                role: role_1.name,
-                                            },
-                                            token: token_1,
-                                            refreshToken: newRefreshToken_1,
-                                            expires: expires_1,
-                                        };
-                                    });
-                                    setName(user_1.first_name);
-                                    saveTokensToCookies(token_1, newRefreshToken_1, expires_1);
-                                    if (!PrismaUserId) return [3 /*break*/, 8];
-                                    return [4 /*yield*/, fetch("/api/sessionLoadChecker", {
-                                            method: "POST",
-                                            headers: {
-                                                "Content-Type": "application/json",
-                                            },
-                                            body: JSON.stringify({
-                                                PrismaUserId: PrismaUserId,
-                                                accessToken: token_1,
-                                                refreshToken: newRefreshToken_1,
-                                                expires: expires_1,
-                                            }),
-                                        })];
-                                case 7:
-                                    _a.sent();
-                                    _a.label = 8;
-                                case 8:
-                                    console.log("Refreshed access token for user:", userId); // Log the userId
-                                    return [2 /*return*/, token_1];
-                                case 9:
-                                    error_3 = _a.sent();
-                                    console.error("Error refreshing access token:", error_3);
-                                    return [4 /*yield*/, logout()];
-                                case 10:
-                                    _a.sent();
-                                    return [2 /*return*/, null];
-                                case 11: return [2 /*return*/];
-                            }
-                        });
-                    }); })();
-                    refreshPromiseRef.current = refreshPromise;
-                    return [4 /*yield*/, refreshPromise];
+                case 0: return [4 /*yield*/, authService.fetchUserData(newToken.access_token)];
                 case 1:
-                    token = _a.sent();
-                    refreshPromiseRef.current = null;
-                    return [2 /*return*/, token];
-            }
-        });
-    }); };
-    var handleFetchUserDataError = function (error) { return __awaiter(void 0, void 0, void 0, function () {
-        var token, user, role, err_1;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    if (!(((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 401 || error.message === "Token expired")) return [3 /*break*/, 8];
-                    return [4 /*yield*/, refreshAccessToken()];
-                case 1:
-                    token = _b.sent();
-                    if (!token) return [3 /*break*/, 6];
-                    _b.label = 2;
+                    user = _a.sent();
+                    return [4 /*yield*/, authService.fetchUserRole(newToken.access_token, user.role)];
                 case 2:
-                    _b.trys.push([2, 5, , 6]);
-                    return [4 /*yield*/, authService.fetchUserData(token)];
-                case 3:
-                    user = _b.sent();
-                    return [4 /*yield*/, authService.fetchUserRole(token, user.role)];
-                case 4:
-                    role = _b.sent();
-                    setSession({
-                        user: {
+                    role = _a.sent();
+                    setSession(function (prevSession) { return (__assign(__assign({}, prevSession), { token: newToken.access_token, refreshToken: newToken.refresh_token, expires: newToken.expires, user: {
                             id: user.id,
                             name: user.first_name,
                             email: user.email,
                             role: role.name,
-                        },
-                        token: token,
-                        refreshToken: (session === null || session === void 0 ? void 0 : session.refreshToken) || "",
-                        expires: (session === null || session === void 0 ? void 0 : session.expires) || 0,
-                    });
+                        } })); });
                     setName(user.first_name);
-                    console.log("User data fetched after token refresh:", user);
+                    saveTokensToCookies(newToken.access_token, newToken.refresh_token, newToken.expires);
                     return [2 /*return*/];
-                case 5:
-                    err_1 = _b.sent();
-                    console.error("Error fetching user data after refresh:", err_1);
-                    return [3 /*break*/, 6];
-                case 6: return [4 /*yield*/, logout()];
-                case 7:
-                    _b.sent();
-                    return [3 /*break*/, 10];
-                case 8:
-                    console.error("Error fetching user data:", error);
-                    return [4 /*yield*/, logout()];
-                case 9:
-                    _b.sent();
-                    _b.label = 10;
-                case 10: return [2 /*return*/];
             }
         });
     }); };
     useEffect(function () {
         var initializeSession = function () { return __awaiter(void 0, void 0, void 0, function () {
-            var token, refreshToken, user, role, error_4;
+            var token, refreshToken, user, role, error_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -366,8 +289,8 @@ export var SessionProvider = function (_a) {
                         setName(user.first_name);
                         return [3 /*break*/, 6];
                     case 4:
-                        error_4 = _a.sent();
-                        return [4 /*yield*/, handleFetchUserDataError(error_4)];
+                        error_5 = _a.sent();
+                        return [4 /*yield*/, handleFetchUserDataError(error_5, refreshAccessToken, setSession, setName, session)];
                     case 5:
                         _a.sent();
                         return [3 /*break*/, 6];
@@ -383,8 +306,10 @@ export var SessionProvider = function (_a) {
     return (<SessionContext.Provider value={{
             session: session,
             setSession: setSession,
-            login: login,
-            logout: logout,
+            login: function (credentials) {
+                return login(credentials, setLoading, setSession, setName);
+            },
+            logout: function () { return logout(setSession, setName, session); },
             refreshAccessToken: refreshAccessToken,
             withTokenRefresh: withTokenRefresh,
             loading: loading,

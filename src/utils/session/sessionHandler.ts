@@ -16,9 +16,7 @@
 import { Session } from "@shopify/shopify-api";
 import { encrypt, decrypt } from "../security/encryption";
 import fetch from "node-fetch";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 import { getTokensFromShopify } from "../shopify/shopifyClient"; // Importing getTokensFromShopify
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL || "https://api.referrd.com.au";

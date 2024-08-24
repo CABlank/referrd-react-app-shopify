@@ -79,10 +79,12 @@ const ReferralDetail: React.FC<ReferralDetailProps> = ({
           <input
             type="text"
             name="url"
-            value={campaign.url || ""}
+            value={`${campaign.company}/pages/referrd?${campaign.uuid}` || ""}
             placeholder="https://example.com"
             className="w-full form-input px-4 py-2 border border-gray-300 rounded-md"
-            onChange={handleChange}
+            readOnly
+            onFocus={(e) => (e.target as HTMLInputElement).select()}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
           />
         </div>
       </div>

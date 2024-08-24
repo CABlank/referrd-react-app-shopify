@@ -6,7 +6,7 @@ const QueryList: React.FC<{
   loading: boolean;
   error: string | null;
   handleQuerySelect: (query: any) => void;
-}> = ({ queries, loading, error, handleQuerySelect }) => {
+}> = ({ queries = [], loading, error, handleQuerySelect }) => {
   return (
     <div className="flex flex-col w-full justify-start items-start flex-grow p-3 rounded-2xl bg-white xl:w-1/2 overflow-x-auto mobile-scroll">
       <div className="flex justify-between items-start opacity-90 py-4 bg-white sm:w-full w-[640px] pr-4">
@@ -27,7 +27,7 @@ const QueryList: React.FC<{
         <p className="text-gray-700"></p>
       ) : error ? (
         <p className="text-red-600">{error}</p>
-      ) : queries.length === 0 ? (
+      ) : !queries || queries.length === 0 ? (
         <p className="text-gray-700">No support tickets found.</p>
       ) : (
         queries.map((query: any) => (

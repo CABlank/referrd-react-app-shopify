@@ -54,12 +54,12 @@ import { fetchCampaign, updateCampaign, } from "../../../services/campaign/campa
 import { fetchCompanyUrl } from "../../../services/company/company";
 import { useSession } from "../../../context/SessionContext";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
-import Spinner from "../../../components/common/Spinner"; // Import the Spinner component
+import Spinner from "../../../components/common/Spinner";
 import DesktopCreativeHide from "@/components/campaign/DesktopCreativeHide";
-import sessionLoadCheckerUtil from "../../../utils/middleware/sessionLoadCheckerUtil";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
 import FundCampaignModal from "../../../components/campaign/FundCampaignModal";
-import CampaignInformation from "../../../components/campaign/CampaignInformation"; // Import the new component
-import CampaignHeader from "../../../components/campaign/CampaignHeader"; // Import the new CampaignHeader component
+import CampaignInformation from "../../../components/campaign/CampaignInformation";
+import CampaignHeader from "../../../components/campaign/CampaignHeader";
 import CampaignPayment from "../../../components/campaign/CampaignPayment";
 import PushCampaignLive from "../../../components/campaign/PushCampaignLive";
 var useIsDesktop = function () {
@@ -71,42 +71,43 @@ var useIsDesktop = function () {
     }, []);
     return isDesktop;
 };
-var EditCampaign = function () {
-    var _a, _b;
-    var _c = useSession(), session = _c.session, sessionLoading = _c.loading, withTokenRefresh = _c.withTokenRefresh;
+var EditCampaign = function (_a) {
+    var _b, _c;
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, userId = _a.userId;
+    var _d = useSession(), session = _d.session, sessionLoading = _d.loading, withTokenRefresh = _d.withTokenRefresh;
     var router = useRouter();
     var campaignId = router.query.campaignId;
-    var _d = useState(true), isOpen = _d[0], setIsOpen = _d[1];
-    var _e = useState(null), campaignData = _e[0], setCampaignData = _e[1];
-    var _f = useState(null), companyUrl = _f[0], setCompanyUrl = _f[1]; // Add state for company URL
-    var _g = useState(true), loading = _g[0], setLoading = _g[1];
-    var _h = useState(false), saving = _h[0], setSaving = _h[1]; // Added state to track saving status
-    var _j = useState(null), error = _j[0], setError = _j[1];
+    var _e = useState(true), isOpen = _e[0], setIsOpen = _e[1];
+    var _f = useState(null), campaignData = _f[0], setCampaignData = _f[1];
+    var _g = useState(null), companyUrl = _g[0], setCompanyUrl = _g[1];
+    var _h = useState(true), loading = _h[0], setLoading = _h[1];
+    var _j = useState(false), saving = _j[0], setSaving = _j[1];
+    var _k = useState(null), error = _k[0], setError = _k[1];
     var loadExecutedRef = useRef(false);
     var barBuilderRef = useRef(null);
     var popupBuilderRef = useRef(null);
     var isDesktop = useIsDesktop();
-    var _k = useState(false), showFundPopup = _k[0], setShowFundPopup = _k[1];
-    var _l = useState(1000), amountFunded = _l[0], setFundAmount = _l[1]; // Default fund amount
-    var _m = useState(false), paymentConfirmed = _m[0], setPaymentConfirmed = _m[1]; // Track payment confirmation
+    var _l = useState(false), showFundPopup = _l[0], setShowFundPopup = _l[1];
+    var _m = useState(1000), amountFunded = _m[0], setFundAmount = _m[1];
+    var _o = useState(false), paymentConfirmed = _o[0], setPaymentConfirmed = _o[1];
     useEffect(function () {
         var fetchData = function () { return __awaiter(void 0, void 0, void 0, function () {
             var data, url, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!((session === null || session === void 0 ? void 0 : session.token) && campaignId && !loadExecutedRef.current)) return [3 /*break*/, 6];
+                        if (!(((session === null || session === void 0 ? void 0 : session.token) || accessToken) &&
+                            campaignId &&
+                            !loadExecutedRef.current)) return [3 /*break*/, 6];
                         setLoading(true);
                         loadExecutedRef.current = true;
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 4, 5, 6]);
-                        return [4 /*yield*/, withTokenRefresh(function (token) {
-                                return fetchCampaign(Number(campaignId), token);
-                            })];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchCampaign(Number(campaignId), token); }, refreshToken)];
                     case 2:
                         data = _a.sent();
-                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchCompanyUrl(token); })];
+                        return [4 /*yield*/, withTokenRefresh(function (token) { return fetchCompanyUrl(token); }, refreshToken)];
                     case 3:
                         url = _a.sent();
                         setCompanyUrl(url);
@@ -115,7 +116,6 @@ var EditCampaign = function () {
                                 : "", closeDate: data.closeDate
                                 ? new Date(data.closeDate).toISOString().split("T")[0]
                                 : "", company: url }));
-                        // Deserialize state if available
                         if (data.serializedTopbarState &&
                             data.settingsTopbarState &&
                             barBuilderRef.current) {
@@ -144,12 +144,18 @@ var EditCampaign = function () {
         if (!sessionLoading) {
             fetchData();
         }
-    }, [session, campaignId, sessionLoading, withTokenRefresh]);
+    }, [
+        session,
+        accessToken,
+        refreshToken,
+        campaignId,
+        sessionLoading,
+        withTokenRefresh,
+    ]);
     var handleToggle = function () {
         setIsOpen(!isOpen);
     };
     var handlePaymentSuccess = function () {
-        // Handle post-payment success, e.g., redirect or show a success message
         router.push("/brand/campaigns/edit?campaignId=".concat(campaignId));
     };
     var handleChange = function (e) {
@@ -173,12 +179,12 @@ var EditCampaign = function () {
                 case 0:
                     e.preventDefault();
                     setLoading(true);
-                    setSaving(true); // Indicate that saving is in progress
+                    setSaving(true);
                     if (!campaignData) return [3 /*break*/, 6];
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, 5, 6]);
-                    if (!(session === null || session === void 0 ? void 0 : session.token)) return [3 /*break*/, 3];
+                    if (!((session === null || session === void 0 ? void 0 : session.token) || accessToken)) return [3 /*break*/, 3];
                     if (barBuilderRef.current) {
                         serializedTopbarState = barBuilderRef.current.serializeRealTopBar();
                         settingsTopbarState = barBuilderRef.current.serializeTopbarSettings();
@@ -186,7 +192,7 @@ var EditCampaign = function () {
                         campaignData.settingsTopbarState =
                             JSON.stringify(settingsTopbarState);
                         compiledHtml = barBuilderRef.current.getCompiledHtml();
-                        campaignData.compiledHtml = JSON.stringify(compiledHtml); // Update this to save compiledHtml from BarBuilder
+                        campaignData.compiledHtml = JSON.stringify(compiledHtml);
                     }
                     if (popupBuilderRef.current) {
                         serializedPopupState = popupBuilderRef.current.serializeRealPopUp();
@@ -196,7 +202,7 @@ var EditCampaign = function () {
                         campaignData.settingsPopupState =
                             JSON.stringify(settingsPopupState);
                         compiledHtml = popupBuilderRef.current.getCompiledHtml();
-                        campaignData.compiledHtml = JSON.stringify(compiledHtml); // If you're storing compiled HTML for Popup separately
+                        campaignData.compiledHtml = JSON.stringify(compiledHtml);
                     }
                     return [4 /*yield*/, withTokenRefresh(function (token) { return __awaiter(void 0, void 0, void 0, function () {
                             return __generator(this, function (_a) {
@@ -207,10 +213,9 @@ var EditCampaign = function () {
                                         return [2 /*return*/];
                                 }
                             });
-                        }); })];
+                        }); }, refreshToken)];
                 case 2:
                     _a.sent();
-                    // Show the funding popup after saving changes
                     setShowFundPopup(true);
                     _a.label = 3;
                 case 3: return [3 /*break*/, 6];
@@ -221,7 +226,7 @@ var EditCampaign = function () {
                     return [3 /*break*/, 6];
                 case 5:
                     setLoading(false);
-                    setSaving(false); // Indicate that saving is complete
+                    setSaving(false);
                     return [7 /*endfinally*/];
                 case 6: return [2 /*return*/];
             }
@@ -235,18 +240,15 @@ var EditCampaign = function () {
     if (!campaignData) {
         return <div>{error || "Loading..."}</div>;
     }
-    // Ensure that the URL is always a string before passing it to the components
     var campaignDataWithNonNullableUrl = __assign(__assign({}, campaignData), { url: campaignData.company || "", startDate: campaignData.startDate || "", closeDate: campaignData.closeDate || "", company: campaignData.company || "" });
     return (<div className={"relative ".concat(loading || saving ? "blur-sm" : "", " flex-1 overflow-y-auto overflow-x-hidden")}>
       {loading && <LoadingOverlay />}
       <main className="">
         <div className="max-w mx-auto mb-10 space-y-6">
-          {/* Use the new CampaignHeader component */}
           <CampaignHeader saving={saving} handleSaveChanges={handleSaveChanges}/>
 
           {error && <div className="text-red-600">{error}</div>}
 
-          {/* Use the new CampaignInformation component */}
           <CampaignInformation isOpen={isOpen} handleToggle={handleToggle} campaignData={campaignDataWithNonNullableUrl} handleChange={handleChange}/>
         </div>
         {isDesktop ? (<>
@@ -254,11 +256,9 @@ var EditCampaign = function () {
               {campaignData.format === "Topbar" ? (<BarBuilder ref={barBuilderRef} campaign={campaignDataWithNonNullableUrl} className="w-full bg-white shadow rounded-lg border border-gray-200"/>) : (<PopupBuilder ref={popupBuilderRef} campaign={campaignDataWithNonNullableUrl} className="w-full bg-white shadow rounded-lg border border-gray-200"/>)}
             </CampaignCreativeSelector>
           </>) : (<DesktopCreativeHide />)}
-        {showFundPopup && (<FundCampaignModal token={(_a = session === null || session === void 0 ? void 0 : session.token) !== null && _a !== void 0 ? _a : ""} amountFunded={amountFunded} setFundAmount={setFundAmount} setShowFundPopup={setShowFundPopup} saving={saving} campaignId={campaignId} oldAmountFunded={campaignData.amountFunded || 0} onPaymentSuccess={handlePaymentSuccess} // Pass the success handler here
-        />)}
+        {showFundPopup && (<FundCampaignModal token={(_b = session === null || session === void 0 ? void 0 : session.token) !== null && _b !== void 0 ? _b : ""} amountFunded={amountFunded} setFundAmount={setFundAmount} setShowFundPopup={setShowFundPopup} saving={saving} campaignId={campaignId} oldAmountFunded={campaignData.amountFunded || 0} onPaymentSuccess={handlePaymentSuccess}/>)}
 
-        <CampaignPayment campaignId={Number(campaignId)} token={(_b = session === null || session === void 0 ? void 0 : session.token) !== null && _b !== void 0 ? _b : ""} onPaymentSuccess={handlePaymentSuccess} // Pass the success handler here
-    />
+        <CampaignPayment campaignId={Number(campaignId)} token={(_c = session === null || session === void 0 ? void 0 : session.token) !== null && _c !== void 0 ? _c : ""} onPaymentSuccess={handlePaymentSuccess}/>
 
         <PushCampaignLive campaignId={campaignData.id} token={session === null || session === void 0 ? void 0 : session.token} currentStatus={campaignData.status}/>
       </main>
@@ -268,7 +268,7 @@ export var getServerSideProps = function (context) { return __awaiter(void 0, vo
     var result;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, sessionLoadCheckerUtil(context)];
+            case 0: return [4 /*yield*/, initialLoadChecker(context)];
             case 1:
                 result = _a.sent();
                 if ("redirect" in result || "notFound" in result) {

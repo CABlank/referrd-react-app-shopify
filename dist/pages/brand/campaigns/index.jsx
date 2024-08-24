@@ -47,14 +47,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import { Redirect } from "@shopify/app-bridge/actions"; // Import Redirect from Shopify App Bridge
 import CalendarIcon from "../../../components/Icons/CalendarIcon";
 import DeleteIcon from "../../../components/Icons/DeleteIcon";
 import EditIcon from "../../../components/Icons/EditIcon";
-import QRCode from "qrcode.react";
 import PaymentFormInline from "../../../components/campaign/PaymentFormInline";
 import StripeWrapper from "../../../components/campaign/StripeWrapper";
+import QRCode from "qrcode.react";
 import { deleteCampaign, updateCampaignStatus, createCampaign, fetchCampaigns, } from "../../../services/campaign/campaign";
-import { fetchCompanyId } from "../../../services/company/company";
 import { useSession } from "../../../context/SessionContext";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import CampaignItemIconSmall from "../../../components/Icons/CampaignItemIconSmall";
@@ -63,9 +63,9 @@ import LiveStatusIcon from "@/components/Icons/LiveStatusIcon";
 import EndedStatusIcon from "@/components/Icons/EndedStatusIcon";
 import DraftStatusIcon from "@/components/Icons/DraftStatusIcon";
 import PendingStatusIcon from "@/components/Icons/PendingStatusIcon";
-import sessionLoadCheckerUtil from "../../../utils/middleware/sessionLoadCheckerUtil";
+import initialLoadChecker from "../../../utils/middleware/initialLoadChecker";
 var CampaignIndex = function (_a) {
-    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, title = _a.title, userId = _a.userId;
+    var accessToken = _a.accessToken, refreshToken = _a.refreshToken, title = _a.title, userId = _a.userId, shop = _a.shop, host = _a.host;
     var router = useRouter();
     var _b = useSession(), session = _b.session, withTokenRefresh = _b.withTokenRefresh;
     var _c = useState([]), campaigns = _c[0], setCampaigns = _c[1];
@@ -76,7 +76,6 @@ var CampaignIndex = function (_a) {
     var _h = useState(false), deleting = _h[0], setDeleting = _h[1];
     var _j = useState(null), showQRPopup = _j[0], setShowQRPopup = _j[1];
     var loadExecutedRef = useRef(false);
-    console.log("userId:", userId);
     useEffect(function () {
         var loadCampaigns = function () { return __awaiter(void 0, void 0, void 0, function () {
             var campaignsData, currentDate, _loop_1, _i, campaignsData_1, campaign, err_1;
@@ -89,7 +88,6 @@ var CampaignIndex = function (_a) {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 7, 8, 9]);
-                        console.log("userIDDDDDDDDDDDDDDDDDDDDDDDd:", userId);
                         return [4 /*yield*/, withTokenRefresh(function (token) { return fetchCampaigns(token); }, refreshToken, userId)];
                     case 2:
                         campaignsData = _a.sent();
@@ -159,6 +157,7 @@ var CampaignIndex = function (_a) {
         }); };
         loadCampaigns();
     }, [session, accessToken, refreshToken, withTokenRefresh]);
+    // Handle campaign deletion
     var handleDelete = function () { return __awaiter(void 0, void 0, void 0, function () {
         var err_2;
         return __generator(this, function (_a) {
@@ -169,14 +168,14 @@ var CampaignIndex = function (_a) {
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
-                    return [4 /*yield*/, withTokenRefresh(function (token) { return deleteCampaign(deleteCampaignId, token); }, refreshToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return deleteCampaign(deleteCampaignId, token); }, refreshToken, userId // Pass userId here
+                        )];
                 case 2:
                     _a.sent();
                     setShowDeletePopup(false);
                     setDeleteCampaignId(null);
                     setDeleting(false);
-                    // Reload the page
-                    router.reload();
+                    router.reload(); // Reload the page after deletion
                     return [3 /*break*/, 4];
                 case 3:
                     err_2 = _a.sent();
@@ -187,18 +186,18 @@ var CampaignIndex = function (_a) {
             }
         });
     }); };
+    // Handle campaign creation
     var handleCreateCampaign = function () { return __awaiter(void 0, void 0, void 0, function () {
-        var newCampaign_1, createdCampaign, err_3;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var newCampaign_1, createdCampaign, appBridge, redirect, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
-                    if (!((session === null || session === void 0 ? void 0 : session.token) || accessToken)) return [3 /*break*/, 5];
+                    if (!((session === null || session === void 0 ? void 0 : session.token) || accessToken)) return [3 /*break*/, 4];
                     setLoading(true);
-                    _b.label = 1;
+                    _a.label = 1;
                 case 1:
-                    _b.trys.push([1, 4, , 5]);
-                    _a = {
+                    _a.trys.push([1, 3, , 4]);
+                    newCampaign_1 = {
                         name: "New Campaign",
                         startDate: null,
                         closeDate: null,
@@ -210,26 +209,29 @@ var CampaignIndex = function (_a) {
                         format: "Popup",
                         commission: null,
                         commissionType: "FixedAmount",
-                        amountFunded: 0
+                        amountFunded: 0,
                     };
-                    return [4 /*yield*/, withTokenRefresh(
-                        // Fetch the company ID for the current user
-                        function (token) { return fetchCompanyId(token); }, refreshToken)];
+                    return [4 /*yield*/, withTokenRefresh(function (token) { return createCampaign(newCampaign_1, token); }, refreshToken, userId // Pass userId here
+                        )];
                 case 2:
-                    newCampaign_1 = (_a.company_id = _b.sent(),
-                        _a);
-                    return [4 /*yield*/, withTokenRefresh(function (token) { return createCampaign(newCampaign_1, token); }, refreshToken)];
+                    createdCampaign = _a.sent();
+                    // Use Shopify App Bridge for navigation if in Shopify
+                    if (shop && host) {
+                        appBridge = window.shopify;
+                        redirect = Redirect.create(appBridge);
+                        redirect.dispatch(Redirect.Action.APP, "/brand/campaigns/edit?campaignId=".concat(createdCampaign.id, "&shop=").concat(shop, "&host=").concat(host));
+                    }
+                    else {
+                        router.push("/brand/campaigns/edit?campaignId=".concat(createdCampaign.id));
+                    }
+                    return [3 /*break*/, 4];
                 case 3:
-                    createdCampaign = _b.sent();
-                    router.push("/brand/campaigns/edit?campaignId=".concat(createdCampaign.id));
-                    return [3 /*break*/, 5];
-                case 4:
-                    err_3 = _b.sent();
+                    err_3 = _a.sent();
                     console.error("Error creating campaign:", err_3);
                     setError("Failed to create campaign. Please try again.");
                     setLoading(false);
-                    return [3 /*break*/, 5];
-                case 5: return [2 /*return*/];
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     }); };
@@ -317,7 +319,14 @@ var CampaignIndex = function (_a) {
                 </div>
                 <div className="flex space-x-2">
                   <button onClick={function () {
-                    return router.push("/brand/campaigns/edit?campaignId=".concat(campaign.id));
+                    if (shop && host) {
+                        var appBridge = window.shopify;
+                        var redirect = Redirect.create(appBridge);
+                        redirect.dispatch(Redirect.Action.APP, "/brand/campaigns/edit?campaignId=".concat(campaign.id, "&shop=").concat(shop, "&host=").concat(host));
+                    }
+                    else {
+                        router.push("/brand/campaigns/edit?campaignId=".concat(campaign.id));
+                    }
                 }} className="p-2 bg-gray-200 rounded-full hover:bg-gray-300">
                     <EditIcon />
                   </button>
@@ -403,7 +412,7 @@ export var getServerSideProps = function (context) { return __awaiter(void 0, vo
     var result;
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, sessionLoadCheckerUtil(context)];
+            case 0: return [4 /*yield*/, initialLoadChecker(context)];
             case 1:
                 result = _a.sent();
                 if ("redirect" in result || "notFound" in result) {

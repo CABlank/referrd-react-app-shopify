@@ -11,6 +11,7 @@ import useReferralDetails, {
   Customer,
   Campaign,
 } from "../../../hooks/useReferralDetails";
+import Link from "next/link";
 
 // Define the RowData interface
 interface RowData {
@@ -119,8 +120,51 @@ const ReferralDetails: React.FC = () => {
     { dataIndex: "value", className: "text-left", title: "Value" },
   ];
 
+  const { shop, host, id_token } = router.query; // Extract existing query parameters
+
+  let referralsUrl = "/brand/referrals";
+
+  // If the environment is a Shopify store, append the required query parameters
+  if (shop || host || id_token) {
+    const urlObj = new URL(window.location.origin + referralsUrl);
+    if (shop) urlObj.searchParams.set("shop", shop as string);
+    if (host) urlObj.searchParams.set("host", host as string);
+    if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+    referralsUrl = urlObj.toString().replace(window.location.origin, "");
+  }
+
   return (
     <div className="relative">
+      <div className="flex justify-start items-center relative gap-2">
+        <Link
+          href={referralsUrl}
+          className="flex-grow-0 flex-shrink-0 text-sm font-medium text-left text-black/50"
+        >
+          Referral
+        </Link>
+        <svg
+          width={16}
+          height={16}
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="flex-grow-0 flex-shrink-0 w-4 h-4 relative"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <path
+            d="M5.75 3.5L10.25 8L5.75 12.5"
+            stroke="black"
+            strokeOpacity="0.5"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <p className="flex-grow-0 flex-shrink-0 text-sm font-medium text-left text-black/50">
+          Referral Detail
+        </p>
+      </div>
       <div className="flex flex-col justify-center items-center mx-auto gap-4 sm:p-4">
         <ScrollableContainer>
           <PerformanceSummary
