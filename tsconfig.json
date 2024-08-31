@@ -5,13 +5,13 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": false,
+    "noEmit": true, // Set to true to avoid emitting files during tests
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node", // Changed from 'bundler' to 'node'
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx", // Changed from 'preserve' to 'react-jsx'
     "incremental": true,
     "plugins": [
       {
@@ -25,10 +25,5 @@
     "rootDir": "./src"
   },
   "include": ["src", "next-env.d.ts", ".next/types/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**/*"
-  ]
+  "exclude": ["node_modules"]
 }

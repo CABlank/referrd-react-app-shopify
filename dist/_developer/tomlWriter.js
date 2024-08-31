@@ -46,7 +46,7 @@ try {
     subscriptions: [
       {
         topics: ["orders/create"],
-        uri: `${appUrl}/api/webhooks/orders-create`,
+        uri: `${appUrl}/api/shopify/webhooks/orders-create`,
       },
     ],
   };

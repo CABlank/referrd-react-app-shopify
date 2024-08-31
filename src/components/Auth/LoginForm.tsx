@@ -71,7 +71,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
 
     try {
       await onLogin(email, password);
-      router.push("/dashboard"); // Redirect to the dashboard or relevant page after successful login
+      router.push("/brand/dashboard"); // Redirect to the dashboard or relevant page after successful login
     } catch (err) {
       setError(
         "Failed to log in. Please check your credentials and try again."

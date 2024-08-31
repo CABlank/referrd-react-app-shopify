@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import CalendarIcon from "../../../components/Icons/CalendarIcon";
 import DeleteIcon from "../../../components/Icons/DeleteIcon";
 import EditIcon from "../../../components/Icons/EditIcon";
-import PaymentFormInline from "../../../components/campaign/PaymentFormInline";
+import CampaignPayment from "../../../components/campaign/CampaignPayment";
 import StripeWrapper from "../../../components/campaign/StripeWrapper";
 import QRCode from "qrcode.react";
 
@@ -55,6 +55,9 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showPaymentPopup, setShowPaymentPopup] = useState<Campaign | null>(
+    null
+  );
   const [deleteCampaignId, setDeleteCampaignId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showQRPopup, setShowQRPopup] = useState<number | null>(null);
@@ -169,6 +172,8 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
           userId
         );
 
+        console.log("Company ID: ", companyId);
+
         // Extract existing query parameters
         const { shop, host, id_token } = router.query;
 
@@ -216,7 +221,7 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
         const shopifyToken = shopifyTokenResponse.ShopifyToken;
 
         // Call the backend API route to create the Shopify page using fetch
-        await fetch("/api/create-shopify-page", {
+        await fetch("/api/campaign-content/create-shopify-page", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -270,8 +275,6 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
   };
 
   const downloadQR = (campaignId: number) => {
-    alert("Download QR Code for campaign: " + campaignId);
-
     const canvas = document.getElementById(
       `qr-${campaignId}`
     ) as HTMLCanvasElement;
@@ -286,6 +289,30 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
     document.body.removeChild(downloadLink);
   };
 
+  const handlePaymentSuccess = async () => {
+    try {
+      // Re-fetch the updated campaign data after the payment is successful
+      const updatedCampaigns = await withTokenRefresh(
+        (token) => fetchCampaigns(token),
+        refreshToken,
+        userId
+      );
+
+      // Update the state with the new campaigns data
+      setCampaigns(updatedCampaigns);
+
+      // Close the payment popup
+      setShowPaymentPopup(null);
+
+      // Optionally, display a success message or notification
+      console.log(
+        "Payment was successful, and campaign data has been updated."
+      );
+    } catch (error) {
+      console.error("Failed to refresh campaign data after payment", error);
+      setError("Failed to refresh campaign data. Please try again.");
+    }
+  };
   return (
     <div className={`relative ${loading ? "blur" : ""}`}>
       {loading && <LoadingOverlay />}
@@ -311,12 +338,36 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
           </div>
         </div>
       )}
+      {showPaymentPopup !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg z-60 w-full max-w-lg">
+            <CampaignPayment
+              campaignId={showPaymentPopup?.id ?? 0} // Provide a default value for campaignId
+              token={session?.token ?? ""}
+              amountFunded={showPaymentPopup?.amountFunded || 0} // Correctly access amountFunded
+              onPaymentSuccess={handlePaymentSuccess}
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => {
+                  setShowPaymentPopup(null);
+                  router.reload(); // Reload the page when the popup is closed
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showQRPopup !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-8 rounded-lg shadow-lg z-60 flex flex-col items-center">
             <QRCode
               id={`qr-${showQRPopup}`}
-              value={`${campaigns.find((campaign) => campaign.id === showQRPopup)?.company}/pages/referrd-${campaigns.find((campaign) => campaign.id === showQRPopup)?.uuid}`}
+              value={`https://${campaigns.find((campaign) => campaign.id === showQRPopup)?.company}/pages/referrd-${campaigns.find((campaign) => campaign.id === showQRPopup)?.uuid}`}
             />
             <div className="flex justify-end mt-4 w-full">
               <button
@@ -461,10 +512,15 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
                 </div>
               </div>
               <div className="flex justify-between w-full items-center mt-4">
-                <StripeWrapper>
-                  <PaymentFormInline campaign={campaign} loading={false} />
-                </StripeWrapper>
+                {/* Payment Button */}
+                <button
+                  className="flex justify-center items-center flex-grow-0 flex-shrink-0 relative gap-2.5 px-4 py-1.5 rounded bg-[#47B775] text-white font-medium hover:bg-[#45a66b]"
+                  onClick={() => setShowPaymentPopup(campaign)}
+                >
+                  Fund Campaign
+                </button>
 
+                {/* QR Code Button */}
                 <button
                   className="flex justify-center items-center flex-grow-0 flex-shrink-0 relative gap-2.5 px-4 py-1.5 rounded bg-[#fef]"
                   onClick={() =>

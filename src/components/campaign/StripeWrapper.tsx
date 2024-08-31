@@ -6,10 +6,27 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
 
-const StripeWrapper: React.FC<{ children: React.ReactNode }> = ({
+interface StripeWrapperProps {
+  clientSecret: string;
+  children: React.ReactNode;
+}
+
+const StripeWrapper: React.FC<StripeWrapperProps> = ({
+  clientSecret,
   children,
 }) => {
-  return <Elements stripe={stripePromise}>{children}</Elements>;
+  const options = {
+    clientSecret,
+    appearance: {
+      theme: "stripe" as const, // Customize the look if needed
+    },
+  };
+
+  return (
+    <Elements stripe={stripePromise} options={options}>
+      {children}
+    </Elements>
+  );
 };
 
 export default StripeWrapper;

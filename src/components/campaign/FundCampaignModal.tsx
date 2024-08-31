@@ -82,17 +82,6 @@ const FundCampaignModal: React.FC<FundCampaignModalProps> = ({
           <p className="text-xl font-medium text-left text-[#10ad1b]">
             4. Boost this Campaign
           </p>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-700">Fund Amount</label>
-              <input
-                type="number"
-                value={amountFunded}
-                onChange={(e) => setFundAmount(Number(e.target.value))}
-                className="px-4 py-2 border border-gray-300 rounded mb-4 w-full"
-              />
-            </div>
-          </div>
           <p className="text-xs text-left text-black/75">
             Left Campaign Budget: {oldAmountFunded}
           </p>
@@ -111,17 +100,8 @@ const FundCampaignModal: React.FC<FundCampaignModalProps> = ({
               } text-white flex justify-center items-center`}
               disabled={loadingSave || saving || loadingPayment}
             >
-              {loadingSave ? <Spinner /> : "Save Without Fund"}
+              {loadingSave ? <Spinner /> : "Save"}
             </button>
-            <StripeWrapper>
-              <PaymentForm
-                campaignId={Number(campaignId)}
-                amountFunded={amountFunded || 0}
-                oldAmount={oldAmountFunded || 0}
-                disabled={saving || loadingSave}
-                onSuccess={handlePaymentSuccess} // Pass handlePaymentSuccess as onSuccess
-              />
-            </StripeWrapper>
           </div>
         </div>
       </div>

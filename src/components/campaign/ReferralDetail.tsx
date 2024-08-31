@@ -79,7 +79,9 @@ const ReferralDetail: React.FC<ReferralDetailProps> = ({
           <input
             type="text"
             name="url"
-            value={`${campaign.company}/pages/referrd?${campaign.uuid}` || ""}
+            value={
+              `https://${campaign.company}/pages/referrd-${campaign.uuid}` || ""
+            }
             placeholder="https://example.com"
             className="w-full form-input px-4 py-2 border border-gray-300 rounded-md"
             readOnly

@@ -154,26 +154,52 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
-  const handlePaymentSuccess = () => {
-    const { shop, host, id_token } = router.query; // Extract existing query parameters
+  const handlePaymentSuccess = async () => {
+    try {
+      // Re-fetch the updated campaign data after the payment is successful
+      const updatedCampaignData = await withTokenRefresh(
+        (token) => fetchCampaign(Number(campaignId), token),
+        refreshToken,
+        userId
+      );
 
-    let url = `/brand/campaigns/edit?campaignId=${campaignId}`;
+      // Update the state with the new campaign data
+      setCampaignData({
+        ...updatedCampaignData,
+        startDate: updatedCampaignData.startDate
+          ? new Date(updatedCampaignData.startDate).toISOString().split("T")[0]
+          : "",
+        closeDate: updatedCampaignData.closeDate
+          ? new Date(updatedCampaignData.closeDate).toISOString().split("T")[0]
+          : "",
+        company: companyUrl,
+      });
 
-    // Check if any query parameter exists
-    if (shop || host || id_token) {
-      const urlObj = new URL(window.location.origin + url);
+      const { shop, host, id_token } = router.query; // Extract existing query parameters
 
-      // Append the required query parameters if they exist
-      if (shop) urlObj.searchParams.set("shop", shop as string);
-      if (host) urlObj.searchParams.set("host", host as string);
-      if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+      let url = `/brand/campaigns/edit?campaignId=${campaignId}`;
 
-      // Generate the final URL string with parameters
-      url = urlObj.toString().replace(window.location.origin, "");
+      // Check if any query parameter exists
+      if (shop || host || id_token) {
+        const urlObj = new URL(window.location.origin + url);
+
+        // Append the required query parameters if they exist
+        if (shop) urlObj.searchParams.set("shop", shop as string);
+        if (host) urlObj.searchParams.set("host", host as string);
+        if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+        // Generate the final URL string with parameters
+        url = urlObj.toString().replace(window.location.origin, "");
+      }
+
+      // Optionally, you might want to show a success message or notification
+      console.log(
+        "Payment was successful, and campaign data has been updated."
+      );
+    } catch (error) {
+      console.error("Failed to refresh campaign data after payment", error);
+      setError("Failed to refresh campaign data. Please try again.");
     }
-
-    // Redirect to the generated URL
-    router.push(url);
   };
   const handleChange = (
     e: React.ChangeEvent<
@@ -339,6 +365,7 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
         <CampaignPayment
           campaignId={Number(campaignId)}
           token={session?.token ?? ""}
+          amountFunded={campaignData.amountFunded || 0}
           onPaymentSuccess={handlePaymentSuccess}
         />
 

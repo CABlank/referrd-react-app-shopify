@@ -1,8 +1,9 @@
 import React from "react";
+import Spinner from "./Spinner";
 
 const LoadingOverlay = () => (
-  <div className="loading-overlay">
-    <div className="spinner"></div>
+  <div className="loading-overlay" role="status">
+    <Spinner />
   </div>
 );
 

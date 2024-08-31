@@ -65,19 +65,6 @@ shopify.webhooks.addHandlers({
     deliveryMethod: DeliveryMethod.Http, // Specify the delivery method for the webhook
     callbackUrl: "/api/webhooks/app_uninstalled", // The URL to handle the webhook
   },
-  ORDERS_CREATE: {
-    deliveryMethod: DeliveryMethod.Http, // Specify the delivery method for the webhook
-    callbackUrl: "/api/webhooks/order-created", // The URL to handle the 'orders/create' webhook
-    callback: async (topic, shop, body) => {
-      // Define the inline handler function
-      const order = JSON.parse(body);
-      console.log("New Order Created via Handler:");
-      console.log(`Order ID: ${order.id}`);
-      console.log(`Name: ${order.name}`);
-      console.log(`Email: ${order.email}`);
-      console.log(`Total: ${order.total_price} ${order.currency}`);
-    },
-  },
 });
 
 /**

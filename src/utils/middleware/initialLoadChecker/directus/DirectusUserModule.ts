@@ -1,37 +1,38 @@
 import authService from "../../../../services/auth/auth";
 
-export const createOrLoginDirectusUser = async (
+export const createDirectusUser = async (
   email: string,
   firstName: string,
   lastName: string,
-  ShopifyToken: string
-): Promise<{ accessToken: string; refreshToken: string }> => {
-  const credentials = { email, password: email };
+  password: string // plaintext or hashed password
+): Promise<void> => {
+  authService.createUser({
+    email,
+    password,
+    first_name: firstName,
+    last_name: lastName,
+  });
+};
 
+export const loginDirectusUser = async (
+  email: string,
+  password: string // plaintext or hashed password
+): Promise<{ accessToken: string; refreshToken: string }> => {
   try {
-    const loginData = await authService.login(credentials);
+    const loginData = await authService.login({ email, password });
+
+    if (!loginData || !loginData.data) {
+      throw new Error("Login response is undefined or missing data.");
+    }
+
+    console.log("User logged in successfully to Directus:", loginData.data);
+
     return {
       accessToken: loginData.data.access_token,
       refreshToken: loginData.data.refresh_token,
     };
-  } catch {
-    try {
-      await authService.createUser({
-        email,
-        password: email,
-        first_name: firstName,
-        last_name: lastName,
-        ShopifyToken: ShopifyToken,
-      });
-
-      const loginData = await authService.login(credentials);
-      return {
-        accessToken: loginData.data.access_token,
-        refreshToken: loginData.data.refresh_token,
-      };
-    } catch (error) {
-      console.error("Failed to create or log in user in Directus", error);
-      throw new Error("Directus user handling failed");
-    }
+  } catch (error) {
+    console.error("Failed to log in to Directus:", error);
+    throw new Error("Directus login failed.");
   }
 };

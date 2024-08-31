@@ -17,7 +17,7 @@ export const saveTokensToDatabase = async (
   console.log(`Saving new tokens to database for user ID: ${userId}`);
 
   try {
-    const response = await fetch("/api/saveRefreshUpdate", {
+    const response = await fetch("/api/database-access/save-refresh-update", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -52,7 +52,7 @@ export const fetchSessionAccessTokenExpiration = async (
   );
 
   try {
-    const response = await fetch("/api/sessionLoadChecker", {
+    const response = await fetch("/api/database-access/session-load-checker", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

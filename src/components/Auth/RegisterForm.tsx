@@ -60,7 +60,6 @@ const RegisterForm = () => {
   const handleShopifyRegister = () => {
     // Validate the Shopify store name
     if (!validateShopifyStoreName(formData.shopifyStoreName)) {
-      alert("Please enter a valid Shopify store name.");
       return;
     }
 

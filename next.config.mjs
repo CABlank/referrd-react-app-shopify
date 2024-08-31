@@ -14,6 +14,7 @@ const nextConfig = {
     ENCRYPTION_STRING: process.env.ENCRYPTION_STRING,
     BOT_TOKEN: process.env.BOT_TOKEN,
     GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+    TOKEN: process.env.TOKEN,
   },
   images: {
     remotePatterns: [

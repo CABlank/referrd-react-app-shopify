@@ -1,13 +1,11 @@
 import React from "react";
-import LoadingOverlay from "../../components/common/LoadingOverlay";
-import useSettings from "../../hooks/useSettings";
-import SettingsForm from "../../components/Settings/SettingsForm";
-import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
+import SettingsIndex from "../../features/Brand/Settings/SettingsIndex";
 import {
   GetServerSideProps,
   GetServerSidePropsContext,
   GetServerSidePropsResult,
 } from "next";
+import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 interface SettingsProps {
   accessToken?: string;
@@ -16,27 +14,17 @@ interface SettingsProps {
   title: string;
 }
 
-const Settings: React.FC<SettingsProps> = ({
+const SettingsPage: React.FC<SettingsProps> = ({
   accessToken,
   refreshToken,
   userId,
 }) => {
-  const { settings, loading, error, handleChange, handleSave } = useSettings({
-    accessToken,
-    refreshToken,
-    userId,
-  });
-
   return (
-    <div className={`relative ${loading ? "blur" : ""}`}>
-      {loading && <LoadingOverlay />}
-      <SettingsForm
-        settings={settings}
-        error={error}
-        handleChange={handleChange}
-        handleSave={handleSave}
-      />
-    </div>
+    <SettingsIndex
+      accessToken={accessToken}
+      refreshToken={refreshToken}
+      userId={userId}
+    />
   );
 };
 
@@ -65,4 +53,4 @@ export const getServerSideProps: GetServerSideProps<SettingsProps> = async (
   };
 };
 
-export default Settings;
+export default SettingsPage;

@@ -9,6 +9,7 @@ const login = async (credentials: { email: string; password: string }) => {
     body: JSON.stringify(credentials),
   });
 
+  // Check if the response is not OK (e.g., 401 Unauthorized)
   if (!response.ok) {
     const error = await response.json();
     console.error("Login failed:", error);
@@ -97,6 +98,46 @@ export const fetchUserData = async (token: string) => {
   return data.data; // Assuming the user data is under a "data" key
 };
 
+export const updateUserData = async (
+  token: string,
+  userIdDirectus: string,
+  updatedData: object
+) => {
+  try {
+    const response = await fetch(
+      `${process.env.API_URL}/users/${userIdDirectus}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedData),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (
+        error.errors &&
+        error.errors[0]?.extensions?.code === "TOKEN_EXPIRED"
+      ) {
+        console.error("Token expired:", error);
+        throw new Error("Token expired");
+      }
+      console.error("Failed to update user data:", error);
+      throw new Error(`Failed to update user data: ${error.message}`);
+    }
+
+    const data = await response.json();
+    console.log("Updated user data:", data.data);
+    return data.data; // Assuming the updated user data is under a "data" key
+  } catch (error) {
+    console.error("Error updating user data:", error);
+    throw error; // Re-throw the error after logging it
+  }
+};
+
 const fetchUserRole = async (token: string, roleId: string) => {
   const response = await fetch(`${API_URL}/roles/${roleId}`, {
     method: "GET",
@@ -121,7 +162,6 @@ const createUser = async (userData: {
   password: string;
   first_name: string;
   last_name: string;
-  ShopifyToken?: string;
 }) => {
   const response = await fetch(`${API_URL}/users/register`, {
     method: "POST",
@@ -144,6 +184,7 @@ const createUser = async (userData: {
 export default {
   login,
   refreshToken,
+  updateUserData,
   logout,
   fetchUserData,
   fetchUserRole,

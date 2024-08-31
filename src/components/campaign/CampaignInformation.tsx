@@ -106,7 +106,7 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
         <div className="text-sm text-gray-500 flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <p className="mr-0 md:mr-10">
-              <strong>Campaign ID:</strong> {campaignData.id}
+              <strong>Amount Available: </strong>${campaignData.amountFunded}
             </p>
             <p className="mr-0 md:mr-10">
               <strong>Name:</strong> {campaignData.name}

@@ -1,4 +1,4 @@
-import React from "react";
+/*import React from "react";
 import CalendarIcon from "../../../../components/Icons/CalendarIcon";
 import DeleteIcon from "../../../../components/Icons/DeleteIcon";
 import EditIcon from "../../../../components/Icons/EditIcon";
@@ -148,3 +148,4 @@ const CampaignItem: React.FC<CampaignItemProps> = ({
 };
 
 export default CampaignItem;
+*/

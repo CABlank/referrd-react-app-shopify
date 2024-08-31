@@ -2,7 +2,10 @@
 import React from "react";
 
 const FallbackLogo = () => (
-  <div className="flex flex-col justify-center items-center flex-grow-0 flex-shrink-0 h-[69px] w-[69px] relative overflow-hidden gap-2.5 px-0.5 py-[5px] rounded-[32px] bg-[#851087]/[0.15]">
+  <div
+    data-testid="fallback-logo"
+    className="flex flex-col justify-center items-center flex-grow-0 flex-shrink-0 h-[69px] w-[69px] relative overflow-hidden gap-2.5 px-0.5 py-[5px] rounded-[32px] bg-[#851087]/[0.15]"
+  >
     <svg
       width={31}
       height={32}
