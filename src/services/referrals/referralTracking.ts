@@ -63,14 +63,17 @@ const fetchFromAPI = async <T>(
 export const fetchCustomerByUUID = async (
   uuid: string,
   token: string
-): Promise<Customer> => {
+): Promise<Customer | null> => {
   const customers = await fetchFromAPI<Customer[] | null>(
     `/items/customers?filter[uuid][_eq]=${uuid}`,
     token
   );
+
   if (!customers || customers.length === 0) {
-    throw new Error(`Customer with UUID ${uuid} not found`);
+    console.log(`Customer with UUID ${uuid} not found`);
+    return null; // Return null if no customer is found
   }
+
   return customers[0];
 };
 
@@ -81,8 +84,17 @@ export const createCustomer = async (
 ): Promise<Customer> => {
   // Update the return type to Promise<Customer>
   try {
-    console.log("Creating customer with data:", customer);
-    console.log("Using token:", token);
+    //fetch first if the customer exist with the email
+
+    const customers = await fetchFromAPI<Customer[] | null>(
+      `/items/customers?filter[email][_eq]=${customer.email}`,
+      token
+    );
+
+    if (customers && customers.length > 0) {
+      console.log(`Customer with email ${customer.email} already exists`);
+      return customers[0];
+    }
 
     const createdCustomer = await fetchFromAPI<Customer | null>(
       "/items/customers",
@@ -140,12 +152,14 @@ export const registerClick = async (
 ): Promise<void> => {
   try {
     const customer = await fetchCustomerByUUID(referralUuid, token);
-    await incrementCustomerField(
-      customer.id!,
-      "click_count",
-      customer.click_count,
-      token
-    );
+    if (customer) {
+      await incrementCustomerField(
+        customer.id!,
+        "click_count",
+        customer.click_count,
+        token
+      );
+    }
     console.log(`Registered click for referral UUID ${referralUuid}`);
   } catch (error) {
     console.error("Error registering click:", error);
@@ -163,17 +177,19 @@ export const registerSignup = async (
 
     // Create new customer with `referred_by` set to the referring customer's UUID
     await createCustomer(
-      { ...newCustomer, referred_by: referringCustomer.uuid },
+      { ...newCustomer, referred_by: referringCustomer?.uuid },
       token
     );
 
     // Increment the signup count for the referring customer
-    await incrementCustomerField(
-      referringCustomer.id!,
-      "signup_count",
-      referringCustomer.signup_count,
-      token
-    );
+    if (referringCustomer) {
+      await incrementCustomerField(
+        referringCustomer.id!,
+        "signup_count",
+        referringCustomer.signup_count,
+        token
+      );
+    }
     console.log(`Registered signup for referrer UUID ${referralUuid}`);
   } catch (error) {
     console.error("Error registering signup:", error);
@@ -188,14 +204,16 @@ export const registerConversion = async (
   try {
     const customer = await fetchCustomerByUUID(customerUuid, token);
 
-    if (customer.referred_by) {
+    if (customer && customer.referred_by) {
       const referrer = await fetchCustomerByUUID(customer.referred_by, token);
-      await incrementCustomerField(
-        referrer.id!,
-        "conversion_count",
-        referrer.conversion_count,
-        token
-      );
+      if (referrer) {
+        await incrementCustomerField(
+          referrer.id!,
+          "conversion_count",
+          referrer.conversion_count,
+          token
+        );
+      }
       console.log(
         `Registered conversion for referrer UUID ${customer.referred_by}`
       );
@@ -238,9 +256,9 @@ export const fetchReferralStats = async (
     const customer = await fetchCustomerByUUID(customerUuid, token);
     console.log(`Fetched stats for customer UUID ${customerUuid}`);
     return {
-      clicks: customer.click_count,
-      signups: customer.signup_count,
-      conversions: customer.conversion_count,
+      clicks: customer ? customer.click_count : 0,
+      signups: customer?.signup_count ?? 0,
+      conversions: customer?.conversion_count ?? 0,
     };
   } catch (error) {
     console.error("Error fetching referral stats:", error);

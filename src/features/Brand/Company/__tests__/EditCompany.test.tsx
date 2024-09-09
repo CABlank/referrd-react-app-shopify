@@ -8,7 +8,11 @@ import { useEditCompany } from "../hooks/useEditCompany";
 jest.mock("../hooks/useEditCompany");
 
 // Mock the Next.js Image component
-jest.mock("next/image", () => (props: any) => <img {...props} />);
+jest.mock("next/image", () => {
+  const MockImage = (props: any) => <img {...props} />;
+  MockImage.displayName = "NextImage"; // Add displayName here
+  return MockImage;
+});
 
 describe("EditCompany", () => {
   beforeEach(() => {

@@ -125,6 +125,28 @@ export const fetchPaymentsByCompanyId = async (
   }
 };
 
+export const fetchPaymentsByReferralUUID = async (
+  referralUUID: string,
+  token: string
+): Promise<Payment[] | null> => {
+  try {
+    const payments = await fetchFromAPI<Payment[]>(
+      `/items/payments?filter[referral_uuid][_eq]=${referralUUID}`,
+      token
+    );
+
+    if (payments) {
+      return payments;
+    } else {
+      console.log("No payments found for this referral UUID.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching payments by referral UUID:", error);
+    throw error;
+  }
+};
+
 // Create a new payment
 export const createPayment = async (
   payment: Payment,

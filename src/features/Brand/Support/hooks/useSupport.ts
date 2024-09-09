@@ -197,7 +197,15 @@ const useSupport = ({
   const handleQuerySelect = (query: any) => {
     const { shop, host, id_token } = router.query; // Extract existing query parameters
 
-    let url = `/brand/support/${query.id}`;
+    // Declare 'url' outside of the block
+    let url = "";
+
+    // Build the base URL depending on the user role
+    if (router.pathname.includes("brand")) {
+      url = `/brand/support/${query.id}`;
+    } else {
+      url = `/customer/support/${query.id}`;
+    }
 
     // If the environment is a Shopify store, append the required query parameters
     if (shop || host || id_token) {
@@ -206,10 +214,12 @@ const useSupport = ({
       if (host) urlObj.searchParams.set("host", host as string);
       if (id_token) urlObj.searchParams.set("id_token", id_token as string);
 
+      // Assign the final URL back to 'url'
       url = urlObj.toString().replace(window.location.origin, "");
     }
 
-    router.push(url); // Navigate to the support detail page with the updated URL
+    // Navigate to the support detail page with the updated URL
+    router.push(url);
   };
 
   return {

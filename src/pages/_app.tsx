@@ -78,6 +78,7 @@ const ContentWrapper: React.FC<{
 }> = ({ isShopify, Component, pageProps }) => {
   const { session, loading } = useSession();
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [redirected, setRedirected] = useState(false); // Prevent multiple redirects
   const router = useRouter();
 
   // Log whenever the session is updated
@@ -102,12 +103,23 @@ const ContentWrapper: React.FC<{
   }, [loading]);
 
   useEffect(() => {
-    if (sessionChecked) {
-      if (session && router.pathname === "/login") {
+    if (!sessionChecked) return; // Only proceed if the session has been checked
+
+    if (session && router.pathname === "/login") {
+      const userRole = session?.user?.role;
+
+      console.log("User role detected:", userRole);
+
+      // Redirect based on user role
+      if (userRole === "Brand") {
         router.replace("/brand/dashboard");
-      } else if (!session && router.pathname.startsWith("/brand")) {
-        // Additional logic can be added here
+      } else if (userRole === "Customer") {
+        console.log("Redirecting to /customer/dashboard");
+        router.replace("/customer/dashboard");
+      } else {
+        router.replace("/"); // Fallback for unknown roles
       }
+    } else if (!session && router.pathname.startsWith("/brand")) {
     }
   }, [sessionChecked, session, router]);
 

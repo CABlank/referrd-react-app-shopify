@@ -97,7 +97,7 @@ const styles = {
   },
   urlContainer: {
     display: "flex",
-    justifyContent: "center",
+
     alignItems: "center",
     height: "2.5rem",
     padding: "0 1.5rem",

@@ -5,13 +5,13 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true, // Set to true to avoid emitting files during tests
+    "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node", // Changed from 'bundler' to 'node'
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx", // Changed from 'preserve' to 'react-jsx'
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -25,5 +25,13 @@
     "rootDir": "./src"
   },
   "include": ["src", "next-env.d.ts", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts", // Exclude .test.ts files
+    "**/*.test.tsx", // Exclude .test.tsx files
+    "**/*.spec.ts", // Exclude .spec.ts files (if any)
+    "**/*.spec.tsx", // Exclude .spec.tsx files (if any)
+    "**/__tests__/**", // Exclude any files in the __tests__ directory
+    "**/__mocks__/**" // Optionally exclude mock files, if any
+  ]
 }

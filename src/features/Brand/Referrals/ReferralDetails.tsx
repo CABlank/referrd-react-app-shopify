@@ -121,7 +121,14 @@ const ReferralDetails: React.FC = () => {
 
   const { shop, host, id_token } = router.query;
 
-  let referralsUrl = "/brand/referrals";
+  let referralsUrl = "";
+
+  // Build the base URL depending on the user role
+  if (router.pathname.includes("brand")) {
+    referralsUrl = `/brand/support`;
+  } else {
+    referralsUrl = `/customer/support`;
+  }
 
   if (shop || host || id_token) {
     const urlObj = new URL(window.location.origin + referralsUrl);

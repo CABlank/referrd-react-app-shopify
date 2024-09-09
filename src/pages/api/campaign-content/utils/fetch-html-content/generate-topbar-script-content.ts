@@ -1,6 +1,14 @@
+import { createSendFormDataFunction, createSpinnerFunction } from "./index";
+
 export function generateTopbarScriptContent(campaignData: any, settings: any) {
+  const sendFormDataFunction = createSendFormDataFunction();
+  const spinnerFunction = createSpinnerFunction();
+
   return `
     (function() {
+      ${sendFormDataFunction}
+      ${spinnerFunction}
+
       console.log("Script Loaded: Initializing Topbar Campaign...");
 
       const campaignData = ${JSON.stringify(campaignData)};
@@ -19,6 +27,9 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
         topbarElement.style.height = settings.desktopStep1.height;
         topbarElement.style.backgroundColor = settings.desktopStep1.backgroundColor;
         topbarElement.style.zIndex = '9999';
+        topbarElement.style.display = 'flex'; // Use flexbox to center spinner
+        topbarElement.style.justifyContent = 'center'; // Center horizontally
+        topbarElement.style.alignItems = 'center'; // Center vertically
 
         const closeButton = document.createElement('button');
         closeButton.innerHTML = '&times;';
@@ -57,59 +68,21 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
         stepTwoWrapper.id = 'step-two-wrapper';
         stepTwoWrapper.innerHTML = '';  // Initially keep it empty to avoid showing placeholders
         stepTwoWrapper.style.display = 'none';
-        stepTwoWrapper.style.position = 'relative';
         topbarElement.appendChild(stepTwoWrapper);
 
-        // Add spinner while loading
-        const spinner = document.createElement('div');
-        spinner.id = 'spinner';
-        spinner.innerHTML = \`
-          <div class="spinner-container">
-            <div class="spinner">
-              <div class="spinner-text">R</div>
-            </div>
-          </div>
-        \`;
-        spinner.style.display = 'block';  // Show spinner initially
-        stepTwoWrapper.appendChild(spinner);
+        // Create and append the spinner
+        const spinner = createSpinner();
+        console.log("Spinner created:", spinner);
 
-        // Spinner CSS Styles
-        const style = document.createElement('style');
-        style.innerHTML = \`
-          .spinner-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-          }
-          .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-top: 4px solid #47b775; /* Spinner color */
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            position: relative;
-          }
-          .spinner-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 16px;
-            font-weight: bold;
-            color: #47b775; /* Text color */
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        \`;
-        document.head.appendChild(style);
+        if (!spinner) {
+          console.error("Spinner creation failed!");
+        } else {
+          topbarElement.appendChild(spinner); // Append the spinner directly to the topbar element
+          console.log("Spinner appended to topbarElement:", topbarElement);
+        }
 
         applyTopbarSettings(1, isMobile);
-        setupTopbarEventListeners(stepOneWrapper, stepTwoWrapper);
+        setupTopbarEventListeners(stepOneWrapper, stepTwoWrapper, spinner);
 
         // Initialize formData object
         const formData = {};
@@ -195,93 +168,22 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
 
           console.log('Form submitted with data:', formData);
 
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', ' https://bfc7b8e384a4.ngrok.app/api/campaign-content/submit-form', true);
-          xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-          xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-              const response = JSON.parse(xhr.responseText);
-              if (response.success && response.generatedUrl) {
-                console.log('Generated URL:', response.generatedUrl);
+          // Hide step one and show spinner immediately
+          stepOneWrapper.style.display = 'none';
+          spinner.style.display = 'flex'; // Make sure the spinner is displayed and centered
+          console.log("Spinner displayed");
 
-                const maxUrlLength = 15;
-                const truncatedUrl = response.generatedUrl.length > maxUrlLength
-                  ? response.generatedUrl.slice(0, maxUrlLength) + '...'
-                  : response.generatedUrl;
-
-                // Update stepTwoWrapper's content dynamically
-                stepTwoWrapper.innerHTML = htmlContentStepTwo;  // Insert the actual HTML once we have the correct URL
-
-                const urlDisplayDiv = stepTwoWrapper.querySelector('#domain');
-                if (urlDisplayDiv) {
-                  urlDisplayDiv.textContent = truncatedUrl;
-                }
-
-                const copyButton = stepTwoWrapper.querySelector('#copy-button button');
-                if (copyButton) {
-                  copyButton.addEventListener('click', () => {
-                    navigator.clipboard.writeText(response.generatedUrl).then(() => {
-                      copyButton.textContent = 'Copied!';
-                      setTimeout(() => {
-                        copyButton.textContent = 'Copy';
-                      }, 3000);
-                    }).catch(err => {
-                      console.error('Failed to copy URL: ', err);
-                    });
-                  });
-                }
-
-                // Social Media Sharing
-                document.getElementById('whatsapp').addEventListener('click', () => {
-                  const shareUrl = \`https://wa.me/?text=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('email').addEventListener('click', () => {
-                  const shareUrl = \`mailto:?subject=Check this out&body=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('facebook').addEventListener('click', () => {
-                  const shareUrl = \`https://www.facebook.com/sharer/sharer.php?u=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('messenger').addEventListener('click', () => {
-                  const shareUrl = \`fb-messenger://share?link=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('sms').addEventListener('click', () => {
-                  const shareUrl = \`sms:?&body=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('x').addEventListener('click', () => {
-                  const shareUrl = \`https://twitter.com/intent/tweet?url=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('reddit').addEventListener('click', () => {
-                  const shareUrl = \`https://www.reddit.com/submit?url=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                document.getElementById('linkedin').addEventListener('click', () => {
-                  const shareUrl = \`https://www.linkedin.com/shareArticle?mini=true&url=\${encodeURIComponent(response.generatedUrl)}\`;
-                  window.open(shareUrl, '_blank');
-                });
-
-                // Hide spinner and show content
-                spinner.style.display = 'none';  // Hide spinner after loading is complete
-                stepTwoWrapper.style.display = 'block';  // Display the actual content
-
-                // Now that the URL and content are ready, transition to Step Two
-                goToTopbarStep2(stepOneWrapper, stepTwoWrapper);
-              }
+          sendFormData(
+            'https://unduly-absolute-cricket.ngrok-free.app/api/campaign-content/submit-form',
+            formData,
+            htmlContentStepTwo,
+            stepTwoWrapper,
+            spinner,
+            () => {
+              goToTopbarStep2(stepOneWrapper, stepTwoWrapper);  // Correct function call
             }
-          };
-          xhr.send(JSON.stringify(formData));
+          );
+
         });
 
       };
@@ -301,7 +203,7 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
         }
       };
 
-      const setupTopbarEventListeners = (stepOneWrapper, stepTwoWrapper) => {
+      const setupTopbarEventListeners = (stepOneWrapper, stepTwoWrapper, spinner) => {
         console.log("Setting up Topbar event listeners...");
 
         const submitButton = stepOneWrapper.querySelector("#submit-button");
@@ -310,6 +212,12 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
           submitButton.addEventListener("click", (event) => {
             console.log("Topbar Submit button clicked");
             event.preventDefault();
+
+            // Hide step one and show spinner
+            stepOneWrapper.style.display = "none";
+            spinner.style.display = "flex";
+            console.log("Spinner displayed");
+
             goToTopbarStep2(stepOneWrapper, stepTwoWrapper);
           });
         }
@@ -320,6 +228,9 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
 
         stepOneWrapper.style.display = "none";
         stepTwoWrapper.style.display = "block";
+
+        const spinner = document.getElementById("spinner");
+        if (spinner) spinner.style.display = 'none';
 
         const isMobile = window.innerWidth <= 650;
         applyTopbarSettings(2, isMobile);

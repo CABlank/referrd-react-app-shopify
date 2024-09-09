@@ -1,37 +1,54 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/router";
-
+import Sidebar from "./Sidebar";
+import BudgetLeft from "./BudgetLeft";
+import Avatar from "./Avatar";
 import { useSession } from "../../../context/SessionContext";
+import LoadingOverlay from "../../../components/common/LoadingOverlay";
 
 type CustomerLayoutProps = {
   children: React.ReactNode;
+  title?: string;
 };
 
-const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children }) => {
-  const { session } = useSession();
+const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children, title }) => {
+  const { session, loading } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (!session) {
+    if (!loading && (!session || session.user.role !== "Customer")) {
+      router.push("/login");
     }
-  }, [session, router]);
+  }, [session, loading, router]);
 
-  if (!session || session.user.role !== "customer") {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div>Loading...</div>{" "}
-        {/* You can replace this with a spinner or loading component */}
-      </div>
-    );
+  if (loading || !session || session.user.role !== "Customer") {
+    return <LoadingOverlay />;
   }
 
   return (
-    <div className="flex h-screen">
-      <div className="lg:w-80 flex-shrink-0"></div>
-      <div className="flex-1 overflow-y-auto">
-        <header></header>
-        <div className="pt-[25px] pb-[20px] lg:pt-[5rem]"></div>
-        <main className="p-4">{children}</main>
+    <div className="flex h-screen overflow-hidden ">
+      {/* Sidebar Component */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <div id="scroll" className="flex-1 overflow-y-auto">
+        <div className="px-8">
+          {/* Header with Budget Information, Avatar, and Page Title */}
+          <div className="py-[40px]  z-[15] sticky lg:static top-0">
+            <div className="flex items-center justify-between">
+              <p className="text-[40px] font-semibold text-[#10ad1b]">
+                {title}
+              </p>
+              <div className="flex items-center gap-4">
+                <BudgetLeft />
+                <Avatar />
+              </div>
+            </div>
+          </div>
+
+          {/* Main Page Content */}
+          <main className="px-1">{children}</main>
+        </div>
       </div>
     </div>
   );

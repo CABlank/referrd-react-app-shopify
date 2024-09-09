@@ -18,11 +18,12 @@ const Login = () => {
     };
 
     try {
+      // Log the user in
       await login(credentials);
-      router.push("/"); // Redirect to homepage or another protected route after login
+
+      // The session is not immediately updated here. The useEffect below will handle redirection based on session change.
     } catch (error) {
       console.error("Login failed:", error);
-      // Handle login error (e.g., show a notification to the user)
     }
   };
 

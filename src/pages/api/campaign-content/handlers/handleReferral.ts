@@ -31,12 +31,9 @@ export async function handleReferral(
       const referralRecord = await fetchCustomerByUUID(referralUuid, BOT_TOKEN);
 
       if (!referralRecord) {
-        console.log("Invalid referral code");
-        res.status(404).json({
-          success: false,
-          message: "Invalid referral code",
-        });
-        return false;
+        console.log("Referral UUID not found. Continuing without error.");
+        // Continue processing even if the referral record is not found
+        return true;
       }
 
       console.log("Referral Record Found:", referralRecord);

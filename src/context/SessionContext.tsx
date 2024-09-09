@@ -27,25 +27,32 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [name, setName] = useState<string | undefined>(undefined);
   const hasInitialized = useRef(false);
 
-  // Re-export functions so other files can import them from this file
-  const refreshAccessToken = importedRefreshAccessToken;
-  const withTokenRefresh = importedWithTokenRefresh;
-  const login = importedLogin;
-  const logout = importedLogout;
-
+  // Ensure session is initialized when the component is mounted
   useEffect(() => {
     initializeSession({ setSession, setName, setLoading, hasInitialized });
-
-    const withTokenRefresh = importedWithTokenRefresh;
   }, []);
+
+  // Ensure that the session is properly updated after login
+  const login = async (credentials: { email: string; password: string }) => {
+    setLoading(true);
+    try {
+      await importedLogin(credentials, setLoading, setSession, setName);
+
+      // Log the session state after login to check if the role and session data are set correctly
+      console.log("Session after login:", session);
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SessionContext.Provider
       value={{
         session,
         setSession,
-        login: (credentials) =>
-          importedLogin(credentials, setLoading, setSession, setName),
+        login,
         logout: () => importedLogout(setSession, setName, session),
         refreshAccessToken: (propsRefreshToken?: string | undefined) =>
           importedRefreshAccessToken(

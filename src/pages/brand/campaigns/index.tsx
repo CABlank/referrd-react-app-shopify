@@ -4,7 +4,6 @@ import CalendarIcon from "../../../components/Icons/CalendarIcon";
 import DeleteIcon from "../../../components/Icons/DeleteIcon";
 import EditIcon from "../../../components/Icons/EditIcon";
 import CampaignPayment from "../../../components/campaign/CampaignPayment";
-import StripeWrapper from "../../../components/campaign/StripeWrapper";
 import QRCode from "qrcode.react";
 
 import {
@@ -340,14 +339,16 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
       )}
       {showPaymentPopup !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg z-60 w-full max-w-lg">
-            <CampaignPayment
-              campaignId={showPaymentPopup?.id ?? 0} // Provide a default value for campaignId
-              token={session?.token ?? ""}
-              amountFunded={showPaymentPopup?.amountFunded || 0} // Correctly access amountFunded
-              onPaymentSuccess={handlePaymentSuccess}
-            />
-            <div className="flex justify-end mt-4">
+          <div className="bg-white p-8 rounded-lg shadow-lg z-60 w-full max-w-lg max-h-full flex flex-col">
+            <div className="flex-grow overflow-y-auto">
+              <CampaignPayment
+                campaignId={showPaymentPopup?.id ?? 0} // Provide a default value for campaignId
+                token={session?.token ?? ""}
+                amountFunded={showPaymentPopup?.amountFunded || 0} // Correctly access amountFunded
+                onPaymentSuccess={handlePaymentSuccess}
+              />
+            </div>
+            <div className="flex justify-end sticky bottom-0 bg-white py-2">
               <button
                 onClick={() => {
                   setShowPaymentPopup(null);

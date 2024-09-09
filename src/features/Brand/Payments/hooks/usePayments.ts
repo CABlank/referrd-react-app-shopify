@@ -78,7 +78,7 @@ export const usePayments = (
                       referrer?.name || referrer?.email || "N/A";
                     const campaignName = campaign ? campaign.name : "N/A";
 
-                    // Calculate referral fee
+                    // Calculate referral fee based on the campaign's commission type and amount
                     const referralFee = campaign
                       ? calculateReferralFee(
                           payment.total_price,
@@ -87,11 +87,14 @@ export const usePayments = (
                         )
                       : 0;
 
+                    console.log("referralFee", referralFee);
+                    console.log(" campaign.commission", campaign.commission);
+
                     return {
                       ...payment,
                       referrer: referrerName,
                       campaign: campaignName,
-                      referralCashback: referralFee,
+                      referralCashback: referralFee, // referral cashback added here
                       date: new Date(payment.date_created).toLocaleString(),
                       order: `#${payment.order_number}`,
                     };
@@ -120,12 +123,25 @@ export const usePayments = (
     commission: number,
     commissionType: string
   ): number => {
-    if (commissionType === "FixedAmount") {
+    console.log("Calculating referral fee with values:");
+    console.log("Total Price:", totalPrice);
+    console.log("Commission:", commission);
+    console.log("Commission Type:", commissionType);
+
+    const parsedTotalPrice = parseFloat(totalPrice);
+
+    if (isNaN(parsedTotalPrice)) {
+      console.error("Error: Invalid total price:", totalPrice);
+      return 0; // Return 0 if the total price is not a valid number
+    }
+
+    if (commissionType === "Dollar") {
       return commission;
     } else if (commissionType === "Percentage") {
-      return (parseFloat(totalPrice) * commission) / 100;
+      return (parsedTotalPrice * commission) / 100;
     }
-    return 0;
+    console.error("Error: Unknown commission type:", commissionType);
+    return 0; // Return 0 if the commission type is invalid
   };
 
   const handlePaymentAction = async (

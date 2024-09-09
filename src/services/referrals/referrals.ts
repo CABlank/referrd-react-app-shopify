@@ -75,6 +75,20 @@ export const fetchCustomers = (token: string, companyUUID: string) =>
     token
   );
 
+// Fetch all customers for a specific referral
+export const fetchCustomersByUuidReferral = (
+  token: string,
+  referred_by: string
+) =>
+  fetchFromAPI<Customer[]>(
+    `/items/customers?filter[referred_by][_eq]=${referred_by}`,
+    token
+  );
+
+// Fetch all customer data for a specific referral
+export const fetchMainCustomerByUuidReferral = (token: string, uuid: string) =>
+  fetchFromAPI<Customer[]>(`/items/customers?filter[uuid][_eq]=${uuid}`, token);
+
 // Fetch all companies
 export const fetchCompanies = (token: string): Promise<Company[]> =>
   fetchFromAPI<Company[]>("/items/company", token);

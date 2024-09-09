@@ -217,12 +217,6 @@ export const updateCampaignStatus = async (
     body: JSON.stringify({ status }),
   });
 
-  // Duplicate the action for `campaign_public_page`
-  await fetchFromAPI<void>(`/items/campaign_public_page/${id}`, token, {
-    method: "PATCH",
-    body: JSON.stringify({ status }),
-  });
-
   // Duplicate the action for `campaign_metadata`
   await fetchFromAPI<void>(`/items/campaign_metadata/${id}`, token, {
     method: "PATCH",

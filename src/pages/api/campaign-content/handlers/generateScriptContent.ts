@@ -46,10 +46,17 @@ export function generateScriptContent(
   } else if (format === "Popup") {
     // Generate popup script for non-referral pages
     const settings = getPopupSettings(campaignData);
+
+    if (!settings) {
+      throw new Error("Popup settings are missing or invalid.");
+    }
     scriptContent = generatePopupScriptContent(campaignData, settings);
   } else if (format === "Both") {
     // Generate topbar script for non-referral pages
     const settings = getTopbarSettings(campaignData);
+    if (!settings) {
+      throw new Error("Topbar settings are missing or invalid.");
+    }
     scriptContent = generateTopbarScriptContent(campaignData, settings);
   } else {
     throw new Error(`Unsupported format: ${format}`);

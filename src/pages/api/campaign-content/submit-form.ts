@@ -7,6 +7,7 @@ import {
   createCustomer,
 } from "../../../services/referrals/referralTracking";
 import { handleCors } from "./handlers/handleCors";
+import { createDirectusCustomer } from "../../../services/customers/customers";
 
 const BOT_TOKEN = process.env.BOT_TOKEN || "";
 
@@ -140,11 +141,27 @@ export default async function handler(
     const nameSlug = formData.name
       ? formData.name.toLowerCase().replace(/\s+/g, "-")
       : "referral";
-    const generatedUrl = `${origin}?${customerUUID}?${encodeURIComponent(
-      nameSlug
-    )}`;
+
+    // Updated URL format: ?referrd?-UUID&nameSlug
+    const generatedUrl = `${origin}?referrd?-${customerUUID}&${encodeURIComponent(nameSlug)}`;
 
     console.log("Generated URL:", generatedUrl);
+
+    // Create the customer in Directus using createDirectusCustomer
+    const directusCustomer = await createDirectusCustomer({
+      name: newCustomer.name,
+      email: newCustomer.email,
+      updatedData: {
+        uuid: customerUUID,
+      },
+    });
+
+    // Handle if the Directus customer already exists
+    if (directusCustomer === null) {
+      console.log("Customer already exists in Directus, continuing...");
+      // You can proceed here without breaking the flow since the customer exists
+    } else {
+    }
 
     // Register the signup if `referred_by` is provided
     if (formData.referred_by) {

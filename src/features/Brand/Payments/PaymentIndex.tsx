@@ -106,7 +106,11 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
     { dataIndex: "date", className: "text-center text-sm" },
     { dataIndex: "referrer", className: "text-center" },
     { dataIndex: "campaign", className: "text-center" },
-    { dataIndex: "referralCashback", className: "text-center" },
+    {
+      dataIndex: "referralCashback",
+      className: "text-center",
+      customRender: (value: number) => `$${value.toFixed(2)}`, // Format as currency
+    },
     {
       dataIndex: "id",
       className: "text-center flex justify-center items-center",

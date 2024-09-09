@@ -79,7 +79,7 @@ const CampaignPayment: React.FC<CampaignPaymentProps> = ({
   return (
     <div
       key={componentKey} // Use the key to force re-render
-      className="flex items-center justify-center min-h-[200px] p-6 bg-white rounded-lg shadow-md w-full my-12"
+      className="flex items-center justify-center min-h-[200px] p-6 bg-white rounded-lg shadow-md w-full"
     >
       <div className="w-full">
         <h2 className="flex text-xl font-semibold text-green-500 text-center mb-4">

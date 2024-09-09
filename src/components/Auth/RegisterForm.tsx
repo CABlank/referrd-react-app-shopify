@@ -95,7 +95,6 @@ const RegisterForm = () => {
               Sign Up with Google
             </p>
           </button>
-
           <button
             type="button"
             onClick={() => setRegisterMethod("shopify")}
@@ -106,24 +105,26 @@ const RegisterForm = () => {
               Sign Up with Shopify
             </p>
           </button>
-          <FullNameInput
-            fullName={formData.fullName}
-            setFullName={(value) => handleChange("fullName", value)}
-          />
-          <EmailInput
-            email={formData.email}
-            setEmail={(value) => handleChange("email", value)}
-          />
-          <MobileInput
-            mobile={formData.mobile}
-            setMobile={(value) => handleChange("mobile", value)}
-          />
-          <PasswordInput
-            password={formData.password}
-            setPassword={(value) => handleChange("password", value)}
-            setPasswordRequirements={setPasswordRequirements}
-          />
 
+          <div className="hidden">
+            <FullNameInput
+              fullName={formData.fullName}
+              setFullName={(value) => handleChange("fullName", value)}
+            />
+            <EmailInput
+              email={formData.email}
+              setEmail={(value) => handleChange("email", value)}
+            />
+            <MobileInput
+              mobile={formData.mobile}
+              setMobile={(value) => handleChange("mobile", value)}
+            />
+            <PasswordInput
+              password={formData.password}
+              setPassword={(value) => handleChange("password", value)}
+              setPasswordRequirements={setPasswordRequirements}
+            />
+          </div>
           <button
             type="submit"
             className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
@@ -168,16 +169,18 @@ const RegisterForm = () => {
             <ArrowLoginIcon />
           </button>
 
-          <button
-            type="button"
-            onClick={() => setRegisterMethod("email")}
-            className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
-          >
-            <WorkEmailPurpleIcon />
-            <p className="text-base font-medium text-left text-[#851087]">
-              Work Email Address
-            </p>
-          </button>
+          <div className="hidden">
+            <button
+              type="button"
+              onClick={() => setRegisterMethod("email")}
+              className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
+            >
+              <WorkEmailPurpleIcon />
+              <p className="text-base font-medium text-left text-[#851087]">
+                Work Email Address
+              </p>
+            </button>
+          </div>
         </>
       )}
     </form>

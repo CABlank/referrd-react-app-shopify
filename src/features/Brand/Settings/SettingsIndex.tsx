@@ -2,6 +2,7 @@ import React from "react";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import useSettings from "./hooks/useSettings";
 import SettingsForm from "./components/SettingsForm";
+import CustomerLayout from "@/pages/layouts/CustomerLayout/CustomerLayout";
 
 interface SettingsProps {
   accessToken?: string;
@@ -14,6 +15,9 @@ const SettingsIndex: React.FC<SettingsProps> = ({
   refreshToken,
   userId,
 }) => {
+  console.log("accessToken: ", accessToken);
+  console.log("refreshToken: ", refreshToken);
+  console.log("userId: ", userId);
   const { settings, loading, error, handleChange, handleSave } = useSettings({
     accessToken,
     refreshToken,

@@ -18,7 +18,9 @@ const useSettings = ({
   refreshToken,
   userId,
 }: UseSettingsArgs) => {
+  console.log("accessToken in useSettings: ", accessToken); // Debugging accessToken
   const { session, withTokenRefresh } = useSession();
+  console.log("session in useSettings: ", session); // Debugging session
 
   const initialSettings: SettingsType = {
     id: undefined,
@@ -48,7 +50,9 @@ const useSettings = ({
 
   useEffect(() => {
     const loadSettings = async () => {
+      console.log("session?.token: ", session?.token); // Logging token when loading settings
       if ((session?.token || accessToken) && !loadExecutedRef.current) {
+        console.log("Loading settings...");
         setSettingsState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
@@ -57,6 +61,7 @@ const useSettings = ({
             refreshToken,
             userId
           );
+          console.log("Fetched settings: ", data); // Logging the fetched settings
           setSettingsState({ settings: data, loading: false, error: null });
         } catch (err) {
           console.error("Error fetching settings:", err);

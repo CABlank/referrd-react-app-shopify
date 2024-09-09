@@ -18,7 +18,15 @@ const SupportDetail: React.FC = () => {
   const router = useRouter();
   const { shop, host, id_token } = router.query;
 
-  let supportUrl = "/brand/support";
+  let supportUrl = "";
+
+  // Build the base URL depending on the user role
+  if (router.pathname.includes("brand")) {
+    supportUrl = `/brand/support`;
+  } else {
+    supportUrl = `/customer/support`;
+  }
+
   if (shop || host || id_token) {
     const urlObj = new URL(window.location.origin + supportUrl);
     if (shop) urlObj.searchParams.set("shop", shop as string);
