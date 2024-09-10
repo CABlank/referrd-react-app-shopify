@@ -9,11 +9,15 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
       ${sendFormDataFunction}
       ${spinnerFunction}
 
+
       console.log("Script Loaded: Initializing Topbar Campaign...");
 
       const campaignData = ${JSON.stringify(campaignData)};
+
+            console.log("campaignData",campaignData);
+
       const settings = ${JSON.stringify(settings)};
-      const compiledHtml = campaignData.compiledHtml ? JSON.parse(campaignData.compiledHtml) : {};
+      const compiledHtmlTopBar = campaignData.compiledHtmlTopBar ? JSON.parse(campaignData.compiledHtmlTopBar) : {};
 
       const createTopbarElement = () => {
         console.log("Creating Topbar Element...");
@@ -55,8 +59,8 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
         document.body.style.marginTop = settings.desktopStep1.height;
 
         const isMobile = window.innerWidth <= 650;
-        const htmlContentStepOne = isMobile ? compiledHtml.mobileStepOne : compiledHtml.desktopStepOne;
-        const htmlContentStepTwo = isMobile ? compiledHtml.mobileStepTwo : compiledHtml.desktopStepTwo;
+        const htmlContentStepOne = isMobile ? compiledHtmlTopBar.mobileStepOne : compiledHtmlTopBar.desktopStepOne;
+        const htmlContentStepTwo = isMobile ? compiledHtmlTopBar.mobileStepTwo : compiledHtmlTopBar.desktopStepTwo;
 
         const stepOneWrapper = document.createElement('div');
         stepOneWrapper.id = 'step-one-wrapper';
@@ -174,7 +178,7 @@ export function generateTopbarScriptContent(campaignData: any, settings: any) {
           console.log("Spinner displayed");
 
           sendFormData(
-            'https://unduly-absolute-cricket.ngrok-free.app/api/campaign-content/submit-form',
+            'https://app.referrd.com.au/api/campaign-content/submit-form',
             formData,
             htmlContentStepTwo,
             stepTwoWrapper,

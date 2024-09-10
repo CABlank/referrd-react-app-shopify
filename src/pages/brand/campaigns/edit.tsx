@@ -232,6 +232,7 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
     if (campaignData) {
       try {
         if (session?.token || accessToken) {
+          // Always save TopBar data, even if Popup is selected
           if (barBuilderRef.current) {
             const serializedTopbarState =
               barBuilderRef.current.serializeRealTopBar();
@@ -243,10 +244,13 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
             campaignData.settingsTopbarState =
               JSON.stringify(settingsTopbarState);
 
-            const compiledHtml = barBuilderRef.current.getCompiledHtml();
-            campaignData.compiledHtml = JSON.stringify(compiledHtml);
+            // Get compiled HTML for TopBar and save it as compiledHtmlTopBar
+            const compiledHtmlTopBar = barBuilderRef.current.getCompiledHtml();
+            campaignData.compiledHtmlTopBar =
+              JSON.stringify(compiledHtmlTopBar);
           }
 
+          // Always save Popup data, even if TopBar is selected
           if (popupBuilderRef.current) {
             const serializedPopupState =
               popupBuilderRef.current.serializeRealPopUp();
@@ -257,10 +261,12 @@ const EditCampaign: React.FC<CampaignEditProps> = ({
             campaignData.settingsPopupState =
               JSON.stringify(settingsPopupState);
 
-            const compiledHtml = popupBuilderRef.current.getCompiledHtml();
-            campaignData.compiledHtml = JSON.stringify(compiledHtml);
+            // Get compiled HTML for Popup and save it as compiledHtml
+            const compiledHtmlPopup = popupBuilderRef.current.getCompiledHtml();
+            campaignData.compiledHtml = JSON.stringify(compiledHtmlPopup);
           }
 
+          // Save the campaign data
           await withTokenRefresh(
             async (token) => {
               await updateCampaign(campaignData, token);

@@ -24,6 +24,7 @@ export interface Campaign {
   amountFunded?: number;
   url?: string;
   compiledHtml?: string;
+  compiledHtmlTopBar?: string;
   company_id?: string;
   uuid?: string;
 }
@@ -87,6 +88,7 @@ const duplicateCampaignToPublicPage = async (
     commission: campaign.commission,
     commissionType: campaign.commissionType,
     compiledHtml: campaign.compiledHtml,
+    compiledHtmlTopBar: campaign.compiledHtmlTopBar,
     company_id: campaign.company_id,
     campaign_uuid: campaign.uuid,
   };

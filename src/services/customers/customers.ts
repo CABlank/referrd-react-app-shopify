@@ -485,7 +485,7 @@ export async function createDirectusCustomer({
     console.log("UUID and token successfully updated for the new user.");
 
     // Send registration email with the secure token in the registration link
-    const registrationLink = `https://unduly-absolute-cricket.ngrok-free.app/register?token=${registrationToken}`;
+    const registrationLink = `https://app.referrd.com.au/register?token=${registrationToken}`;
     await sendRegistrationEmail({ name, email, registrationLink });
 
     return createdUser;

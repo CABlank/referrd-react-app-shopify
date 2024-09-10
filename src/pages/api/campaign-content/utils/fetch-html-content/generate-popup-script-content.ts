@@ -119,7 +119,7 @@ export function generatePopupScriptContent(campaignData: any, settings: any) {
 
             console.log('Form submitted with data:', formData);
 
-            sendFormData('https://unduly-absolute-cricket.ngrok-free.app/api/campaign-content/submit-form', formData, htmlContentStepTwo, stepTwoWrapper, spinner, () => {
+            sendFormData('https://app.referrd.com.au/api/campaign-content/submit-form', formData, htmlContentStepTwo, stepTwoWrapper, spinner, () => {
               goToPopupStep2(stepOneWrapper, stepTwoWrapper);  // Correct function call
             });
 
