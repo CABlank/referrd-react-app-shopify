@@ -44,6 +44,13 @@ const findExistingUser = async (
     where: { email, shopDomain },
   });
 
+const findExistingUserByShop = async (
+  shopDomain: string
+): Promise<User | null> =>
+  await prisma.user.findFirst({
+    where: { shopDomain },
+  });
+
 const fetchExistingTokens = async (userId: number) => {
   return await prisma.token.findFirst({
     where: { userId },
@@ -94,6 +101,8 @@ const handleTokenRefresh = async (
   password: string,
   userId: number
 ) => {
+  console.log("email to use login directus", email);
+
   const directusTokens = await loginDirectusUser(email, password);
   const accessToken = directusTokens.accessToken;
   const refreshToken = directusTokens.refreshToken;
@@ -160,16 +169,34 @@ const ensureShopifyTokenExists = async (
 
 const processExistingUser = async (
   existingUser: User,
-  shop: string,
-  normalizedShopDomain: string
+  shop: string, // The actual shop string
+  normalizedShopDomain: string // The normalized version of the shop domain
 ) => {
-  console.log(
-    `User already exists with email: ${existingUser.email} for shop domain: ${shop}. No need to create a new user.`
-  );
+  // Ensure we are using the correct shop identifier (choose shop or normalizedShopDomain)
 
+  console.log("shop", shop);
+  console.log("normalizedShopDomain", normalizedShopDomain);
+  const shopDomain = shop; // Use normalizedShopDomain if available, fallback to shop
+
+  // Find the user by shopDomain and get the email
+  const userFromDb = await prisma.user.findFirst({
+    where: { shopDomain }, // This will use the correct shopDomain
+    select: { email: true }, // Ensure you select the email field
+  });
+
+  // Check if userFromDb is found and has an email
+  if (!userFromDb || !userFromDb.email) {
+    throw new Error("User not found or email is missing");
+  }
+
+  const email = userFromDb.email; // Extract the email
+
+  console.log("Existing user found with email:", email);
+
+  // Pass the email along with the other necessary fields
   return await getValidTokens(
     existingUser.id,
-    existingUser.email,
+    email, // Use the retrieved email from the database
     existingUser.password
   );
 };
@@ -286,7 +313,11 @@ const initialLoadChecker = async (
     // Normalize the owner email to match the format used for user creation
     const normalizedOwnerEmail = generateUniqueEmail(ownerEmail, shop);
 
-    user = await findExistingUser(normalizedOwnerEmail, normalizedShopDomain);
+    console.log("normalizedShopDomain:", shop);
+    user = await findExistingUserByShop(shop);
+
+    console.log("User found by shop:", user);
+
     console.log(
       "User already exists with email:",
       user?.email,
@@ -296,11 +327,7 @@ const initialLoadChecker = async (
     );
     console.log("User ID:", user?.id);
 
-    if (
-      user &&
-      user.email === normalizedOwnerEmail &&
-      user.shopDomain === normalizedShopDomain
-    ) {
+    if (user && user.shopDomain === shop) {
       // Process existing user without attempting to refetch unnecessarily
       ({ accessToken, refreshToken, sessionAccessTokenExpiresAt } =
         await processExistingUser(user, shop, normalizedShopDomain));
