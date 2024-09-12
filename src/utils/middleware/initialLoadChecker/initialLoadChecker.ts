@@ -310,9 +310,6 @@ const initialLoadChecker = async (
 
     const normalizedShopDomain = normalizeShopDomain(shop);
 
-    // Normalize the owner email to match the format used for user creation
-    const normalizedOwnerEmail = generateUniqueEmail(ownerEmail, shop);
-
     console.log("normalizedShopDomain:", shop);
     user = await findExistingUserByShop(shop);
 
