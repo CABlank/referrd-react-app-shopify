@@ -14,7 +14,7 @@ model User {
   firstName  String
   lastName   String
   password   String
-  shopDomain String?  // Make this field optional
+  shopDomain String?  @unique // Make shopDomain unique and still optional
   tokens     Token[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
