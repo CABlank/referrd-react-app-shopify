@@ -32,7 +32,7 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children, title }) => {
 
       {/* Main Content Area */}
       <div id="scroll" className="flex-1 overflow-y-auto">
-        <div className="px-8">
+        <div className="px-1">
           {/* Header with Budget Information, Avatar, and Page Title */}
           <div className="py-[40px]  z-[15] sticky lg:static top-0">
             <div className="flex items-center justify-between">

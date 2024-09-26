@@ -68,12 +68,29 @@ const fetchFromAPI = async <T>(
   return data.data;
 };
 
-// Fetch all customers for a specific company
-export const fetchCustomers = (token: string, companyUUID: string) =>
-  fetchFromAPI<Customer[]>(
-    `/items/customers?filter[company_id][_eq]=${companyUUID}`,
-    token
-  );
+// Fetch all customers (ignoring companyUUID filtering for now)
+export const fetchCustomers = async (token: string, companyUUID: string) => {
+  try {
+    // Fetch all customers
+    const allCustomers = await fetchFromAPI<Customer[]>('/items/customers', token);
+
+    // Perform filtering based on companyUUID
+    const filteredCustomers = allCustomers.filter((customer) => {
+      // Use optional chaining and nullish coalescing to handle null or undefined values
+      return Array.isArray(customer.company_id) && customer.company_id?.includes(companyUUID);
+    });
+
+    // Return the filtered list
+    return filteredCustomers;
+
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    throw error;
+  }
+};
+
+
+
 
 // Fetch all customers for a specific referral
 export const fetchCustomersByUuidReferral = (

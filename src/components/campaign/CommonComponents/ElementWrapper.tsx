@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { useDrag, useDrop } from "react-dnd";
+import { useDrag, useDrop, DropTargetMonitor } from "react-dnd";
 import {
   ButtonElementProps,
   ElementProps,
@@ -12,6 +12,7 @@ import ButtonElement from "./ButtonElement";
 import DividerElement from "./DividerElement";
 import InputElement from "./InputElement";
 import { ItemTypes, DragItem } from "./Types";
+import { throttle } from "lodash"; // Import lodash throttle for debouncing hover
 
 interface ElementWrapperProps {
   element: ElementProps;
@@ -49,7 +50,11 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const [{ isDragging }, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag<
+    DragItem,
+    unknown,
+    { isDragging: boolean }
+  >({
     type:
       element.type === "text"
         ? ItemTypes.TEXT_ELEMENT
@@ -65,30 +70,41 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     canDrag: enableDragAndDrop,
   });
 
-  const [{ isOver, canDrop }, drop] = useDrop({
+  const [{ isOver, canDrop }, drop] = useDrop<
+    DragItem,
+    unknown,
+    { isOver: boolean; canDrop: boolean }
+  >({
     accept: [
       ItemTypes.TEXT_ELEMENT,
       ItemTypes.BUTTON_ELEMENT,
       ItemTypes.DIVIDER_ELEMENT,
       ItemTypes.INPUT_ELEMENT,
     ],
-    hover: (item: DragItem, monitor) => {
-      if (!enableDragAndDrop || !ref.current || item.index === index) return;
+    hover: throttle(
+      (item: DragItem, monitor: DropTargetMonitor<DragItem, unknown>) => {
+        if (!enableDragAndDrop || !ref.current || item.index === index) return;
 
-      const hoverBoundingRect = ref.current.getBoundingClientRect();
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientX = clientOffset
-        ? clientOffset.x - hoverBoundingRect.left
-        : 0;
+        const hoverBoundingRect = ref.current.getBoundingClientRect();
+        const clientOffset = monitor.getClientOffset();
+        const hoverClientX = clientOffset
+          ? clientOffset.x - hoverBoundingRect.left
+          : 0;
 
-      if (hoverClientX < hoverBoundingRect.width / 2) {
-        moveElement(item.index, index);
-        item.index = index;
-      } else {
-        moveElement(item.index, index + 1);
-        item.index = index + 1;
-      }
-    },
+        // Calculate the middle of the hovered element
+        const hoverMiddleX = hoverBoundingRect.width / 2;
+
+        // Determine if the mouse has crossed the middle of the hovered element
+        if (hoverClientX < hoverMiddleX && item.index !== index) {
+          moveElement(item.index, index);
+          item.index = index;
+        } else if (hoverClientX >= hoverMiddleX && item.index !== index + 1) {
+          moveElement(item.index, index + 1);
+          item.index = index + 1;
+        }
+      },
+      150
+    ), // Throttle the hover event to prevent rapid updates
     collect: (monitor) => ({
       isOver: enableDragAndDrop && monitor.isOver(),
       canDrop: enableDragAndDrop && monitor.canDrop(),

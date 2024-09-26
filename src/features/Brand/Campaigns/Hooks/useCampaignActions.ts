@@ -15,7 +15,7 @@ export const useCampaignActions = () => {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async (campaignId: number | null) => {
-    if ((session?.token || session?.token) && campaignId !== null) {
+    if ((session?.accessToken || session?.accessToken) && campaignId !== null) {
       setDeleting(true);
       try {
         await withTokenRefresh(
@@ -32,7 +32,7 @@ export const useCampaignActions = () => {
   };
 
   const handleCreateCampaign = async () => {
-    if (session?.token || session?.refreshToken) {
+    if (session?.accessToken || session?.refreshToken) {
       setLoading(true);
       try {
         const newCampaign: Campaign = {

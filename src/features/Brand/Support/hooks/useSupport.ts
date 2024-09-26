@@ -50,7 +50,7 @@ const useSupport = ({
 
   useEffect(() => {
     const loadQueries = async () => {
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
@@ -89,7 +89,7 @@ const useSupport = ({
 
   // Submit a new support query
   const handleSubmit = async () => {
-    if (session?.token || accessToken) {
+    if (session?.accessToken || accessToken) {
       try {
         const data = {
           title: state.queryTitle,
@@ -130,7 +130,7 @@ const useSupport = ({
 
   // Submit a new message for a specific support query
   const handleNewMessageSubmit = async () => {
-    if (state.query && (session?.token || accessToken)) {
+    if (state.query && (session?.accessToken || accessToken)) {
       try {
         const response = {
           support_query_id: state.query.id,
@@ -166,7 +166,7 @@ const useSupport = ({
 
   // Update the status of a specific support query
   const handleStatusChange = async (status: string) => {
-    if (state.query && (session?.token || accessToken)) {
+    if (state.query && (session?.accessToken || accessToken)) {
       try {
         await withTokenRefresh(
           (token) =>

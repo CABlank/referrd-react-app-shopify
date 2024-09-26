@@ -8,7 +8,7 @@ export const defaultButtonProps: Partial<ButtonElementProps> = {
   buttonTextColor: "#000000",
   buttonBorderColor: "#555555",
   buttonBorderWidth: 1,
-  buttonBorderRadius: 8,
+  buttonBorderRadius: 12,
   paddingTop: "8px",
   paddingRight: "24px",
   paddingBottom: "8px",

@@ -28,7 +28,7 @@ export const useEditCompany = () => {
   const loadExecutedRef = useRef(false);
 
   const loadCompany = useCallback(async () => {
-    if (session?.token && companyId && !loadExecutedRef.current) {
+    if (session?.accessToken && companyId && !loadExecutedRef.current) {
       setLoading(true);
       loadExecutedRef.current = true;
       try {
@@ -44,7 +44,7 @@ export const useEditCompany = () => {
         setLoading(false);
       }
     }
-  }, [companyId, session?.token, withTokenRefresh]);
+  }, [companyId, session?.accessToken, withTokenRefresh]);
 
   useEffect(() => {
     loadCompany();
@@ -69,7 +69,7 @@ export const useEditCompany = () => {
       setLogoError("Logo is required.");
       return;
     }
-    if (session?.token) {
+    if (session?.accessToken) {
       setLoading(true);
       setError(null);
       try {

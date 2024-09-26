@@ -5,6 +5,7 @@ import crypto from "crypto";
 // Directus API Configuration
 const DIRECTUS_API_URL = "https://api.referrd.com.au";
 const DIRECTUS_ADMIN_TOKEN = process.env.TOKEN || ""; // Admin token for Directus
+const SHOPIFY_APP_URL = process.env.SHOPIFY_APP_URL;
 
 // SendGrid API Configuration
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || ""; // SendGrid API key
@@ -485,7 +486,7 @@ export async function createDirectusCustomer({
     console.log("UUID and token successfully updated for the new user.");
 
     // Send registration email with the secure token in the registration link
-    const registrationLink = `https://app.referrd.com.au/register?token=${registrationToken}`;
+    const registrationLink = `${SHOPIFY_APP_URL}/register?token=${registrationToken}`;
     await sendRegistrationEmail({ name, email, registrationLink });
 
     return createdUser;

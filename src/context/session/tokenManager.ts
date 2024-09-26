@@ -31,14 +31,11 @@ export const checkTokenValidity = async (
     isTokenStillValid(sessionAccessTokenExpiresAt)
   ) {
     console.log("Token is still valid based on the current session state.");
-    return session?.token || null;
+    return session?.accessToken || null;
   }
 
   // If the session token expiration is not available or not valid, try fetching from the API
   if (userIdForApiCall) {
-    console.log(
-      "Session token is not valid or missing. Fetching from the API..."
-    );
 
     // Fetch the session token expiration from the API
     const tokenData = await fetchSessionAccessTokenExpiration(userIdForApiCall);
@@ -56,7 +53,7 @@ export const checkTokenValidity = async (
             email: "",
             role: "",
           },
-          token: tokenData.accessToken,
+          accessToken: tokenData.accessToken,
           refreshToken: tokenData.refreshToken,
           expires: tokenData.expires,
           sessionAccessTokenExpiresAt: tokenData.sessionAccessTokenExpiresAt,
@@ -80,7 +77,7 @@ export const checkTokenValidity = async (
         );
       }
 
-      return newTokenData.access_token; // Return the refreshed access token
+      return newTokenData.accessToken; // Return the refreshed access token
     }
   }
 
@@ -89,13 +86,21 @@ export const checkTokenValidity = async (
   return null;
 };
 
-// Check whether the token is still valid by comparing the expiration date with the current date
 export const isTokenStillValid = (
   sessionAccessTokenExpiresAt: string
 ): boolean => {
+  // Convert both dates to UTC for comparison
   const expiresAtDate = new Date(sessionAccessTokenExpiresAt);
-  const isValid = new Date() < expiresAtDate;
+  const currentDate = new Date();
+
+  // Log both dates for debugging
+  console.log("Session expiration (UTC):", expiresAtDate.toISOString());
+  console.log("Current date (UTC):", currentDate.toISOString());
+
+  // Check if current date is before the expiration date
+  const isValid = currentDate < expiresAtDate;
   console.log("Checking if token is still valid:", isValid);
+
   return isValid;
 };
 
@@ -112,7 +117,7 @@ export const getSessionFromUrl = (
   ) {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get("userId");
-    const token = urlParams.get("token");
+    const accessToken = urlParams.get("accessToken");
     const refreshToken = urlParams.get("refreshToken");
     const sessionAccessTokenExpiresAt = urlParams.get(
       "sessionAccessTokenExpiresAt"
@@ -120,12 +125,12 @@ export const getSessionFromUrl = (
 
     console.log("URL parameters found:", {
       userId,
-      token,
+      accessToken,
       refreshToken,
       sessionAccessTokenExpiresAt,
     });
 
-    if (userId && token && refreshToken && sessionAccessTokenExpiresAt) {
+    if (userId && accessToken && refreshToken && sessionAccessTokenExpiresAt) {
       const currentDate = new Date();
       const currentTime = currentDate.getTime();
       const expireTime = new Date(sessionAccessTokenExpiresAt).getTime();
@@ -141,12 +146,12 @@ export const getSessionFromUrl = (
               email: "",
               role: "",
             },
-            token,
+            accessToken,
             refreshToken,
             expires: 0,
             sessionAccessTokenExpiresAt,
           });
-        return token;
+        return accessToken;
       } else {
         console.warn("Token from URL has expired.");
       }
@@ -174,7 +179,7 @@ export const refreshAccessToken = async (
     return overrideToken;
   }
 
-  const refreshToken = Cookies.get("refresh_token");
+  const refreshToken = Cookies.get("refreshToken");
   if (!refreshToken) {
     console.error("No refresh token available in cookies.");
   }
@@ -201,21 +206,21 @@ export const refreshAccessToken = async (
             email: "",
             role: "",
           },
-          token: tokenData.accessToken,
+          accessToken: tokenData.accessToken,
           refreshToken: tokenData.refreshToken,
           expires: tokenData.expires,
           sessionAccessTokenExpiresAt: tokenData.sessionAccessTokenExpiresAt,
         });
 
       return tokenData.accessToken; // Return the valid access token
-    } else if (tokenData) {
+    } else if (tokenData?.refreshToken) {
       console.warn("Token from API is expired or invalid. Refreshing token...");
 
       // If the access token is invalid, use the refresh token to get a new access token
       const newTokenData = await requestNewTokens(tokenData.refreshToken);
       console.log("New tokens received after refresh:", newTokenData);
 
-      return newTokenData.access_token; // Return the refreshed access token
+      return newTokenData.accessToken; // Return the refreshed access token
     }
   }
 
@@ -235,7 +240,7 @@ export const refreshAccessToken = async (
       );
     }
 
-    return newTokenData.access_token;
+    return newTokenData.accessToken;
   } catch (error) {
     console.error("Failed to refresh access token:", error);
     return null;
@@ -247,7 +252,7 @@ export const withTokenRefresh = async (
   makeApiCall: (token: string, userId?: number) => Promise<any>,
   session: Session | null,
   setSession: SetSessionFunction,
-  setName: React.Dispatch<React.SetStateAction<string | undefined>>,
+  setName?: React.Dispatch<React.SetStateAction<string | undefined>>,  // Make setName optional
   userIdForApiCall?: number,
   overrideRefreshToken?: string
 ) => {
@@ -258,31 +263,34 @@ export const withTokenRefresh = async (
   // First, check for a valid token in the URL parameters
   if (!tokenToUse) {
     console.log("Checking for token in URL...");
-    tokenToUse = getSessionFromUrl(setSession, setName);
+    // Check if setName is defined before passing it
+    if (setName) {
+      tokenToUse = getSessionFromUrl(setSession, setName);
+    }
   }
 
   // If no override token or valid URL token, validate the current session token
   if (!tokenToUse) {
     console.log("Validating current session token...");
-    tokenToUse =
-      (await checkTokenValidity(
-        session,
-        userIdForApiCall ?? 0,
-        setSession,
-        setName
-      )) || "";
+    // Check if setName is defined before passing it
+    tokenToUse = (await checkTokenValidity(
+      session,
+      userIdForApiCall ?? 0,
+      setSession,
+      setName!  // Only pass setName if it exists
+    )) || "";
   }
 
   // If no valid session token, attempt to refresh the token
   if (!tokenToUse) {
     console.log("Token invalid or expired, attempting to refresh...");
-    tokenToUse =
-      (await refreshAccessToken(
-        session?.user.id,
-        userIdForApiCall ?? session?.user.id,
-        setSession,
-        setName
-      )) ?? undefined;
+    // Check if setName is defined before passing it
+    tokenToUse = (await refreshAccessToken(
+      session?.user.id,
+      userIdForApiCall ?? session?.user.id,
+      setSession,
+      setName ? setName : undefined  // Only pass setName if it exists
+    )) ?? undefined;
   }
 
   // If we have a valid token at this point, proceed with the API call

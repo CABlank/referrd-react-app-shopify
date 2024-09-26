@@ -6,8 +6,9 @@ import NotificationsForm from "./NotificationsForm";
 interface SettingsFormProps {
   settings: SettingsType | null;
   error: string | null;
-  handleChange: (field: keyof SettingsType, value: any) => void; // Update here
+  handleChange: (field: keyof SettingsType, value: any) => void;
   handleSave: () => void;
+  role?: string; // Add the role prop
 }
 
 const SettingsForm: React.FC<SettingsFormProps> = ({
@@ -15,13 +16,24 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
   error,
   handleChange,
   handleSave,
+  role, // Destructure the role prop
 }) => {
+  console.log("SettingsForm props:", {
+    settings,
+    error,
+    handleChange,
+    handleSave,
+    role,
+  });
+  console.log("role in SettingsForm:", role ?? "Role is undefined");
+
   return (
     <div className="flex flex-col lg:flex-row justify-center items-start max-w-full mx-auto gap-8 p-4 mb-20">
       <BrandInformationForm
         settings={settings}
         error={error}
         handleChange={handleChange}
+        role={role} // Pass the role to BrandInformationForm
       />
       <div className="flex flex-col gap-8 w-full lg:w-1/2">
         <NotificationsForm settings={settings} handleChange={handleChange} />

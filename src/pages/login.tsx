@@ -6,22 +6,29 @@ import AuthLayout from "../components/AuthLayout/AuthLayout";
 import { useSession } from "../context/SessionContext";
 
 const Login = () => {
-  const [isLoginActive, setIsLoginActive] = useState(true); // State to toggle between login and sign up
+  const [isLoginActive, setIsLoginActive] = useState(true); // Toggle between login and sign-up
   const router = useRouter();
-  const { login, session, loading } = useSession();
+  const { session, loading, login } = useSession(); // Retrieve session context
 
-  // Function to handle form submission
+  // UseEffect to check if the user is already logged in based on the session
+  useEffect(() => {
+    // If session is present, redirect to the dashboard
+    if (session && session.accessToken) {
+      if (session.user.role === "Brand") {
+        console.log("Session found, redirecting to the dashboard");
+        router.push("/brand/dashboard");
+      } else if (session.user.role === "Customer") {
+        console.log("Session found, redirecting to the dashboard");
+        router.push("/customer/shares");
+      }
+    }
+  }, [session, router]); // Dependency on session and router
+
+  // Handle login form submission
   const handleLogin = async (email: string, password: string) => {
-    const credentials = {
-      email,
-      password,
-    };
-
     try {
-      // Log the user in
-      await login(credentials);
-
-      // The session is not immediately updated here. The useEffect below will handle redirection based on session change.
+      // Log the user in by using the session context's login function
+      await login({ email, password });
     } catch (error) {
       console.error("Login failed:", error);
     }

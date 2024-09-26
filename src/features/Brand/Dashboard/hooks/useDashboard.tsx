@@ -22,7 +22,7 @@ export const useDashboard = (
   const loadExecutedRef = useRef(false);
 
   const loadData = useCallback(async () => {
-    if ((session?.token || accessToken) && !loadExecutedRef.current) {
+    if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
       setDataLoading(true);
       loadExecutedRef.current = true;
       try {
@@ -52,7 +52,13 @@ export const useDashboard = (
         setDataLoading(false);
       }
     }
-  }, [session?.token, accessToken, refreshToken, withTokenRefresh, userId]);
+  }, [
+    session?.accessToken,
+    accessToken,
+    refreshToken,
+    withTokenRefresh,
+    userId,
+  ]);
 
   useEffect(() => {
     if (!sessionLoading) {

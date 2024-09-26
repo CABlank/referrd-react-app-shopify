@@ -13,8 +13,7 @@ const Dashboard = () => {
     <CustomerLayout>
       <div>
         <SummaryReferrals />
-        <SharesIndex />
-        <ReferralsIndex />
+
         <PaymentIndex />
       </div>
     </CustomerLayout>

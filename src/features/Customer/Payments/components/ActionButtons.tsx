@@ -10,7 +10,7 @@ interface ActionButtonsProps {
   payment: MappedPayment;
   handlePaymentAction: (
     paymentId: number,
-    action: "Accepted" | "Declined"
+    action: "Approved" | "Declined"
   ) => void;
 }
 
@@ -19,7 +19,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   handlePaymentAction,
 }) => {
   const statusStyles = {
-    Accepted: {
+    Approved: {
       container: "text-[#10ad1b] bg-[#d6f5d6]/5 border-[#10ad1b]",
       text: "text-[#10ad1b]",
     },
@@ -40,9 +40,9 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       <div className="flex justify-start items-center gap-2">
         <div
           className="flex items-center gap-1 cursor-pointer"
-          onClick={() => handlePaymentAction(payment.id ?? 0, "Accepted")}
+          onClick={() => handlePaymentAction(payment.id ?? 0, "Approved")}
         >
-          <p className="text-base text-[#10ad1b]">Accept</p>
+          <p className="text-base text-[#10ad1b]">Approve</p>
           <AcceptIcon />
         </div>
         <SeparatorIcon />

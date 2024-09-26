@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import defaultTerms from "./terms";
 
 interface ReferralDetailProps {
   campaign: any;
@@ -36,7 +37,7 @@ const ReferralDetail: React.FC<ReferralDetailProps> = ({
               onChange={handleChange}
             >
               <option value="">Select one</option>
-              <option value="Dollar">Dollar</option>
+              <option value="Fix">Fix</option>
               <option value="Percentage">Percentage</option>
             </select>
           </div>
@@ -65,7 +66,7 @@ const ReferralDetail: React.FC<ReferralDetailProps> = ({
           </label>
           <textarea
             name="terms"
-            value={campaign.terms || ""}
+            value={campaign.terms || defaultTerms}
             placeholder="Write terms"
             className="w-full h-[142px] px-4 py-4 rounded-lg bg-white border border-gray-300"
             onChange={handleChange}

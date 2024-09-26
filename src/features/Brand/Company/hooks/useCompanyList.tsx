@@ -32,7 +32,7 @@ export const useCompanyList = () => {
 
   // Fetch all companies
   const loadCompanies = useCallback(async () => {
-    if (session?.token && needsReload) {
+    if (session?.accessToken && needsReload) {
       setLoading(true);
       loadExecutedRef.current = true;
       setNeedsReload(false);
@@ -49,7 +49,7 @@ export const useCompanyList = () => {
         setLoading(false);
       }
     }
-  }, [session?.token, needsReload, withTokenRefresh]);
+  }, [session?.accessToken, needsReload, withTokenRefresh]);
 
   useEffect(() => {
     loadCompanies();
@@ -99,7 +99,7 @@ export const useCompanyList = () => {
 
       const updatedCompany: Company = { ...company, logo: logoId };
 
-      if (session?.token) {
+      if (session?.accessToken) {
         await withTokenRefresh((token) => createCompany(updatedCompany, token));
         setNeedsReload(true); // Trigger component reload
       }

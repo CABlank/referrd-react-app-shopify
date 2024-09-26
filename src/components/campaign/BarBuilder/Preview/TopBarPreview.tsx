@@ -12,25 +12,16 @@ import StepTwo from "./StepTwo";
 import { moveElement } from "../../CommonComponents/MoveElement";
 import { useDropWrapper } from "../../CommonComponents/UseDropWrapper";
 import { desktopStyle, mobileStyle } from "./Styles";
-import { TopBar } from "@shopify/polaris";
 
 interface TopBarPreviewProps {
   desktopStepOneElements: ElementProps[];
-  setDesktopStepOneElements: React.Dispatch<
-    React.SetStateAction<ElementProps[]>
-  >;
+  setDesktopStepOneElements: React.Dispatch<React.SetStateAction<ElementProps[]>>;
   mobileStepOneElements: ElementProps[];
-  setMobileStepOneElements: React.Dispatch<
-    React.SetStateAction<ElementProps[]>
-  >;
+  setMobileStepOneElements: React.Dispatch<React.SetStateAction<ElementProps[]>>;
   desktopStepTwoElements: ElementProps[];
-  setDesktopStepTwoElements: React.Dispatch<
-    React.SetStateAction<ElementProps[]>
-  >;
+  setDesktopStepTwoElements: React.Dispatch<React.SetStateAction<ElementProps[]>>;
   mobileStepTwoElements: ElementProps[];
-  setMobileStepTwoElements: React.Dispatch<
-    React.SetStateAction<ElementProps[]>
-  >;
+  setMobileStepTwoElements: React.Dispatch<React.SetStateAction<ElementProps[]>>;
   view: "desktop" | "mobile";
   desktopConfigStepOne: TopBarConfig;
   desktopConfigStepTwo: TopBarConfig;
@@ -85,10 +76,8 @@ const TopBarPreview = forwardRef(
     const containerRefMobileStepTwo = useRef<HTMLDivElement>(null);
 
     // Determine which configuration to use based on the view and step
-    const configStepOne =
-      view === "desktop" ? desktopConfigStepOne : mobileConfigStepOne;
-    const configStepTwo =
-      view === "desktop" ? desktopConfigStepTwo : mobileConfigStepTwo;
+    const configStepOne = view === "desktop" ? desktopConfigStepOne : mobileConfigStepOne;
+    const configStepTwo = view === "desktop" ? desktopConfigStepTwo : mobileConfigStepTwo;
 
     // Compile HTML
     const compileHtml = useCallback(
@@ -103,22 +92,10 @@ const TopBarPreview = forwardRef(
     );
 
     const getCompiledHtml = useCallback(() => {
-      const htmlDesktopStepOne = compileHtml(
-        containerRefDesktopStepOne,
-        desktopConfigStepOne
-      );
-      const htmlMobileStepOne = compileHtml(
-        containerRefMobileStepOne,
-        mobileConfigStepOne
-      );
-      const htmlDesktopStepTwo = compileHtml(
-        containerRefDesktopStepTwo,
-        desktopConfigStepTwo
-      );
-      const htmlMobileStepTwo = compileHtml(
-        containerRefMobileStepTwo,
-        mobileConfigStepTwo
-      );
+      const htmlDesktopStepOne = compileHtml(containerRefDesktopStepOne, desktopConfigStepOne);
+      const htmlMobileStepOne = compileHtml(containerRefMobileStepOne, mobileConfigStepOne);
+      const htmlDesktopStepTwo = compileHtml(containerRefDesktopStepTwo, desktopConfigStepTwo);
+      const htmlMobileStepTwo = compileHtml(containerRefMobileStepTwo, mobileConfigStepTwo);
 
       return {
         desktopStepOne: htmlDesktopStepOne,
@@ -182,15 +159,9 @@ const TopBarPreview = forwardRef(
         <div style={{ display: step === 1 ? "block" : "none" }}>
           {/* Desktop Step One */}
           <div
-            ref={
-              dropWrapperDesktopStepOne.drop as unknown as React.RefObject<HTMLDivElement>
-            }
+            ref={dropWrapperDesktopStepOne.drop as unknown as React.RefObject<HTMLDivElement>}
             className={`top-bar-preview px-2 flex items-center relative ${dropWrapperDesktopStepOne.isOver ? "bg-gray-100" : ""}`}
-            style={
-              view === "desktop"
-                ? desktopStyle(desktopConfigStepOne)
-                : { display: "none" }
-            }
+            style={view === "desktop" ? desktopStyle(desktopConfigStepOne) : { display: "none" }}
           >
             <div
               className="flex h-full items-center justify-center gap-4"
@@ -215,9 +186,7 @@ const TopBarPreview = forwardRef(
                 }
                 hoverIndex={hoverIndex}
                 elementWidth={
-                  100 /
-                    (desktopStepOneElements.length +
-                      (hoverIndex !== null ? 1 : 0)) +
+                  100 / ((desktopStepOneElements?.length || 0) + (hoverIndex !== null ? 1 : 0)) +
                   "%"
                 }
                 onRemove={(id) =>
@@ -236,15 +205,9 @@ const TopBarPreview = forwardRef(
 
           {/* Mobile Step One */}
           <div
-            ref={
-              dropWrapperMobileStepOne.drop as unknown as React.RefObject<HTMLDivElement>
-            }
+            ref={dropWrapperMobileStepOne.drop as unknown as React.RefObject<HTMLDivElement>}
             className={`top-bar-preview px-2 flex  items-center relative ${dropWrapperMobileStepOne.isOver ? "bg-gray-100" : ""}`}
-            style={
-              view === "mobile"
-                ? mobileStyle(mobileConfigStepOne)
-                : { display: "none" }
-            }
+            style={view === "mobile" ? mobileStyle(mobileConfigStepOne) : { display: "none" }}
           >
             <div
               className="flex h-full items-center justify-center gap-4 "
@@ -269,10 +232,7 @@ const TopBarPreview = forwardRef(
                 }
                 hoverIndex={hoverIndex}
                 elementWidth={
-                  100 /
-                    (mobileStepOneElements.length +
-                      (hoverIndex !== null ? 1 : 0)) +
-                  "%"
+                  100 / (mobileStepOneElements?.length + (hoverIndex !== null ? 1 : 0)) + "%"
                 }
                 onRemove={(id) =>
                   setMobileStepOneElements((prevElements) =>
@@ -307,15 +267,9 @@ const TopBarPreview = forwardRef(
         >
           {/* Desktop Step Two */}
           <div
-            ref={
-              dropWrapperDesktopStepTwo.drop as unknown as React.RefObject<HTMLDivElement>
-            }
+            ref={dropWrapperDesktopStepTwo.drop as unknown as React.RefObject<HTMLDivElement>}
             className={`top-bar-preview px-2 flex items-center relative ${dropWrapperDesktopStepTwo.isOver ? "bg-gray-100" : ""}`}
-            style={
-              view === "desktop"
-                ? desktopStyle(desktopConfigStepTwo)
-                : { display: "none" }
-            }
+            style={view === "desktop" ? desktopStyle(desktopConfigStepTwo) : { display: "none" }}
           >
             <div
               className="overflow-x-auto h-full w-full"
@@ -325,10 +279,7 @@ const TopBarPreview = forwardRef(
               }} // Allow horizontal scrolling
               onScroll={(e) => {
                 if (e.currentTarget.scrollLeft > 0) {
-                  console.log(
-                    "Parent Div ID:",
-                    document.getElementById("parent-div")?.id
-                  );
+                  console.log("Parent Div ID:", document.getElementById("parent-div")?.id);
                 }
               }}
             >
@@ -353,10 +304,7 @@ const TopBarPreview = forwardRef(
                   }
                   hoverIndex={hoverIndex}
                   elementWidth={
-                    100 /
-                      (desktopStepTwoElements.length +
-                        (hoverIndex !== null ? 1 : 0)) +
-                    "%"
+                    100 / (desktopStepTwoElements?.length + (hoverIndex !== null ? 1 : 0)) + "%"
                   }
                   onRemove={(id) =>
                     setDesktopStepTwoElements((prevElements) =>
@@ -371,15 +319,9 @@ const TopBarPreview = forwardRef(
 
           {/* Mobile Step Two */}
           <div
-            ref={
-              dropWrapperMobileStepTwo.drop as unknown as React.RefObject<HTMLDivElement>
-            }
+            ref={dropWrapperMobileStepTwo.drop as unknown as React.RefObject<HTMLDivElement>}
             className={`top-bar-preview px-2 flex items-center relative ${dropWrapperMobileStepTwo.isOver ? "bg-gray-100" : ""}`}
-            style={
-              view === "mobile"
-                ? mobileStyle(mobileConfigStepTwo)
-                : { display: "none" }
-            }
+            style={view === "mobile" ? mobileStyle(mobileConfigStepTwo) : { display: "none" }}
           >
             <div
               className="flex h-full items-center justify-center gap-4"
@@ -404,10 +346,7 @@ const TopBarPreview = forwardRef(
                 }
                 hoverIndex={hoverIndex}
                 elementWidth={
-                  100 /
-                    (mobileStepTwoElements.length +
-                      (hoverIndex !== null ? 1 : 0)) +
-                  "%"
+                  100 / (mobileStepTwoElements?.length + (hoverIndex !== null ? 1 : 0)) + "%"
                 }
                 onRemove={(id) =>
                   setMobileStepTwoElements((prevElements) =>

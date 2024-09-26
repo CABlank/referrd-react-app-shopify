@@ -1,56 +1,119 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import ArrowDropdownIcon from "../Icons/ArrowDropdownIcon";
 
+// Utility function to update the error message element
+export const updateErrorMessage = (message: string) => {
+  const errorMessageArea = document.getElementById("error-message-area");
+  if (errorMessageArea) {
+    errorMessageArea.innerHTML = message;
+  }
+};
+
+// Utility function to clear the error message element
+export const clearErrorMessage = () => {
+  const errorMessageArea = document.getElementById("error-message-area");
+  if (errorMessageArea) {
+    errorMessageArea.innerHTML = "";
+  }
+};
+
 const CampaignCreativeSelector: React.FC<{
   className?: string;
   selectedFormat: string;
   onSelect: (format: string) => void;
+  selectedSubFormat: "Popup" | "Bar";
+  onSubFormatSelect: (subFormat: "Popup" | "Bar") => void;
   children?: React.ReactNode;
-}> = ({ className, selectedFormat, onSelect, children }) => {
+}> = ({
+  className,
+  selectedFormat,
+  onSelect,
+  selectedSubFormat,
+  onSubFormatSelect,
+  children,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {
+    const errorMessageArea = document.getElementById("error-message-area");
+    if (errorMessageArea && errorMessageArea.innerHTML.trim() !== "") {
+      return;
+    }
     setIsOpen(!isOpen);
   };
 
+  // Function to handle setting the format and updating the attribute
   const handleSelectFormat = (format: string) => {
-    onSelect(format); // Call the onSelect callback with the selected format
-  };
-
-  const isClickInsideScrollbarOrScrollContainer = (event: MouseEvent) => {
-    const scrollContainer = document.getElementById("scroll");
-    if (scrollContainer) {
-      return (
-        event.target === scrollContainer ||
-        scrollContainer.contains(event.target as Node)
-      );
+    // Set a custom attribute on the body element
+    if (format === "Both" || format === "Popup") {
+      document.body.setAttribute("data-selected-format", format);
+    } else {
+      document.body.removeAttribute("data-selected-format");
     }
-    return false;
-  };
 
+    // Call the onSelect callback
+    onSelect(format);
+  };
+  // Use MutationObserver to monitor both "data-selected-format" and "data-current-substep"
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node) &&
-        !isClickInsideScrollbarOrScrollContainer(event)
-      ) {
-        if (isOpen) {
-          handleToggle();
-        }
-      }
-    }
+    const format = document.body.getAttribute("data-selected-format");
+    const subStep = document.body.getAttribute("data-current-substep");
+    const subStepNumber = parseInt(subStep || "0", 10);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
+    console.log("Selected format:", format);
+    console.log("Current substep:", subStepNumber);
+
+    // Automatically select subformat based on substep range
+    const observer = new MutationObserver(() => {
+      const updatedFormat = document.body.getAttribute("data-selected-format");
+      const updatedSubStep = document.body.getAttribute("data-current-substep");
+      const updatedSubStepNumber = parseInt(updatedSubStep || "0", 10);
+
+      console.log("Updated format:", updatedFormat);
+      console.log("Updated substep:", updatedSubStepNumber);
+
+      // If in substep 4.1 to 4.4, select "Popup"
+      if (
+        updatedFormat === "Both" &&
+        updatedSubStepNumber >= 1 &&
+        updatedSubStepNumber <= 4 &&
+        selectedSubFormat !== "Popup"
+      ) {
+        onSubFormatSelect("Popup");
+      }
+
+      // If in substep 4.5 to 4.8, select "Bar"
+      if (
+        updatedFormat === "Both" &&
+        updatedSubStepNumber >= 5 &&
+        updatedSubStepNumber <= 8 &&
+        selectedSubFormat !== "Bar"
+      ) {
+        onSubFormatSelect("Bar");
+      }
+    });
+
+    // Observe both "data-selected-format" and "data-current-substep" on the body
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-selected-format", "data-current-substep"],
+    });
+
+    // Cleanup observer on component unmount
+    return () => observer.disconnect();
+  }, [selectedSubFormat, onSubFormatSelect]);
 
   const memoizedChildren = useMemo(() => {
     return <div>{children}</div>;
   }, [children]);
+
+  useEffect(() => {
+    // Clear error messages when component unmounts
+    return () => {
+      clearErrorMessage();
+    };
+  }, []);
 
   return (
     <div
@@ -70,6 +133,9 @@ const CampaignCreativeSelector: React.FC<{
           </button>
         </div>
         <hr className="border-gray-200 mb-6" />
+
+        {/* Error Message Area */}
+        <div id="error-message-area" className="text-red-600 mb-4"></div>
       </div>
 
       {/* Always render children but control visibility */}
@@ -103,7 +169,7 @@ const CampaignCreativeSelector: React.FC<{
                   </p>
                 </div>
               </div>
-              {/* Popup + Topbar Option */}
+              {/* Popup + Bar Option */}
               <div
                 className={`flex justify-center items-center flex-1 gap-8 p-8 rounded-lg border border-gray-300 cursor-pointer ${
                   selectedFormat === "Both" ? "border-green-500" : ""
@@ -126,9 +192,34 @@ const CampaignCreativeSelector: React.FC<{
                 </div>
               </div>
             </div>
+
+            {/* Mini-selection for "Popup + Bar" */}
+            {selectedFormat === "Both" && (
+              <div className="flex gap-4 mt-4">
+                <button
+                  className={`flex-1 p-4 rounded-lg border ${
+                    selectedSubFormat === "Popup"
+                      ? "border-green-500"
+                      : "border-gray-300"
+                  }`}
+                  onClick={() => onSubFormatSelect("Popup")}
+                >
+                  Configure Popup
+                </button>
+                <button
+                  className={`flex-1 p-4 rounded-lg border ${
+                    selectedSubFormat === "Bar"
+                      ? "border-green-500"
+                      : "border-gray-300"
+                  }`}
+                  onClick={() => onSubFormatSelect("Bar")}
+                >
+                  Configure Bar
+                </button>
+              </div>
+            )}
           </div>
         </div>
-        {/* Use the memoized children */}
         {memoizedChildren}
       </div>
 

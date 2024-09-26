@@ -1,4 +1,4 @@
-import { useDrop } from "react-dnd";
+import { useDrop, DropTargetMonitor } from "react-dnd";
 import { useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -22,28 +22,43 @@ export const useDropWrapper = (
 ) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>({
+  const [{ isOver }, drop] = useDrop<DragItem, unknown, { isOver: boolean }>({
     accept: [ItemTypes.TEXT_ELEMENT, ItemTypes.BUTTON_ELEMENT],
-    hover: (item, monitor) => {
-      if (!enableDragAndDrop || !containerRef.current) return;
 
+    hover: (item: DragItem, monitor: DropTargetMonitor<DragItem, unknown>) => {
+      if (!enableDragAndDrop || !containerRef.current || item.index === hoverIndex) return;
+
+      // Get bounding rectangle of the container
       const hoverBoundingRect = containerRef.current.getBoundingClientRect();
+
+      // Get current mouse offset
       const clientOffset = monitor.getClientOffset();
-      const hoverClientX = clientOffset
-        ? clientOffset.x - hoverBoundingRect.left
-        : 0;
+      if (!clientOffset) return;
 
-      let newHoverIndex = Math.floor(
-        (hoverClientX / hoverBoundingRect.width) * currentElements.length
-      );
+      // Calculate the mouse position relative to the container
+      const hoverClientX = clientOffset.x - hoverBoundingRect.left;
 
-      newHoverIndex = Math.max(
-        0,
-        Math.min(currentElements.length, newHoverIndex)
-      );
+      // Calculate the width of each element inside the container
+      const elementWidth = hoverBoundingRect.width / currentElements.length;
 
-      setHoverIndex(newHoverIndex);
+      // Calculate the middle of the hovered element
+      const hoverMiddleX = elementWidth / 2;
+
+      // Find the index of the element being hovered over
+      const hoverIndexLocal = Math.floor(hoverClientX / elementWidth);
+
+      // Ensure the hoverIndexLocal is within bounds
+      const newHoverIndex = Math.max(0, Math.min(currentElements.length - 1, hoverIndexLocal));
+
+      // Get the mouse position relative to the hovered element's center
+      const hoverElementClientX = hoverClientX - newHoverIndex * elementWidth;
+
+      // Move the element only if the cursor crosses the middle of the hovered element
+      if (hoverElementClientX > hoverMiddleX && hoverIndex !== newHoverIndex) {
+        setHoverIndex(newHoverIndex);
+      }
     },
+
     drop: (item: DragItem) => {
       if (!enableDragAndDrop) return;
 
@@ -52,13 +67,16 @@ export const useDropWrapper = (
 
       const newIndex = hoverIndex !== null ? hoverIndex : elements.length;
 
+      // Find if the element already exists
       const existingIndex = elements.findIndex(
         (element) => element && element.id === item.id
       );
 
       if (existingIndex !== -1) {
+        // Move the element if it already exists in the array
         moveElement(elements, setElements, existingIndex, newIndex);
       } else {
+        // Create a new element if it doesn't exist
         let newElement: ElementProps;
 
         if (item.type === ItemTypes.TEXT_ELEMENT) {
@@ -81,12 +99,15 @@ export const useDropWrapper = (
           } as TextElementProps;
         }
 
+        // Insert the new element at the calculated index
         elements.splice(newIndex, 0, newElement);
         setElements(elements);
       }
 
+      // Reset hover index
       setHoverIndex(null);
     },
+
     collect: (monitor) => ({
       isOver: enableDragAndDrop && monitor.isOver(),
     }),

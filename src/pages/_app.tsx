@@ -1,4 +1,4 @@
-import { AppProvider as PolarisProvider } from "@shopify/polaris";
+import { AppProvider as PolarisProvider, Button, Box, Page, LegacyCard } from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
 import App, { AppProps, AppContext } from "next/app";
@@ -10,6 +10,7 @@ import BrandLayout from "./layouts/BrandLayout/BrandLayout";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import Link from "next/link";
 import createApp from "@shopify/app-bridge";
+import cookies from "js-cookie";
 
 declare global {
   interface Window {
@@ -20,13 +21,12 @@ declare global {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      "ui-nav-menu": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement>,
-        HTMLElement
-      >;
+      "ui-nav-menu": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
 }
+
+const SHOPIFY_APP_URL = process.env.CONFIG_SHOPIFY_APP_URL as string;
 
 class MyApp extends App<AppProps> {
   static async getInitialProps(appContext: AppContext) {
@@ -60,11 +60,7 @@ class MyApp extends App<AppProps> {
     return (
       <PolarisProvider i18n={translations}>
         <SessionProvider>
-          <ContentWrapper
-            isShopify={isShopify}
-            Component={Component}
-            pageProps={pageProps}
-          />
+          <ContentWrapper isShopify={isShopify} Component={Component} pageProps={pageProps} />
         </SessionProvider>
       </PolarisProvider>
     );
@@ -78,13 +74,33 @@ const ContentWrapper: React.FC<{
 }> = ({ isShopify, Component, pageProps }) => {
   const { session, loading } = useSession();
   const [sessionChecked, setSessionChecked] = useState(false);
-  const [redirected, setRedirected] = useState(false); // Prevent multiple redirects
   const router = useRouter();
+  const [redirected, setRedirected] = useState(false); // Prevent multiple redirects
 
   // Log whenever the session is updated
   useEffect(() => {
     if (session) {
       console.log("Session has been defined with new information:", session);
+
+      // Redirect to the Referrd app if the session is defined
+      // setting the cookies
+      // Set cookies with SameSite=None and Secure=true for cross-site requests
+      cookies.set("accessToken", session.accessToken, {
+        sameSite: "None",
+        secure: true,
+      });
+
+      cookies.set("refreshToken", session.refreshToken, {
+        sameSite: "None",
+        secure: true,
+      });
+
+      cookies.set("sessionAccessTokenExpiresAt", session.sessionAccessTokenExpiresAt, {
+        sameSite: "None",
+        secure: true,
+      });
+
+      console.log("Cookies set:", cookies.get("accessToken"));
     }
   }, [session]);
 
@@ -102,36 +118,15 @@ const ContentWrapper: React.FC<{
     checkSession();
   }, [loading]);
 
-  useEffect(() => {
-    if (!sessionChecked) return; // Only proceed if the session has been checked
+  const isBrandRoute = router.pathname.startsWith("/brand");
 
-    if (session && router.pathname === "/login") {
-      const userRole = session?.user?.role;
-
-      console.log("User role detected:", userRole);
-
-      // Redirect based on user role
-      if (userRole === "Brand") {
-        router.replace("/brand/dashboard");
-      } else if (userRole === "Customer") {
-        console.log("Redirecting to /customer/dashboard");
-        router.replace("/customer/dashboard");
-      } else {
-        router.replace("/"); // Fallback for unknown roles
-      }
-    } else if (!session && router.pathname.startsWith("/brand")) {
-    }
-  }, [sessionChecked, session, router]);
-
-  // Initialize App Bridge and trigger actions
+  // Initialize Shopify App Bridge
   useEffect(() => {
     if (isShopify && pageProps.shop && pageProps.host) {
       const app = createApp({
         apiKey: process.env.CONFIG_SHOPIFY_API_KEY as string,
-        host: pageProps.host, // Use `host` instead of `shopOrigin`
+        host: pageProps.host,
       });
-
-      // Attach app instance to window for debugging if needed
       window.shopify = app;
     }
   }, [isShopify, pageProps.shop, pageProps.host]);
@@ -140,49 +135,51 @@ const ContentWrapper: React.FC<{
     return <LoadingOverlay />;
   }
 
-  const isBrandRoute = router.pathname.startsWith("/brand");
-
   // Function to append session data to URLs
   const createLinkWithSession = (path: string) => {
     const url = new URL(path, window.location.href);
     if (pageProps.shop) url.searchParams.set("shop", pageProps.shop);
     if (pageProps.idToken) url.searchParams.set("id_token", pageProps.idToken);
 
-    // Add session parameters
     if (session) {
-      url.searchParams.set("token", session.token);
+      url.searchParams.set("accessToken", session.accessToken);
       url.searchParams.set("refreshToken", session.refreshToken);
-      url.searchParams.set(
-        "sessionAccessTokenExpiresAt",
-        session.sessionAccessTokenExpiresAt
-      );
+      url.searchParams.set("sessionAccessTokenExpiresAt", session.sessionAccessTokenExpiresAt);
       url.searchParams.set("userId", session.user?.id?.toString() || "");
       url.searchParams.set("expires", session.expires.toString());
     }
 
-    // Log the final URL
     console.log("Final URL with session data:", url.toString());
-
     return url.toString();
+  };
+
+  // Function to handle redirection based on the platform (Shopify or external)
+  const handleRedirect = () => {
+    const targetUrl = createLinkWithSession(`${SHOPIFY_APP_URL}`);
+
+    window.open(targetUrl, "_blank");
   };
 
   if (isShopify) {
     return (
       <>
         <ui-nav-menu style={{ display: "none" }}>
-          <Link href={createLinkWithSession("/brand/campaigns")}>
-            Campaigns
-          </Link>
-          <Link href={createLinkWithSession("/brand/referrals")}>
-            Referrals
-          </Link>
+          <Link href={createLinkWithSession("/brand/campaigns")}>Campaigns</Link>
+          <Link href={createLinkWithSession("/brand/referrals")}>Referrals</Link>
           <Link href={createLinkWithSession("/brand/settings")}>Settings</Link>
           <Link href={createLinkWithSession("/brand/payments")}>Payments</Link>
           <Link href={createLinkWithSession("/brand/support")}>Support</Link>
         </ui-nav-menu>
-        <div className="flex-1 overflow-y-auto">
-          <main className="p-6">
-            <Component {...pageProps} />
+        <div className="flex-1 overflow-y-auto" style={{ position: "relative" }}>
+          <main className="">
+            {/* Removed HOLA and replaced it with a button */}
+            <Box position="absolute" insetInlineEnd="0" padding="400">
+              <Button onClick={handleRedirect}>Go to Referrd App</Button>
+            </Box>
+            {/* Add margin to separate the button from the component */}
+            <Box padding="1600">
+              <Component {...pageProps} />
+            </Box>
           </main>
         </div>
       </>

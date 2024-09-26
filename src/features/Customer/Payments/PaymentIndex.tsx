@@ -28,9 +28,7 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const handleSearch = (query: string) => setSearchQuery(query);
-
   const handleSort = (order: string) => setSortOrder(order);
-
   const handlePageChange = (page: number) => setCurrentPage(page);
 
   const handleItemsPerPageChange = (
@@ -55,9 +53,9 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
     } else if (sortOrder === "campaign") {
       return a.campaign.localeCompare(b.campaign);
     } else if (sortOrder === "referralCashback") {
-      return b.referralCashback - a.referralCashback; // Assuming referralCashback is a number
+      return b.referralCashback - a.referralCashback;
     } else {
-      return 0; // Default case if sortOrder doesn't match any known property
+      return 0;
     }
   });
 
@@ -66,7 +64,20 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
     currentPage * itemsPerPage
   );
 
-  // Updated columns without "Order" and without Action buttons
+  // Define styles for the payment status
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "Approved":
+        return "bg-green-100 text-green-600 px-3 py-1 rounded-full";
+      case "Declined":
+        return "bg-red-100 text-red-600 px-3 py-1 rounded-full";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full";
+      default:
+        return "bg-gray-100 text-gray-600 px-3 py-1 rounded-full";
+    }
+  };
+
   const columns = [
     { dataIndex: "date", className: "text-center text-sm" },
     { dataIndex: "referrer", className: "text-center" },
@@ -77,19 +88,19 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
       customRender: (value: number) => `$${value.toFixed(2)}`, // Format as currency
     },
     {
-      dataIndex: "status", // Added status instead of action buttons
+      dataIndex: "status",
       className: "text-center",
       customRender: (status: string) => {
-        // Simply return the status text
-        return <span>{status}</span>;
+        // Apply styles dynamically based on the status value
+        return <span className={getStatusStyle(status)}>{status}</span>;
       },
     },
   ];
 
   const computePerformanceMetrics = () => {
     const totalPayments = payments.length;
-    const acceptedPayments = payments.filter(
-      (p) => p.status === "Accepted"
+    const approvedPayments = payments.filter(
+      (p) => p.status === "Approved"
     ).length;
     const declinedPayments = payments.filter(
       (p) => p.status === "Declined"
@@ -98,23 +109,21 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
       (p) => p.status === "Pending"
     ).length;
 
-    // Calculate the total order value
-    const totalOrderValue = payments.reduce(
-      (acc, p) => acc + parseFloat(p.total_price),
+    const totalPaymentsValue = payments.reduce(
+      (acc, p) => acc + (p.referralCashback || 0),
       0
     );
 
-    // Calculate the average order value
-    const averageOrderValue =
-      totalPayments > 0 ? totalOrderValue / totalPayments : 0;
+    const averagePaymentsValue =
+      totalPayments > 0 ? totalPaymentsValue / totalPayments : 0;
 
     return {
       totalPayments,
-      acceptedPayments,
+      approvedPayments,
       declinedPayments,
       pendingPayments,
-      totalOrderValue: totalOrderValue.toFixed(2),
-      averageOrderValue: averageOrderValue.toFixed(2),
+      totalPaymentsValue: totalPaymentsValue.toFixed(2),
+      averagePaymentsValue: averagePaymentsValue.toFixed(2),
     };
   };
 
@@ -129,8 +138,8 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
         <div className="relative w-full flex justify-center items-center">
           <ScrollableContainer>
             <PerformanceSummary
-              metricName="Accepted Payments"
-              value={metrics.acceptedPayments.toString()}
+              metricName="Approved Payments"
+              value={metrics.approvedPayments.toString()}
               iconName="MouseClickIcon"
             />
             <PerformanceSummary
@@ -144,13 +153,13 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
               iconName="ConversionRate"
             />
             <PerformanceSummary
-              metricName="Total Order Value"
-              value={`$${metrics.totalOrderValue}`}
+              metricName="Total Payments"
+              value={`$${metrics.totalPaymentsValue}`}
               iconName="TotalSpends"
             />
             <PerformanceSummary
-              metricName="Avg Order Value"
-              value={`$${metrics.averageOrderValue}`}
+              metricName="Avg Payments"
+              value={`$${metrics.averagePaymentsValue}`}
               iconName="MouseClickedIcon"
             />
           </ScrollableContainer>
@@ -159,10 +168,10 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
         {/* Data Table */}
         <div className="w-full">
           {/* Search, Sort, and Items Per Page */}
-          <div className="flex justify-end w-full mb-4">
+          <div className="flex justify-end w-full mb-4 ">
             <div className="flex items-center gap-4">
               <SearchSortSection onSearch={handleSearch} onSort={handleSort} />
-              <div className="flex items-center px-0 py-2 justify-center rounded-lg bg-white w-[30%] sm:w-auto">
+              <div className="hidden sm:flex items-center px-0 py-2 justify-center rounded-lg bg-white w-[30%] sm:w-auto">
                 <select
                   className="text-[.8rem] sm:text-base font-medium text-left text-black/80"
                   value={itemsPerPage}
@@ -187,7 +196,7 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
                 { title: "Referrer", align: "center" },
                 { title: "Campaign", align: "center" },
                 { title: "Referral Fee", align: "center" },
-                { title: "Status", align: "center" }, // Changed "Action" to "Status"
+                { title: "Status", align: "center" }, // Status column
               ],
             }}
           />

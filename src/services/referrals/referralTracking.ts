@@ -10,7 +10,7 @@ export interface Customer {
   conversion_count: number;
   click_count: number;
   signup_count: number;
-
+  company_id: object;
   location?: {
     country?: string;
     city?: string;
@@ -78,45 +78,78 @@ export const fetchCustomerByUUID = async (
 };
 
 // Create a new customer
+// Create a new customer or update the company_id if the customer exists
 export const createCustomer = async (
   customer: Customer,
-  token: string
+  token: string,
+  newCompanyId?: string // Renamed parameter for clarity
 ): Promise<Customer> => {
-  // Update the return type to Promise<Customer>
   try {
-    //fetch first if the customer exist with the email
-
+    // Check if the customer exists using their email
     const customers = await fetchFromAPI<Customer[] | null>(
       `/items/customers?filter[email][_eq]=${customer.email}`,
       token
     );
 
     if (customers && customers.length > 0) {
+      // Customer exists
+      const existingCustomer = customers[0];
       console.log(`Customer with email ${customer.email} already exists`);
-      return customers[0];
+
+      // Check if the new company_id is different and not already present
+      const existingCompanyIds = Array.isArray(existingCustomer.company_id)
+        ? existingCustomer.company_id
+        : [existingCustomer.company_id];
+
+      if (!existingCompanyIds.includes(newCompanyId)) {
+        // Add the new company_id to the array
+        const updatedCompanyIds = [...existingCompanyIds, newCompanyId];
+
+        // Update the customer with the new list of company IDs
+        const updatedCustomer = await fetchFromAPI<Customer | null>(
+          `/items/customers/${existingCustomer.id}`,
+          token,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ company_id: updatedCompanyIds }),
+          }
+        );
+
+        if (!updatedCustomer) {
+          throw new Error("Failed to update customer with new company ID.");
+        }
+
+        console.log("Updated existing customer with new company ID:", updatedCustomer);
+        return updatedCustomer;
+      }
+
+      // If the company_id already exists, return the existing customer
+      return existingCustomer;
     }
 
+    // Customer does not exist, create a new one
     const createdCustomer = await fetchFromAPI<Customer | null>(
       "/items/customers",
       token,
       {
         method: "POST",
-        body: JSON.stringify(customer),
+        body: JSON.stringify({ ...customer, company_id: [newCompanyId] }), // Create new customer with the new company_id as an array
       }
     );
 
-    if (createdCustomer === null) {
-      console.log("Customer created successfully but no content was returned.");
+    if (!createdCustomer) {
       throw new Error("Customer creation failed, no data returned.");
-    } else {
-      console.log("Created new customer:", createdCustomer);
-      return createdCustomer; // Return the created customer object
     }
+
+    console.log("Created new customer:", createdCustomer);
+    return createdCustomer;
+
   } catch (error) {
-    console.error("Error creating customer:", error);
+    console.error("Error creating or updating customer:", error);
     throw error;
   }
 };
+
 
 // Manually increment a customer field value
 export const incrementCustomerField = async (

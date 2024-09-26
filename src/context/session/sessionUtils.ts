@@ -9,17 +9,20 @@ export const clearSession = (
 ) => {
   setSession(null);
   setName(undefined);
-  Cookies.remove("access_token");
-  Cookies.remove("refresh_token");
+  Cookies.remove("accessToken");
+
   Cookies.remove("token_expiration");
-  Cookies.remove("session_access_token_expires_at"); // Remove the new session expiration cookie
+
   Cookies.remove("__stripe_mid");
   Cookies.remove("__stripe_sid");
+
+  Cookies.remove("refreshToken");
+  Cookies.remove("sessionAccessTokenExpiresAt");
 };
 
 // Utility function to save tokens to cookies
 export const saveTokensToCookies = (
-  token: string,
+  accessToken: string,
   refreshToken: string,
   expires: number,
   sessionAccessTokenExpiresAt: string // Add the new parameter
@@ -33,14 +36,14 @@ export const saveTokensToCookies = (
   });
 
   // Save the access token, refresh token, and session access token expiration time
-  Cookies.set("access_token", token, { secure: true, sameSite: "Strict" });
-  Cookies.set("refresh_token", refreshToken, {
+  Cookies.set("accessToken", accessToken, { secure: true, sameSite: "Strict" });
+  Cookies.set("refreshToken", refreshToken, {
     secure: true,
     sameSite: "Strict",
   });
 
   // Save the sessionAccessTokenExpiresAt as a cookie
-  Cookies.set("session_access_token_expires_at", sessionAccessTokenExpiresAt, {
+  Cookies.set("sessionAccessTokenExpiresAt", sessionAccessTokenExpiresAt, {
     secure: true,
     sameSite: "Strict",
   });
@@ -53,7 +56,7 @@ export const logout = async (
   session: SessionContextType["session"]
 ) => {
   try {
-    const refreshToken = Cookies.get("refresh_token") || session?.refreshToken;
+    const refreshToken = Cookies.get("refreshToken") || session?.refreshToken;
     if (refreshToken) await authService.logout(refreshToken);
   } catch (error) {
     console.error("Logout error:", error);
@@ -71,11 +74,11 @@ export const handleFetchUserDataError = async (
   session: SessionContextType["session"] | null
 ) => {
   if (error.response?.status === 401 || error.message === "Token expired") {
-    const token = await refreshAccessToken();
-    if (token) {
+    const accessToken = await refreshAccessToken();
+    if (accessToken) {
       try {
-        const user = await authService.fetchUserData(token);
-        const role = await authService.fetchUserRole(token, user.role);
+        const user = await authService.fetchUserData(accessToken);
+        const role = await authService.fetchUserRole(accessToken, user.role);
 
         // Calculate the new session access token expiration time (1.5 hours from now)
         const sessionAccessTokenExpiresAt = new Date();
@@ -95,7 +98,7 @@ export const handleFetchUserDataError = async (
             email: user.email,
             role: role.name,
           },
-          token,
+          accessToken,
           refreshToken: session?.refreshToken || "",
           expires: session?.expires || 0,
           sessionAccessTokenExpiresAt:
@@ -126,7 +129,8 @@ export const login = async (
   setLoading(true);
   try {
     const { data } = await authService.login(credentials);
-    const { access_token: token, refresh_token: refreshToken, expires } = data;
+    const { access_token: accessToken, refresh_token: refreshToken, expires } = data;
+
 
     // Calculate the new session access token expiration time (1.5 hours from now)
     const sessionAccessTokenExpiresAt = new Date();
@@ -136,14 +140,14 @@ export const login = async (
 
     // Save the tokens and expiration to cookies, including the new session expiration time
     saveTokensToCookies(
-      token,
+      accessToken,
       refreshToken,
       expires,
       sessionAccessTokenExpiresAt.toISOString()
     );
 
-    const user = await authService.fetchUserData(token);
-    const role = await authService.fetchUserRole(token, user.role);
+    const user = await authService.fetchUserData(accessToken);
+    const role = await authService.fetchUserRole(accessToken, user.role);
 
     console.log(
       "Updating session with new token and expiration time from login function inf sessionUtils.ts"
@@ -157,7 +161,7 @@ export const login = async (
         email: user.email,
         role: role.name,
       },
-      token,
+      accessToken,
       refreshToken,
       expires,
       sessionAccessTokenExpiresAt: sessionAccessTokenExpiresAt.toISOString(), // Include this in the session

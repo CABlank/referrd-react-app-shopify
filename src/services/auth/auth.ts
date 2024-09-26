@@ -52,7 +52,7 @@ const logout = async (refreshToken: string, mode: string = "json") => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ refresh_token: refreshToken, mode }),
+    body: JSON.stringify({ refreshToken: refreshToken, mode }),
   });
 
   if (!response.ok) {

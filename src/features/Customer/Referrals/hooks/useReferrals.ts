@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import {
   fetchCustomersByUuidReferral,
-  fetchCampaigns,
+  fetchMainCustomerByUuidReferral,
 } from "../../../../services/referrals/referrals";
 import { useSession } from "../../../../context/SessionContext";
 import { fetchUserData } from "../../../../services/auth/auth";
 
-// Define interfaces for the data structures
 interface Customer {
+  length: number;
   id: number;
   date_created: string;
   uuid: string;
@@ -23,13 +23,9 @@ interface Customer {
   campaign_uuid: string;
 }
 
-interface Campaign {
-  id: string;
-  name: string;
-}
-
 interface CustomerState {
   customers: Customer[];
+  mainCustomerData: Customer[];
   loading: boolean;
   error: string | null;
 }
@@ -46,6 +42,7 @@ const useCustomers = ({
   const { session, withTokenRefresh } = useSession();
   const [state, setState] = useState<CustomerState>({
     customers: [],
+    mainCustomerData: [],
     loading: true,
     error: null,
   });
@@ -53,29 +50,45 @@ const useCustomers = ({
 
   useEffect(() => {
     const loadData = async () => {
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
 
         try {
-          // Fetch UUID of the logged-in user (customer)
-          const customerUUID = await fetchUserData(session?.token || "");
+          // First, use withTokenRefresh to fetch the customer UUID securely
+          const customerUUID = await withTokenRefresh(
+            async (token) => {
+              // Fetch the customer data using the current or refreshed token
+              const userData = await fetchUserData(token);
+              return userData;
+            },
+            refreshToken, // If needed, provide a refresh token here
+            userId // User ID to help identify which token to refresh, if required
+          );
           console.log("Fetched customerUUID:", customerUUID?.uuid);
 
           if (customerUUID?.uuid) {
-            // Fetch customers and campaigns using the customer UUID (referred_by logic)
-            const [customersData] = await Promise.all([
+            const [customersData, mainCustomerResponse] = await Promise.all([
               withTokenRefresh(
                 (token) =>
                   fetchCustomersByUuidReferral(token, customerUUID.uuid),
                 refreshToken,
                 userId
               ),
+              withTokenRefresh(
+                (token) =>
+                  fetchMainCustomerByUuidReferral(token, customerUUID.uuid),
+                refreshToken,
+                userId
+              ),
             ]);
 
-            // Set the fetched data into the state
+            const mainCustomerData = mainCustomerResponse || null; // Extract the first customer object
+
+            console.log("Fetched customersData:", mainCustomerData);
             setState({
               customers: customersData || [],
+              mainCustomerData, // Set main customer object
               loading: false,
               error: null,
             });
@@ -86,8 +99,10 @@ const useCustomers = ({
           console.error("Error fetching data:", err);
           setState({
             customers: [],
+            mainCustomerData: [],
             loading: false,
-            error: "Failed to fetch customers or campaigns. Please try again.",
+            error:
+              "Failed to fetch customers or main customer data. Please try again.",
           });
         }
       }

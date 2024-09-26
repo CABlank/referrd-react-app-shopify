@@ -11,7 +11,7 @@ const BudgetLeft: React.FC = () => {
 
   useEffect(() => {
     const calculateTotalBudgetLeft = async () => {
-      if (session?.token && !loadExecutedRef.current) {
+      if (session?.accessToken && !loadExecutedRef.current) {
         setLoading(true);
         loadExecutedRef.current = true;
         try {
@@ -45,11 +45,11 @@ const BudgetLeft: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center gap-4 px-4 py-2 rounded-[32px] bg-[#851087]/5 border border-[#851087]/25">
-      <p className="text-base font-medium text-[#851087]">
+    <div className=" flex flex-wrap items-center gap-2 md:gap-4 px-2 md:px-4 py-2 rounded-[32px] bg-[#851087]/5 border border-[#851087]/25">
+      <p className="text-xs lg:text-base md:text-sm font-medium text-[#851087]">
         Total Budget Available
       </p>
-      <p className="text-base font-bold text-[#851087]">
+      <p className="text-xs md:text-sm font-bold text-[#851087]">
         ${totalBudgetLeft.toFixed(2)}
       </p>
     </div>

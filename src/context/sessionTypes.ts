@@ -8,7 +8,7 @@ export interface User {
 export interface Session {
   id?: number;
   user: User;
-  token: string;
+  accessToken: string;
   refreshToken: string;
   expires: number;
   sessionAccessTokenExpiresAt: string; // Add the new property
@@ -25,7 +25,7 @@ export interface SessionContextType {
   logout: () => void;
   refreshAccessToken: (propsRefreshToken?: string) => Promise<string | null>;
   withTokenRefresh: (
-    apiCall: (token: string, userId?: number) => Promise<any>,
+    apiCall: (accessToken: string, userId?: number) => Promise<any>,
     propsRefreshToken?: string,
     userId?: number
   ) => Promise<any>;

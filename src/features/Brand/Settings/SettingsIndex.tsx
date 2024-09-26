@@ -2,7 +2,7 @@ import React from "react";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import useSettings from "./hooks/useSettings";
 import SettingsForm from "./components/SettingsForm";
-import CustomerLayout from "@/pages/layouts/CustomerLayout/CustomerLayout";
+import { useSession } from "../../../context/SessionContext"; // Import the useSession hook
 
 interface SettingsProps {
   accessToken?: string;
@@ -18,11 +18,17 @@ const SettingsIndex: React.FC<SettingsProps> = ({
   console.log("accessToken: ", accessToken);
   console.log("refreshToken: ", refreshToken);
   console.log("userId: ", userId);
+
+  const { session } = useSession(); // Use the session data from useSession
   const { settings, loading, error, handleChange, handleSave } = useSettings({
     accessToken,
     refreshToken,
     userId,
   });
+
+  // Only set role if it is "Customer"
+  const role = session?.user?.role === "Customer" ? "Customer" : undefined;
+  console.log("session in SettingsIndex: ", role); // Log the role if it's "Customer"
 
   return (
     <div
@@ -40,6 +46,7 @@ const SettingsIndex: React.FC<SettingsProps> = ({
         error={error}
         handleChange={handleChange}
         handleSave={handleSave}
+        role={role} // Pass the role as a prop to SettingsForm, will be "Customer" or undefined
       />
     </div>
   );

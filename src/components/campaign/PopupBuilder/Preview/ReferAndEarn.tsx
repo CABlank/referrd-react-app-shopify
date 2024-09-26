@@ -166,6 +166,7 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
                 {children}
               </div>
             </div>
+            {/* Input fields */}
             <div
               style={{
                 display: "flex",
@@ -223,6 +224,7 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
                 }}
               />
             </div>
+            {/* Submit Button */}
             <div
               style={{
                 display: "flex",
@@ -300,6 +302,29 @@ const ReferAndEarn: React.FC<ReferAndEarnProps> = ({
         boxShadow: "none",
       }}
     >
+      {/* Logo in the corner */}
+      {/* Powered by Referrd and logo at the bottom right */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10px", // Position at the bottom
+          right: "10px", // Align to the right
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+        }}
+      >
+        <span style={{ fontSize: "10px", color: "#333333" }}>Powered by</span>
+        <img
+          src="/images/logo.svg"
+          alt="Referrd Logo"
+          style={{
+            width: "60px",
+            height: "30px",
+          }}
+        />
+      </div>
+
       {shouldRenderContent && renderInnerContent()}
     </div>
   );

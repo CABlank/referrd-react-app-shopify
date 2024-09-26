@@ -20,6 +20,10 @@ import SettingsPanel, {
   initialMobileConfigStep1,
   initialMobileConfigStep2,
 } from "./SettingsPanel";
+import {
+  updateErrorMessage,
+  clearErrorMessage,
+} from "../../../campaign/CampaignCreativeSelector";
 
 const initialElements: ElementProps[] = [];
 
@@ -65,6 +69,47 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
     );
 
     const [imageRecentlyAdded, setImageRecentlyAdded] = useState(false);
+
+    useEffect(() => {
+      // Function to update view and step based on the current substep
+      const updateViewAndStep = () => {
+        const subStep = document.body.getAttribute("data-current-substep");
+        const subStepNumber = parseInt(subStep || "0", 10);
+
+        console.log("Updated substep:", subStepNumber);
+
+        if (subStepNumber === 1) {
+          setView("desktop"); // Set view to desktop
+          setStep(1); // Set step to 1
+        } else if (subStepNumber === 2) {
+          setView("desktop"); // Set view to desktop
+          setStep(2); // Set step to 2
+        } else if (subStepNumber === 3) {
+          setView("mobile"); // Set view to mobile
+          setStep(1); // Set step to 1
+        } else if (subStepNumber === 4) {
+          setView("mobile"); // Set view to mobile
+          setStep(2); // Set step to 2
+        }
+      };
+
+      // Initial update when component mounts
+      updateViewAndStep();
+
+      // Use MutationObserver to monitor changes in "data-current-substep"
+      const observer = new MutationObserver(() => {
+        updateViewAndStep(); // Update when the attribute changes
+      });
+
+      // Observe "data-current-substep" on the body
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-current-substep"],
+      });
+
+      // Cleanup observer on component unmount
+      return () => observer.disconnect();
+    }, []);
 
     const containerRefDesktopStepOne = useRef<HTMLDivElement>(null);
     const containerRefDesktopStepTwo = useRef<HTMLDivElement>(null);
@@ -395,6 +440,7 @@ const PopupBuilder = forwardRef<unknown, PopupBuilderProps>(
           </div>
           <div className="w-3/4 p-4">
             <StepSelector step={step} setStep={setStep} />
+
             <div className="mt-4 flex justify-center items-center bg-gray-100 border-2 border-gray-200 relative h-[580px]">
               <div
                 ref={containerRefDesktopStepOne}

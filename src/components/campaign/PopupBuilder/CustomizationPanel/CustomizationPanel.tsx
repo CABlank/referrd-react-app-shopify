@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ElementProps,
   TextElementProps,
@@ -100,6 +100,30 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
 }) => {
   const [openElementId, setOpenElementId] = useState<string | null>(null);
 
+  // Ref to store the previous elements
+  const prevElementsRef = useRef<ElementProps[]>([]);
+
+  // UseEffect to handle newly added elements
+  useEffect(() => {
+    // Detect if a new element has been added by comparing with the previous elements
+    const prevElements = prevElementsRef.current;
+    if (elements.length > prevElements.length) {
+      const newElement = elements.find(
+        (element) =>
+          !prevElements.some((prevElement) => prevElement.id === element.id)
+      );
+
+      // If a new element is detected, open it automatically
+      if (newElement) {
+        setOpenElementId(newElement.id);
+      }
+    }
+
+    // Save the current elements as the previous elements for the next comparison
+    prevElementsRef.current = elements;
+  }, [elements]);
+
+  // UseEffect to specifically handle imageRecentlyAdded for images
   useEffect(() => {
     if (imageRecentlyAdded) {
       const imageElement = elements.find((element) => element.type === "image");
@@ -245,7 +269,7 @@ const CustomizationPanel: React.FC<CustomizationPanelProps> = ({
                         Upload Image
                       </label>
                       <ImageUpload
-                        imageUrl={(element as ImageElementProps).imageUrl || ""} // Correct property name
+                        imageUrl={(element as ImageElementProps).imageUrl || ""}
                         onImageChange={(file) =>
                           handleImageChange(file, element)
                         }

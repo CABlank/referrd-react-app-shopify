@@ -23,10 +23,12 @@ export function generateScriptContent(
   format: string,
   campaignData: any,
   isReferrdPage: boolean,
-  referralUuidFromUrl: string | null
+  referralUuidFromUrl: string | null,
+  referralUuid: string | null
 ): string {
   console.log("Generating script content...");
   let scriptContent = "";
+  console.log("referralUuid", referralUuid);
 
   if (isReferrdPage) {
     // Validate the UUID from the URL against the campaign UUID
@@ -36,7 +38,11 @@ export function generateScriptContent(
     ) {
       // UUIDs match, generate the section script
       const settings = getPopupSettings(campaignData);
-      scriptContent = generateSectionScriptContent(campaignData, settings);
+      scriptContent = generateSectionScriptContent(
+        campaignData,
+        settings,
+        referralUuid
+      );
     } else {
       // UUIDs do not match, throw an error or handle it as needed
       throw new Error(
@@ -50,14 +56,22 @@ export function generateScriptContent(
     if (!settings) {
       throw new Error("Popup settings are missing or invalid.");
     }
-    scriptContent = generatePopupScriptContent(campaignData, settings);
+    scriptContent = generatePopupScriptContent(
+      campaignData,
+      settings,
+      referralUuid
+    );
   } else if (format === "Both") {
     // Generate topbar script for non-referral pages
     const settings = getTopbarSettings(campaignData);
     if (!settings) {
       throw new Error("Topbar settings are missing or invalid.");
     }
-    scriptContent = generateTopbarScriptContent(campaignData, settings);
+    scriptContent = generateTopbarScriptContent(
+      campaignData,
+      settings,
+      referralUuid
+    );
   } else {
     throw new Error(`Unsupported format: ${format}`);
   }

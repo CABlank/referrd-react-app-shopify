@@ -27,7 +27,7 @@ const DataTableHeader: React.FC<DataTableHeaderProps> = ({ headers }) => {
             />
           </div>
         )}
-      <div className="lg:w-full flex justify-between ">
+      <div className="lg:w-full flex justify-evenly ">
         {headers.columns.map((header, index) => (
           <div
             key={index}

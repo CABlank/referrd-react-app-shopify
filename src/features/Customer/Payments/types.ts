@@ -12,5 +12,5 @@ export interface MappedPayment {
   referralCashback: number;
   date: string;
   order: string;
-  status?: "Accepted" | "Declined" | "Pending";
+  status?: "Approved" | "Declined" | "Pending";
 }

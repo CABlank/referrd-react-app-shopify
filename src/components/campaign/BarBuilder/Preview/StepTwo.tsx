@@ -140,20 +140,22 @@ const StepTwo: React.FC<StepTwoProps> = ({
           boxShadow: "none",
         }}
       >
-        <p
-          style={{
-            fontSize: view === "desktop" ? "18px" : "14px",
-            textAlign: "center",
-            color: "white",
-            fontWeight: "400",
-            outline: "none",
-            boxShadow: "none",
-            width: "215px",
-            margin: "0px",
-          }}
-        >
-          Thanks for signing up!
-        </p>
+        {elements.map((element, index) => (
+          <ElementWrapper
+            key={element.id}
+            index={index}
+            element={element}
+            moveElement={moveElement}
+            elementWidth={elementWidth}
+            hoverIndex={hoverIndex}
+            onRemove={onRemove}
+            showRemoveButton={false}
+            view={view}
+            expandedId={undefined}
+            onExpand={() => {}}
+            handleChange={(setter, type) => (e) => {}}
+          />
+        ))}
         <div
           style={{
             display: "flex",
@@ -239,22 +241,6 @@ const StepTwo: React.FC<StepTwoProps> = ({
           gap: view === "desktop" ? "16px" : "0px", // Adds space between elements in desktop view
         }}
       >
-        {elements.map((element, index) => (
-          <ElementWrapper
-            key={element.id}
-            index={index}
-            element={element}
-            moveElement={moveElement}
-            elementWidth={elementWidth}
-            hoverIndex={hoverIndex}
-            onRemove={onRemove}
-            showRemoveButton={false}
-            view={view}
-            expandedId={undefined}
-            onExpand={() => {}}
-            handleChange={(setter, type) => (e) => {}}
-          />
-        ))}
         {hoverIndex === elements.length && (
           <div
             key={`hoverIndex-${elements.length}`}

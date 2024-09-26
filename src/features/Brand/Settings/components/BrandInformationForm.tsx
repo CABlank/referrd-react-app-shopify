@@ -8,10 +8,12 @@ interface BrandInformationFormProps {
   settings: SettingsType | null;
   error: string | null;
   handleChange: (field: keyof SettingsType, value: any) => void;
+  role?: string;
 }
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
+// Update the `defaultSettings` to include `wiseEmail`
 const defaultSettings: SettingsType = {
   id: undefined,
   contactName: "",
@@ -20,13 +22,16 @@ const defaultSettings: SettingsType = {
   email: "",
   country: "",
   businessAddress: "",
-  notify_referral_conversions: null,
-  notify_payment_confirmation: null,
-  notify_payment_notifications: null,
+  dateOfBirth: "", // Add the date of birth field
+  wiseEmail: "", // Add wiseEmail
+  notify_referral_conversions: true, // Default to true
+  notify_payment_confirmation: true, // Default to true
+  notify_payment_notifications: true, // Default to true
   no_payment_notifications: null,
 };
 
 const countryOptions = countryList().getData();
+
 interface InputFieldProps {
   label: string;
   value: string;
@@ -58,22 +63,32 @@ const BrandInformationForm: React.FC<BrandInformationFormProps> = ({
   settings = defaultSettings,
   error,
   handleChange,
+  role,
 }) => {
+  console.log("Role in BrandInformationForm:", role); // Log the role
+
+  const isCustomer = role === "Customer";
+
   return (
     <div className="flex flex-col justify-start items-start flex-grow gap-8 p-8 rounded-2xl bg-white shadow-lg w-full lg:w-1/2">
       <div className="flex flex-col justify-center items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-3">
-        <p className="text-xl font-medium text-[#10ad1b]">Brand Information</p>
+        <p className="text-xl font-medium text-[#10ad1b]">Information</p>
         <p className="text-base text-black/50">
           Use a permanent address where you can receive mail.
         </p>
       </div>
       {error && <p className="text-red-600">{error}</p>}
-      <InputField
-        label="Brand Name"
-        value={settings?.brandName || ""}
-        onChange={(e) => handleChange("brandName", e.target.value)}
-        placeholder="Brand Name"
-      />
+
+      {/* Show "Brand Name" only if not a Customer */}
+      {!isCustomer && (
+        <InputField
+          label="Brand Name"
+          value={settings?.brandName || ""}
+          onChange={(e) => handleChange("brandName", e.target.value)}
+          placeholder="Brand Name"
+        />
+      )}
+
       <InputField
         label="Contact Name"
         value={settings?.contactName || ""}
@@ -93,6 +108,29 @@ const BrandInformationForm: React.FC<BrandInformationFormProps> = ({
         placeholder="Email"
         type="email"
       />
+
+      {/* Add "Date of Birth" for Customer */}
+      {isCustomer && (
+        <InputField
+          label="Date of Birth"
+          value={settings?.dateOfBirth || ""}
+          onChange={(e) => handleChange("dateOfBirth", e.target.value)}
+          placeholder="Date of Birth"
+          type="date"
+        />
+      )}
+
+      {/* Add "Wise Email" for Customer */}
+      {isCustomer && (
+        <InputField
+          label="Wise Email"
+          value={settings?.wiseEmail || ""}
+          onChange={(e) => handleChange("wiseEmail", e.target.value)}
+          placeholder="Wise Email"
+          type="email"
+        />
+      )}
+
       <div className="flex flex-col gap-4 w-full">
         <label className="text-base font-small text-black/80">Country</label>
         <Select
@@ -108,9 +146,10 @@ const BrandInformationForm: React.FC<BrandInformationFormProps> = ({
           isDisabled={!settings}
         />
       </div>
+
       <div className="flex flex-col gap-4 w-full">
         <label className="text-xl font-small text-black/80">
-          Business Address
+          {isCustomer ? "Address" : "Business Address"}
         </label>
         <GooglePlacesAutocomplete
           apiKey={GOOGLE_MAPS_API_KEY}
@@ -123,7 +162,7 @@ const BrandInformationForm: React.FC<BrandInformationFormProps> = ({
               : undefined,
             onChange: (val) =>
               handleChange("businessAddress", val?.value.description || ""),
-            placeholder: "Business address",
+            placeholder: isCustomer ? "Address" : "Business Address",
           }}
         />
       </div>

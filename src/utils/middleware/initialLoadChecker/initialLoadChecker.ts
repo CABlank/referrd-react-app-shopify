@@ -106,6 +106,8 @@ const handleTokenRefresh = async (
   const directusTokens = await loginDirectusUser(email, password);
   const accessToken = directusTokens.accessToken;
   const refreshToken = directusTokens.refreshToken;
+  console.log("directusTokens", directusTokens);
+
 
   const sessionAccessTokenExpiresAt = new Date(Date.now() + 1.5 * 3600 * 1000);
   await storeTokensInDatabase(

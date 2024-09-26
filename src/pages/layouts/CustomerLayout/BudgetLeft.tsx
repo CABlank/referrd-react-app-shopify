@@ -1,58 +1,73 @@
 import React, { useEffect, useState, useRef } from "react";
-import { fetchCampaigns, Campaign } from "../../../services/campaign/campaign";
 import { useSession } from "../../../context/SessionContext";
+import { usePayments } from "@/features/Customer/Payments/hooks/usePayments";
+import { useRouter } from "next/router";
+import Spinner from "@/components/common/Spinner";
 
 const BudgetLeft: React.FC = () => {
-  const { session, withTokenRefresh } = useSession();
-  const [totalBudgetLeft, setTotalBudgetLeft] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { session } = useSession();
+  const [totalPending, setTotalPending] = useState<number>(0);
+  const [totalPaid, setTotalPaid] = useState<number>(0);
+  const { payments, loading, error } = usePayments(session?.accessToken);
   const loadExecutedRef = useRef(false);
+  const router = useRouter(); // Next.js router for navigation
 
   useEffect(() => {
-    const calculateTotalBudgetLeft = async () => {
-      if (session?.token && !loadExecutedRef.current) {
-        setLoading(true);
-        loadExecutedRef.current = true;
-        try {
-          /* const campaigns: Campaign[] = await withTokenRefresh((token) =>
-            fetchCampaigns(token)
-          );
+    const calculatePayments = () => {
+      const pendingPaymentsTotal = payments
+        .filter((payment) => payment.status === "Pending")
+        .reduce((total, payment) => total + (payment.referralCashback || 0), 0);
 
-          const totalAmountFunded = campaigns.reduce(
-            (total, campaign) => total + (campaign.amountFunded || 0),
-            0
-          );
+      const paidPaymentsTotal = payments
+        .filter((payment) => payment.status === "Approved")
+        .reduce((total, payment) => total + (payment.referralCashback || 0), 0);
 
-          setTotalBudgetLeft(totalAmountFunded);
-          */
-        } catch (error) {
-          console.error("Failed to fetch campaigns", error);
-          setError("Failed to fetch campaigns. Please try again.");
-        } finally {
-          setLoading(false);
-        }
-      }
+      setTotalPending(pendingPaymentsTotal);
+      setTotalPaid(paidPaymentsTotal);
     };
 
-    calculateTotalBudgetLeft();
-  }, [session, withTokenRefresh]);
+    if (!loading && !loadExecutedRef.current) {
+      calculatePayments();
+      loadExecutedRef.current = true;
+    }
+  }, [payments, loading]);
 
   if (loading) {
+    return <Spinner />;
   }
 
   if (error) {
     return <p>{error}</p>;
   }
 
+  // Function to handle redirection
+  const handleRedirect = () => {
+    router.push("/customer/payments");
+  };
+
   return (
-    <div className="flex items-center gap-4 px-4 py-2 rounded-[32px] bg-[#851087]/5 border border-[#851087]/25">
-      <p className="text-base font-medium text-[#851087]">
-        Total Budget Available
-      </p>
-      <p className="text-base font-bold text-[#851087]">
-        ${totalBudgetLeft.toFixed(2)}
-      </p>
+    <div className="flex flex-wrap items-center justify-start gap-4 px-4 py-2 rounded-[32px] bg-[#851087]/5 border border-[#851087]/25">
+      {/* Paid Total (Clickable) */}
+      <div className="flex items-center gap-3 cursor-pointer" onClick={handleRedirect}>
+        <div className="flex items-center justify-center px-6 py-1 bg-[#10AD0B] text-white rounded-full">
+          {/* Non-circle (pill-shaped) */}
+          <p className="text-base font-bold">${totalPaid.toFixed(2)}</p>
+        </div>
+        <p className="text-sm md:text-base font-medium text-green-600 whitespace-nowrap">
+          Paid Payments
+        </p>
+      </div>
+
+      {/* Pending Total (Clickable) */}
+      <div className="flex items-center gap-3 cursor-pointer" onClick={handleRedirect}>
+        <div className="flex items-center justify-center px-6 py-1 bg-yellow-500 text-white rounded-full">
+          {/* Non-circle (pill-shaped) */}
+          <p className="text-base font-bold">${totalPending.toFixed(2)}</p>
+        </div>
+        <p className="text-sm md:text-base font-medium text-yellow-600 whitespace-nowrap">
+          Pending Payments
+        </p>
+      </div>
     </div>
   );
 };

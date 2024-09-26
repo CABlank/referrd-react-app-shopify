@@ -6,7 +6,6 @@ import {
 import { useSession } from "../../../../context/SessionContext";
 import { fetchUserData } from "../../../../services/auth/auth";
 
-// Define interfaces for the data structures
 interface Customer {
   id: number;
   date_created: string;
@@ -19,7 +18,7 @@ interface Customer {
   signup_count: number;
   location: string;
   click_count: number;
-  company_id: string;
+  company_id: string[]; // Change this to an array to handle multiple company IDs
   campaign_uuid: string;
 }
 
@@ -60,12 +59,21 @@ const useCustomers = ({
 
   useEffect(() => {
     const loadData = async () => {
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
+
         try {
-          // Fetch user data to get the referral UUID
-          const customerUUID = await fetchUserData(session?.token || "");
+          // First, use withTokenRefresh to fetch the customer UUID securely
+          const customerUUID = await withTokenRefresh(
+            async (token) => {
+              // Fetch the customer data using the current or refreshed token
+              const userData = await fetchUserData(token);
+              return userData;
+            },
+            refreshToken, // If needed, provide a refresh token here
+            userId // User ID to help identify which token to refresh, if required
+          );
           console.log("customerUUID", customerUUID?.uuid);
 
           if (customerUUID?.uuid) {
@@ -79,11 +87,27 @@ const useCustomers = ({
 
             console.log("customersData", customersData);
 
-            // Fetch company data for each customer, flattening nested arrays
-            const companyPromises = customersData.map((customer: Customer) =>
-              fetchCompanyByUUID(session?.token || "", customer.company_id)
-            );
-            const companiesData = await Promise.all(companyPromises);
+            // Fetch company data for each customer's company_id array
+            let companyFetchPromises: Promise<Company>[] = [];
+            for (const customer of customersData) {
+              const companyIds = Array.isArray(customer.company_id)
+                ? customer.company_id
+                : [customer.company_id]; // Ensure it's treated as an array
+
+              // Sequentially add fetch promises for each company ID
+              for (const companyId of companyIds) {
+                companyFetchPromises.push(
+                  withTokenRefresh(
+                    (token) => fetchCompanyByUUID(token, companyId),
+                    refreshToken,
+                    userId
+                  )
+                );
+              }
+            }
+
+            // Execute all fetch promises sequentially
+            const companiesData = await Promise.all(companyFetchPromises);
 
             // Flatten the nested arrays in companiesData
             const flattenedCompanies = companiesData.flat();

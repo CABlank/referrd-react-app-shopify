@@ -47,6 +47,15 @@ export default async function handler(
     });
   }
 
+  let metadatasubmit = null;
+
+  try {
+    // Parse the metadata JSON string into an object
+    metadatasubmit = formData.metadata ? JSON.parse(formData.metadata) : null;
+  } catch (error) {
+    console.error("Failed to parse metadata:", error);
+  }
+
   // Parse metadata if it's a string
   let metadata;
   try {
@@ -113,6 +122,7 @@ export default async function handler(
     // If neither country nor city is present, set location to null
     const locationData = location.country || location.city ? location : null;
 
+
     // Create the new customer object
     const newCustomer = {
       name: formData.name || "", // Ensure that name is always a string
@@ -122,7 +132,7 @@ export default async function handler(
       click_count: 0,
       signup_count: 0,
       location: locationData, // Add location data
-      referred_by: formData.referred_by || "", // Add referred_by property if provided
+      referred_by: metadatasubmit.referrer || "", // Add referred_by property if provided
       campaign_uuid: formData.campaign_uuid || "", // Add campaign_id property if provided
       company_id: formData.company_id || "", // Add company_id property if provided
     };
@@ -131,7 +141,7 @@ export default async function handler(
     console.log("Creating customer with data:", newCustomer);
 
     // Create the customer in Directus and get the response which includes the UUID
-    const createdCustomer = await createCustomer(newCustomer, BOT_TOKEN);
+    const createdCustomer = await createCustomer(newCustomer, BOT_TOKEN, formData.company_id);
     console.log("New customer created:", createdCustomer);
 
     // Fetch the UUID of the newly created customer from the response
@@ -163,10 +173,22 @@ export default async function handler(
     } else {
     }
 
-    // Register the signup if `referred_by` is provided
-    if (formData.referred_by) {
-      await registerSignup(formData.referred_by, createdCustomer, BOT_TOKEN); // Use the created customer object
-      console.log("Signup registered for referrer:", formData.referred_by);
+    console.log("formdata from submit-form", formData);
+
+    // Check if the metadata was parsed successfully and contains the referrer
+    if (metadatasubmit && metadatasubmit.referrer) {
+      try {
+        await registerSignup(
+          metadatasubmit.referrer, // Use the referrer from the parsed metadata
+          createdCustomer, // Use the created customer object
+          BOT_TOKEN
+        );
+        console.log("Signup registered for referrer:", metadatasubmit.referrer);
+      } catch (error) {
+        console.error("Error registering signup:", error);
+      }
+    } else {
+      console.warn("No valid referrer found in metadata.");
     }
 
     return res.status(200).json({ success: true, generatedUrl });

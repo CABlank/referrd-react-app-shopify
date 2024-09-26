@@ -38,6 +38,9 @@ const ExpandableInput: React.FC<ExpandableInputProps> = ({
         transition: "all 0.2s",
         boxShadow: "none",
         outline: "none",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
       }}
     >
       <input

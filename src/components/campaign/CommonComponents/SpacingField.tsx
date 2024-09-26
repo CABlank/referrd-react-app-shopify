@@ -59,7 +59,7 @@ const SpacingField: React.FC<SpacingFieldProps> = ({
   onChange,
 }) => {
   const [selectedSize, setSelectedSize] =
-    useState<keyof typeof spacingValues.margin>("S");
+    useState<keyof typeof spacingValues.margin>("L");
 
   const handleSizeChange = (size: keyof typeof spacingValues.margin) => {
     setSelectedSize(size);
@@ -96,7 +96,7 @@ const SpacingField: React.FC<SpacingFieldProps> = ({
             </div>
           ))}
         </div>
-        <div className="relative flex justify-center items-center w-full h-[69px] gap-2 rounded-lg border-[0.5px] border-black/30">
+        <div className="hidden relative flex justify-center items-center w-full h-[69px] gap-2 rounded-lg border-[0.5px] border-black/30">
           {Object.keys(currentSpacingValues).map((key) => (
             <p
               key={key}
@@ -104,10 +104,10 @@ const SpacingField: React.FC<SpacingFieldProps> = ({
                 key.includes("Top")
                   ? "top-0"
                   : key.includes("Bottom")
-                  ? "bottom-0"
-                  : key.includes("Left")
-                  ? "left-0"
-                  : "right-0"
+                    ? "bottom-0"
+                    : key.includes("Left")
+                      ? "left-0"
+                      : "right-0"
               } ${
                 key.includes("Top") || key.includes("Bottom")
                   ? "left-1/2 transform -translate-x-1/2 mt-1 mb-1"

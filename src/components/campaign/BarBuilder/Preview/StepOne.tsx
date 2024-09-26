@@ -150,7 +150,7 @@ const StepOne: React.FC<StepOneProps> = ({
       const preloadedInputs: InputElementProps[] = [
         createDefaultInputElement("text", "Name"),
         createDefaultInputElement("email", "Email"),
-        createDefaultInputElement("tel", "Number"),
+        createDefaultInputElement("tel", "Mobile"),
       ];
 
       const newButtonElement = createDefaultButtonElement(handleSubmit, true);

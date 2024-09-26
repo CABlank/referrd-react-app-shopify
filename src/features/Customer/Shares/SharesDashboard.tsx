@@ -101,8 +101,8 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
         <p>Loading...</p>
       ) : (
         customers.map((customer) => {
-          const company = companies.find(
-            (comp) => comp.UUID === customer.company_id
+          const company = companies.find((comp) =>
+            customer.company_id.includes(comp.UUID)
           );
 
           if (!company) return null; // Skip if no matching company is found

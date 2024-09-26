@@ -52,7 +52,7 @@ const useReferralDetails = (referralId: string | string[] | undefined) => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (session?.token && referralId && !loadExecutedRef.current) {
+      if (session?.accessToken && referralId && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
 

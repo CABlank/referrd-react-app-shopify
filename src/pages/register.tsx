@@ -5,32 +5,38 @@ import MobileInput from "../components/common/MobileInput";
 import PasswordInput from "../components/common/PasswordInput";
 import ArrowLoginIcon from "../components/Icons/ArrowLoginIcon";
 import AuthLayout from "../components/AuthLayout/AuthLayout";
+import Select from "react-select";
+import countryList from "react-select-country-list";
+import { useSession } from "../context/SessionContext";
 
 const RegisterForm = () => {
+  const { login } = useSession(); // Import login from session context
+
   const [formData, setFormData] = useState({
     fullName: "",
     mobile: "",
     password: "",
+    country: "", // Add country state
+    email: "", // Add email state
   });
   const [errorMessage, setErrorMessage] = useState("");
-  const [tokenValid, setTokenValid] = useState(false); // To check if the token is valid
-  const [loading, setLoading] = useState(true); // Loading state while verifying token
+  const [tokenValid, setTokenValid] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const countryOptions = countryList().getData(); // Get country options
 
   useEffect(() => {
-    // Extract token from the URL
     const { token } = router.query;
 
     if (token) {
-      // Verify token with backend
       fetch(`/api/verify-token?token=${token}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            setTokenValid(true); // Token is valid
+            setTokenValid(true);
             setFormData((prev) => ({
               ...prev,
-              email: data.email, // Pre-fill email if available from token verification
+              email: data.email,
             }));
           } else {
             setErrorMessage("Invalid or expired token.");
@@ -51,7 +57,7 @@ const RegisterForm = () => {
     event.preventDefault();
     setLoading(true);
 
-    const { token } = router.query; // Get the token from URL query params
+    const { token } = router.query;
 
     try {
       const response = await fetch("/api/complete-registration", {
@@ -60,20 +66,27 @@ const RegisterForm = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token, // Pass token for validation on the backend
+          token,
           fullName: formData.fullName,
           mobile: formData.mobile,
           password: formData.password,
+          country: formData.country, // Include country in the registration data
         }),
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        router.push("/login");
-      } else {
-        setErrorMessage(data.message || "Failed to complete registration.");
-      }
+      console.log("Registration data:", data);
+
+      console.log("Registration successful. Logging in...");
+
+      // Attempt to log in the user
+      await login({ email: formData.email, password: formData.password });
+
+      // Redirect to /customer/shares after login
+      router.push("/customer/shares");
+
+      setErrorMessage(data.message || "Failed to complete registration.");
     } catch (error) {
       console.error("Error completing registration:", error);
       setErrorMessage("Something went wrong, please try again.");
@@ -93,11 +106,11 @@ const RegisterForm = () => {
   };
 
   if (loading) {
-    return <p>Loading...</p>; // Show loading while verifying the token
+    return <p>Loading...</p>;
   }
 
   if (!tokenValid) {
-    return <p>{errorMessage}</p>; // Show error message if token is invalid
+    return <p>{errorMessage}</p>;
   }
 
   return (
@@ -117,6 +130,24 @@ const RegisterForm = () => {
             fullName={formData.fullName}
             setFullName={(value) => handleChange("fullName", value)}
           />
+
+          {/* Country Selector */}
+          <div className="flex flex-col gap-2 w-full">
+            <label className="text-base font-medium text-left text-black/80">
+              Country
+            </label>
+            <Select
+              options={countryOptions}
+              value={countryOptions.find(
+                (option) => option.label === formData.country
+              )}
+              onChange={(option) =>
+                handleChange("country", option ? option.label : "")
+              }
+              className="h-14"
+              placeholder="Select Country"
+            />
+          </div>
           <MobileInput
             mobile={formData.mobile}
             setMobile={(value) => handleChange("mobile", value)}
@@ -126,6 +157,7 @@ const RegisterForm = () => {
             setPassword={(value) => handleChange("password", value)}
             setPasswordRequirements={() => {}}
           />
+
           <button
             type="submit"
             className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"

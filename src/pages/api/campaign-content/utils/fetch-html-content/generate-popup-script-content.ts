@@ -1,8 +1,15 @@
 import { createSendFormDataFunction, createSpinnerFunction } from "./index";
 
-export function generatePopupScriptContent(campaignData: any, settings: any) {
+export function generatePopupScriptContent(
+  campaignData: any,
+  settings: any,
+  referralUuidFromUrl?: string | null
+) {
   const sendFormDataFunction = createSendFormDataFunction();
   const spinnerFunction = createSpinnerFunction();
+  const referralUuid = referralUuidFromUrl;
+  console.log("Referral UUID: ", referralUuid);
+  const SHOPIFY_APP_URL = process.env.CONFIG_SHOPIFY_APP_URL as string;
 
   return `
     (function() {
@@ -109,7 +116,7 @@ export function generatePopupScriptContent(campaignData: any, settings: any) {
             // Add metadata
             formData.metadata = JSON.stringify({
               origin: window.location.origin,
-              referrer: document.referrer,
+              referrer: ${referralUuid ? `'${referralUuid}'` : "document.referrer"},
               timestamp: new Date().toISOString(),
             });
 
@@ -119,7 +126,7 @@ export function generatePopupScriptContent(campaignData: any, settings: any) {
 
             console.log('Form submitted with data:', formData);
 
-            sendFormData('https://app.referrd.com.au/api/campaign-content/submit-form', formData, htmlContentStepTwo, stepTwoWrapper, spinner, () => {
+            sendFormData('${SHOPIFY_APP_URL}/api/campaign-content/submit-form', formData, htmlContentStepTwo, stepTwoWrapper, spinner, () => {
               goToPopupStep2(stepOneWrapper, stepTwoWrapper);  // Correct function call
             });
 

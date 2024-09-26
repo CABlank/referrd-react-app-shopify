@@ -26,27 +26,28 @@ export const initializeSession = async ({
   setLoading(true); // Indicate that the session is being loaded
 
   // Retrieve tokens and expiration time from cookies
-  const token = Cookies.get("access_token");
-  const refreshToken = Cookies.get("refresh_token");
-  const sessionAccessTokenExpiresAt = Cookies.get(
-    "session_access_token_expires_at"
-  );
+  const accessToken = Cookies.get("accessToken");
+  const refreshToken =
+    Cookies.get("refreshToken");
+  const sessionAccessTokenExpiresAt =
+
+    Cookies.get("sessionAccessTokenExpiresAt");
 
   console.log("Retrieved from cookies:", {
-    token,
+    accessToken,
     refreshToken,
     sessionAccessTokenExpiresAt,
   });
 
-  if (token) {
+  if (accessToken) {
     console.log("Token found. Fetching user data...");
     try {
       // Fetch user data using the token
-      const user = await authService.fetchUserData(token);
+      const user = await authService.fetchUserData(accessToken);
       console.log("User data fetched:", user);
 
       // Fetch the user's role
-      const role = await authService.fetchUserRole(token, user.role);
+      const role = await authService.fetchUserRole(accessToken, user.role);
       console.log("User role fetched:", role);
 
       // Update session state with the fetched user data and tokens
@@ -57,7 +58,7 @@ export const initializeSession = async ({
           email: user.email,
           role: role.name,
         },
-        token,
+        accessToken,
         refreshToken: refreshToken || "",
         expires: Number(Cookies.get("token_expiration")) || 0,
         sessionAccessTokenExpiresAt: sessionAccessTokenExpiresAt || "",

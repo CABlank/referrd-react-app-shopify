@@ -34,6 +34,9 @@ const useSettings = ({
     notify_payment_confirmation: null,
     notify_payment_notifications: null,
     no_payment_notifications: null,
+    dateOfBirth: "", // Add the date of birth field
+    wiseEmail: "", // Add wiseEmail
+
   };
 
   const [settingsState, setSettingsState] = useState<{
@@ -50,8 +53,8 @@ const useSettings = ({
 
   useEffect(() => {
     const loadSettings = async () => {
-      console.log("session?.token: ", session?.token); // Logging token when loading settings
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      console.log("session?.token: ", session?.accessToken); // Logging token when loading settings
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         console.log("Loading settings...");
         setSettingsState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
@@ -87,7 +90,7 @@ const useSettings = ({
   };
 
   const handleSave = async () => {
-    if ((session?.token || accessToken) && settingsState.settings) {
+    if ((session?.accessToken || accessToken) && settingsState.settings) {
       setSettingsState((prevState) => ({ ...prevState, loading: true }));
       try {
         if (settingsState.settings.id) {

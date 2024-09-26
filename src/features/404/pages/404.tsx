@@ -16,7 +16,7 @@ const Custom404 = ({ shop, host }: Custom404Props) => {
   const router = useRouter();
 
   const isUserLoggedIn = () => {
-    const accessToken = Cookies.get("access_token");
+    const accessToken = Cookies.get("accessToken");
     return !!accessToken;
   };
 

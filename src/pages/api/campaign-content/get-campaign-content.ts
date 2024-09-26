@@ -68,7 +68,8 @@ export default async function handler(
       format,
       campaignData,
       isReferrdPage,
-      referralUuidFromUrl
+      referralUuidFromUrl,
+      referralUuid
     );
     res.setHeader("Content-Type", "application/javascript");
     res.status(200).send(scriptContent);

@@ -1,5 +1,3 @@
-// src/features/Brand/Payments/hooks/usePayments.ts
-
 import { useState, useEffect, useRef } from "react";
 import {
   fetchCompanyUUID,
@@ -22,7 +20,7 @@ export const usePayments = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [buttonClicked, setButtonClicked] = useState<
-    "Accepted" | "Declined" | null
+    "Approved" | "Declined" | null
   >(null);
   const [selectedPayments, setSelectedPayments] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -30,15 +28,24 @@ export const usePayments = (
 
   useEffect(() => {
     const loadData = async () => {
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         setLoading(true);
         loadExecutedRef.current = true;
 
         try {
-          // fetch uuid of the customer
-          const customerUUID = await fetchUserData(session?.token || "");
+          // First, use withTokenRefresh to fetch the customer UUID securely
+          const customerUUID = await withTokenRefresh(
+            async (token) => {
+              // Fetch the customer data using the current or refreshed token
+              const userData = await fetchUserData(token);
+              return userData;
+            },
+            refreshToken, // If needed, provide a refresh token here
+            userId // User ID to help identify which token to refresh, if required
+          );
+
           console.log("customerUUID", customerUUID);
-          console.log("customerUUID", customerUUID?.uuid);
+          console.log("customerUUID.uuid", customerUUID?.uuid);
 
           if (customerUUID?.uuid) {
             const paymentsData = await withTokenRefresh(
@@ -59,19 +66,19 @@ export const usePayments = (
                   }) => {
                     const referrer = payment.referral_uuid
                       ? await withTokenRefresh(
-                          (token) =>
-                            fetchReferrer(payment.referral_uuid, token),
-                          refreshToken,
-                          userId
-                        )
+                        (token) =>
+                          fetchReferrer(payment.referral_uuid, token),
+                        refreshToken,
+                        userId
+                      )
                       : null;
                     const campaign = payment.campaign_uuid
                       ? await withTokenRefresh(
-                          (token) =>
-                            fetchCampaignMetadata(payment.campaign_uuid, token),
-                          refreshToken,
-                          userId
-                        )
+                        (token) =>
+                          fetchCampaignMetadata(payment.campaign_uuid, token),
+                        refreshToken,
+                        userId
+                      )
                       : null;
 
                     const referrerName =
@@ -81,10 +88,10 @@ export const usePayments = (
                     // Calculate referral fee based on the campaign's commission type and amount
                     const referralFee = campaign
                       ? calculateReferralFee(
-                          payment.total_price,
-                          campaign.commission,
-                          campaign.commissionType
-                        )
+                        payment.total_price,
+                        campaign.commission,
+                        campaign.commissionType
+                      )
                       : 0;
 
                     console.log("referralFee", referralFee);
@@ -116,7 +123,7 @@ export const usePayments = (
     };
 
     loadData();
-  }, [session?.token, accessToken, refreshToken, userId, withTokenRefresh]);
+  }, [session?.accessToken, accessToken, refreshToken, userId, withTokenRefresh]);
 
   const calculateReferralFee = (
     totalPrice: string,
@@ -135,7 +142,7 @@ export const usePayments = (
       return 0; // Return 0 if the total price is not a valid number
     }
 
-    if (commissionType === "Dollar") {
+    if (commissionType === "Fix") {
       return commission;
     } else if (commissionType === "Percentage") {
       return (parsedTotalPrice * commission) / 100;
@@ -146,7 +153,7 @@ export const usePayments = (
 
   const handlePaymentAction = async (
     paymentId: number,
-    action: "Accepted" | "Declined"
+    action: "Approved" | "Declined"
   ) => {
     setLoading(true);
     try {
@@ -168,7 +175,7 @@ export const usePayments = (
     }
   };
 
-  const handleBulkAction = async (action: "Accepted" | "Declined") => {
+  const handleBulkAction = async (action: "Approved" | "Declined") => {
     if (selectedPayments.length > 0) {
       setLoading(true);
       setButtonClicked(action);

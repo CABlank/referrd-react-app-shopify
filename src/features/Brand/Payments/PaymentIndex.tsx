@@ -1,5 +1,3 @@
-// src/features/Brand/Payments/PaymentIndex.tsx
-
 import React, { useState } from "react";
 import SearchSortSection from "../../../components/common/SearchSortSection";
 import DataTableHeader from "../../../components/common/DataTableHeader";
@@ -39,19 +37,39 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
   const [sortOrder, setSortOrder] = useState("date");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [buttonClicked, setButtonClicked] = useState(""); // Declare and initialize the 'buttonClicked' variable
+
+  // Add this state for button clicked tracking
+  const [buttonClicked, setButtonClicked] = useState<
+    "Approved" | "Declined" | "Pending" | null
+  >(null);
+
+  // This function should handle "Pending", "Approved", and "Declined" actions
+  const handlePaymentActionWithPending = async (
+    paymentId: number,
+    action: "Approved" | "Declined" | "Pending"
+  ): Promise<void> => {
+    try {
+      setButtonClicked(action); // Track which button was clicked
+      await handlePaymentAction(paymentId, action as "Approved" | "Declined");
+    } catch (error) {
+      console.error(
+        `Error handling payment action for ID ${paymentId}:`,
+        error
+      );
+    } finally {
+      setButtonClicked(null); // Reset the button click state after action is complete
+    }
+  };
 
   const handleSearch = (query: string) => setSearchQuery(query);
-
   const handleSort = (order: string) => setSortOrder(order);
-
   const handlePageChange = (page: number) => setCurrentPage(page);
 
   const handleItemsPerPageChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setItemsPerPage(parseInt(event.target.value));
-    setCurrentPage(1); // Reset to the first page whenever items per page changes
+    setCurrentPage(1);
   };
 
   const handleCheckboxChange = (paymentId: number, isChecked: boolean) => {
@@ -90,9 +108,9 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
     } else if (sortOrder === "campaign") {
       return a.campaign.localeCompare(b.campaign);
     } else if (sortOrder === "referralCashback") {
-      return b.referralCashback - a.referralCashback; // Assuming referralCashback is a number
+      return b.referralCashback - a.referralCashback;
     } else {
-      return 0; // Default case if sortOrder doesn't match any known property
+      return 0;
     }
   });
 
@@ -109,7 +127,7 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
     {
       dataIndex: "referralCashback",
       className: "text-center",
-      customRender: (value: number) => `$${value.toFixed(2)}`, // Format as currency
+      customRender: (value: number) => `$${value.toFixed(2)}`,
     },
     {
       dataIndex: "id",
@@ -117,7 +135,7 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
       customRender: (id: number, record: MappedPayment) => (
         <ActionButtons
           payment={record}
-          handlePaymentAction={handlePaymentAction}
+          handlePaymentAction={handlePaymentActionWithPending}
         />
       ),
     },
@@ -125,8 +143,8 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
 
   const computePerformanceMetrics = () => {
     const totalPayments = payments.length;
-    const acceptedPayments = payments.filter(
-      (p) => p.status === "Accepted"
+    const approvedPayments = payments.filter(
+      (p) => p.status === "Approved"
     ).length;
     const declinedPayments = payments.filter(
       (p) => p.status === "Declined"
@@ -135,19 +153,17 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
       (p) => p.status === "Pending"
     ).length;
 
-    // Calculate the total order value
     const totalOrderValue = payments.reduce(
       (acc, p) => acc + parseFloat(p.total_price),
       0
     );
 
-    // Calculate the average order value
     const averageOrderValue =
       totalPayments > 0 ? totalOrderValue / totalPayments : 0;
 
     return {
       totalPayments,
-      acceptedPayments,
+      approvedPayments,
       declinedPayments,
       pendingPayments,
       totalOrderValue: totalOrderValue.toFixed(2),
@@ -162,12 +178,11 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
       {loading && <LoadingOverlay />}
 
       <div className="flex flex-col justify-center items-center mx-auto gap-4 mt-6">
-        {/* Performance Metrics */}
         <div className="relative w-full flex justify-center items-center">
           <ScrollableContainer>
             <PerformanceSummary
-              metricName="Accepted Payments"
-              value={metrics.acceptedPayments.toString()}
+              metricName="Approved Payments"
+              value={metrics.approvedPayments.toString()}
               iconName="MouseClickIcon"
             />
             <PerformanceSummary
@@ -193,24 +208,22 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
           </ScrollableContainer>
         </div>
 
-        {/* Data Table */}
         <div className="w-full">
-          {/* Search, Sort, Items Per Page, and Bulk Actions */}
           <div className="flex justify-between w-full mb-4">
             <div className="flex items-center gap-2">
               {selectedPayments.length > 0 && (
                 <>
                   <button
-                    onClick={() => handleBulkAction("Accepted")}
+                    onClick={() => handleBulkAction("Approved")}
                     className={`h-10 px-6 py-2 rounded-lg ${
-                      buttonClicked === "Accepted"
+                      buttonClicked === "Approved"
                         ? "bg-[#47B775] text-white"
                         : "bg-[#47B775] text-white hover:bg-[#3a955d]"
                     } font-medium`}
                   >
-                    {buttonClicked === "Accepted"
-                      ? "Accepted"
-                      : "Accept Selected"}
+                    {buttonClicked === "Approved"
+                      ? "Approved"
+                      : "Approve Selected"}
                   </button>
                   <button
                     onClick={() => handleBulkAction("Declined")}
@@ -229,7 +242,7 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
             </div>
             <div className="flex items-center gap-4">
               <SearchSortSection onSearch={handleSearch} onSort={handleSort} />
-              <div className="flex items-center px-0 py-2 justify-center rounded-lg bg-white w-[30%] sm:w-auto">
+              <div className="hidden sm:flex items-center px-0 py-2 justify-center rounded-lg bg-white w-[30%] sm:w-auto">
                 <select
                   className="text-[.8rem] sm:text-base font-medium text-left text-black/80"
                   value={itemsPerPage}
@@ -245,7 +258,6 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
           </div>
         </div>
 
-        {/* Data Table and Pagination */}
         <div className="flex flex-col w-full overflow-x-auto lg:overflow-hidden rounded-2xl bg-white text-center">
           <DataTableHeader
             headers={{

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession } from "../../../context/SessionContext"; // Import the useSession hook
+import { usePayments } from "@/features/Brand/Payments/hooks/usePayments"; // Use the usePayments hook
 
 import MenuIcon from "../../../components/Icons/MenuIcon";
 import CloseMenuIcon from "../../../components/Icons/CloseMenuIcon";
@@ -25,14 +26,27 @@ interface MenuItem {
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
-  const { logout } = useSession(); // Get the logout function from the session context
+  const { logout, session } = useSession(); // Get the session and logout function
+  const { payments } = usePayments(session?.accessToken); // Use the usePayments hook to fetch payments
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState(0); // State to store the number of pending payments
+
+  // Calculate pending payments
+  useEffect(() => {
+    const pendingCount =
+      payments?.filter((payment) => payment.status === "Pending").length || 0;
+    setPendingPayments(pendingCount);
+  }, [payments]);
 
   const menuItems: MenuItem[] = [
     { name: "Dashboard", icon: DashboardIcon, route: "/brand/dashboard" },
     { name: "Company", icon: CompanyIcon, route: "/brand/company" },
     { name: "Campaigns", icon: CampaignIcon, route: "/brand/campaigns" },
-    { name: "Payments", icon: PaymentsIcon, route: "/brand/payments" },
+    {
+      name: "Payments",
+      icon: PaymentsIcon,
+      route: "/brand/payments",
+    },
     { name: "Referrals", icon: ReferralsIcon, route: "/brand/referrals" },
     { name: "Settings", icon: SettingsIcon, route: "/brand/settings" },
     { name: "Support", icon: SupportIcon, route: "/brand/support" },
@@ -87,12 +101,21 @@ const Sidebar: React.FC = () => {
         <div
           key={item.name}
           onClick={() => handleItemClick(item)}
-          className={`flex justify-start items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-2 px-4 py-2 rounded cursor-pointer ${getItemClass(
+          className={`flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-2 px-4 py-2 rounded cursor-pointer ${getItemClass(
             item
           )}`}
         >
-          <item.icon fillColor={getIconColor(item)} />
-          <p>{item.name}</p>
+          {/* Icon and Label */}
+          <div className="flex items-center gap-2">
+            <item.icon fillColor={getIconColor(item)} />
+            <p>{item.name}</p>
+          </div>
+          {/* Add pending payments count badge next to Payments */}
+          {item.name === "Payments" && pendingPayments > 0 && (
+            <div className="bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              {pendingPayments}
+            </div>
+          )}
         </div>
       ))}
     </>
@@ -129,11 +152,12 @@ const Sidebar: React.FC = () => {
 
         {/* Sidebar Content */}
         <div className="text-center flex justify-center !mt-[0px]">
-          <img
-            src="app.referrd.com.au/images/logo.png"
+          <Image
+            src="/images/logo.png"
             alt="Logo"
             width={150}
             height={90}
+            priority
           />
         </div>
         <div

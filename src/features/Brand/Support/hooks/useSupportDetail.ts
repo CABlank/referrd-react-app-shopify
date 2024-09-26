@@ -34,7 +34,7 @@ const useSupportDetail = () => {
   useEffect(() => {
     // Load support query and responses
     const loadQueryAndResponses = async () => {
-      if (session?.token && supportId && !loadExecutedRef.current) {
+      if (session?.accessToken && supportId && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
@@ -75,7 +75,7 @@ const useSupportDetail = () => {
 
   // Submit a new message
   const handleNewMessageSubmit = async () => {
-    if (state.query && session?.token) {
+    if (state.query && session?.accessToken) {
       try {
         const response = {
           support_query_id: state.query.id,
@@ -105,7 +105,7 @@ const useSupportDetail = () => {
 
   // Update the status of the support query
   const handleStatusChange = async (status: string) => {
-    if (state.query && session?.token) {
+    if (state.query && session?.accessToken) {
       try {
         await withTokenRefresh((token) =>
           updateSupportQueryStatus(state.query.id, { status }, token)

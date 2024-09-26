@@ -6,7 +6,6 @@ import {
 } from "../../../../services/referrals/referrals";
 import { useSession } from "../../../../context/SessionContext";
 
-// Define interfaces for the data structures
 interface Customer {
   id: number;
   date_created: string;
@@ -19,7 +18,7 @@ interface Customer {
   signup_count: number;
   location: string;
   click_count: number;
-  company_id: string;
+  company_id: string[]; // Modify to accept an array of company IDs
   campaign_uuid: string;
 }
 
@@ -62,11 +61,11 @@ const useCustomers = ({
 
   useEffect(() => {
     const loadData = async () => {
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         setState((prevState) => ({ ...prevState, loading: true }));
         loadExecutedRef.current = true;
         try {
-          // Fetch all companies and find the desired one based on some logic
+          // Fetch all companies
           const companiesData: Company[] = await withTokenRefresh(
             (token) => fetchCompanies(token),
             refreshToken,
@@ -77,26 +76,34 @@ const useCustomers = ({
             throw new Error("No companies found");
           }
 
-          // Assume you want to use the first company or have logic to determine which one
-          const companyUUID = companiesData[0].UUID; // Replace with logic to select the correct company
+          // Extract all company UUIDs
+          const companyUUIDs = companiesData.map((company) => company.UUID);
 
-          if (!companyUUID) {
-            throw new Error("Company UUID is undefined");
+          if (companyUUIDs.length === 0) {
+            throw new Error("No company UUIDs available");
           }
 
-          // Fetch customers and campaigns using the company UUID
-          const [customersData, campaignsData] = await Promise.all([
+          // Fetch customers for each company UUID and combine the results
+          const customersDataPromises = companyUUIDs.map((companyUUID) =>
             withTokenRefresh(
               (token) => fetchCustomers(token, companyUUID),
               refreshToken,
               userId
-            ),
+            )
+          );
+
+          // Fetch customers and campaigns concurrently
+          const [customersDataArrays, campaignsData] = await Promise.all([
+            Promise.all(customersDataPromises),
             withTokenRefresh(
               (token) => fetchCampaigns(token),
               refreshToken,
               userId
             ),
           ]);
+
+          // Flatten the array of customer arrays into a single array
+          const customersData = customersDataArrays.flat();
 
           // Set the state with the fetched data
           setState({

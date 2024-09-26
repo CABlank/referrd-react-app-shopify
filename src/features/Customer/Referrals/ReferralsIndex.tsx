@@ -7,7 +7,7 @@ import Pagination from "../../../components/common/Pagination";
 import ScrollableContainer from "../../../components/common/ScrollableContainer";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import DataTableRows from "../../../components/common/DataTableRows";
-import useCustomers from "./hooks/useReferrals"; // Updated path to your hook
+import useCustomers from "./hooks/useReferrals";
 
 interface CustomerData {
   id: number;
@@ -36,13 +36,9 @@ const parseLocation = (location: string): string => {
   }
 };
 
-const ReferralsIndex: React.FC<ReferralsIndexProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const ReferralsIndex: React.FC<ReferralsIndexProps> = ({ accessToken, refreshToken, userId }) => {
   const router = useRouter();
-  const { customers, loading } = useCustomers({
+  const { customers, mainCustomerData, loading } = useCustomers({
     accessToken,
     refreshToken,
     userId,
@@ -58,7 +54,7 @@ const ReferralsIndex: React.FC<ReferralsIndexProps> = ({
       id: customer.id,
       uuid: customer.uuid,
       date: new Date(customer.date_created).toLocaleString(),
-      name: customer.name || "N/A",
+      name: "User", // Replace the name with "User"
       location: parseLocation(customer.location),
       signup_count: customer.signup_count,
       click_count: customer.click_count,
@@ -67,8 +63,7 @@ const ReferralsIndex: React.FC<ReferralsIndexProps> = ({
     }));
 
   const handleSearch = (query: string) => setSearchQuery(query);
-  const handleSort = (order: string) =>
-    setSortOrder(order as keyof CustomerData);
+  const handleSort = (order: string) => setSortOrder(order as keyof CustomerData);
   const handlePageChange = (page: number) => setCurrentPage(page);
 
   const filteredCustomers = mapCustomerData().filter(
@@ -89,21 +84,17 @@ const ReferralsIndex: React.FC<ReferralsIndexProps> = ({
   );
 
   const computePerformanceMetrics = () => {
-    const totalSignups = sortedCustomers.reduce(
-      (acc, c) => acc + c.signup_count,
-      0
-    );
-    const totalClicks = sortedCustomers.reduce(
-      (acc, c) => acc + c.click_count,
-      0
-    );
-    const totalConversions = sortedCustomers.reduce(
-      (acc, c) => acc + c.conversion_count,
-      0
-    );
-    const totalSpends = sortedCustomers.reduce((acc, c) => acc + c.spend, 0);
-    const conversionRate =
-      totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+    console.log("Main customer data:", mainCustomerData);
+
+    // Access the first element of the mainCustomerData array
+    const customer = mainCustomerData && mainCustomerData.length > 0 ? mainCustomerData[0] : null;
+
+    // Ensure customer is not null and has the properties
+    const totalSignups = customer?.signup_count || 0;
+    const totalClicks = customer?.click_count || 0;
+    const totalConversions = customer?.conversion_count || 0;
+    const totalSpends = totalConversions * 10; // Example spend calculation
+    const conversionRate = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
     const cpa = totalConversions > 0 ? totalSpends / totalConversions : 0;
 
     return {
@@ -118,13 +109,11 @@ const ReferralsIndex: React.FC<ReferralsIndexProps> = ({
 
   const metrics = computePerformanceMetrics();
 
-  // Updated columns with Campaign and Actions removed
+  // Updated columns with "User" in place of names
   const columns = [
     { dataIndex: "date", className: "text-center text-xs", title: "Date" },
-    { dataIndex: "name", className: "text-center", title: "Name" },
+    { dataIndex: "name", className: "text-center", title: "User" },
     { dataIndex: "location", className: "text-center", title: "Location" },
-    { dataIndex: "signup_count", className: "text-center", title: "Sign Ups" },
-    { dataIndex: "click_count", className: "text-center", title: "Clicks" },
   ];
 
   return (
@@ -151,16 +140,6 @@ const ReferralsIndex: React.FC<ReferralsIndexProps> = ({
             metricName="Conversion Rate"
             value={`${metrics.conversionRate}%`}
             iconName="ConversionRate"
-          />
-          <PerformanceSummary
-            metricName="Total Spends"
-            value={`$${metrics.totalSpends}`}
-            iconName="TotalSpends"
-          />
-          <PerformanceSummary
-            metricName="CPA"
-            value={`$${metrics.cpa}`}
-            iconName="MouseClickedIcon"
           />
         </ScrollableContainer>
         <SearchSortSection onSearch={handleSearch} onSort={handleSort} />

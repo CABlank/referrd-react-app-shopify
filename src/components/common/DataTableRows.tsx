@@ -29,7 +29,7 @@ const DataTableRows = ({
               />
             </div>
           )}
-          <div className="lg:w-full flex justify-between">
+          <div className="lg:w-full flex justify-evenly">
             {columns.map((column, colIndex) => (
               <div
                 key={colIndex}
@@ -39,7 +39,7 @@ const DataTableRows = ({
                   column.customRender(row[column.dataIndex], row)
                 ) : (
                   <p
-                    className={`w-full text-center text-${column.align || "left"}`}
+                    className={`w-full text-center text-xs text-${column.align || "left"}`}
                   >
                     {row[column.dataIndex]}
                   </p>

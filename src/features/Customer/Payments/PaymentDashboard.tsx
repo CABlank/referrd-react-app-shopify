@@ -88,8 +88,8 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
 
   const computePerformanceMetrics = () => {
     const totalPayments = payments.length;
-    const acceptedPayments = payments.filter(
-      (p) => p.status === "Accepted"
+    const approvedPayments = payments.filter(
+      (p) => p.status === "Approved"
     ).length;
     const declinedPayments = payments.filter(
       (p) => p.status === "Declined"
@@ -110,7 +110,7 @@ const PaymentIndex: React.FC<PaymentIndexProps> = ({
 
     return {
       totalPayments,
-      acceptedPayments,
+      approvedPayments,
       declinedPayments,
       pendingPayments,
       totalOrderValue: totalOrderValue.toFixed(2),

@@ -64,7 +64,7 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
 
   useEffect(() => {
     const loadCampaigns = async () => {
-      if ((session?.token || accessToken) && !loadExecutedRef.current) {
+      if ((session?.accessToken || accessToken) && !loadExecutedRef.current) {
         setLoading(true);
         loadExecutedRef.current = true;
 
@@ -119,7 +119,7 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
 
   // Handle campaign deletion
   const handleDelete = async () => {
-    if ((session?.token || accessToken) && deleteCampaignId !== null) {
+    if ((session?.accessToken || accessToken) && deleteCampaignId !== null) {
       setDeleting(true);
       try {
         await withTokenRefresh(
@@ -160,7 +160,7 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
 
   // Handle campaign creation
   const handleCreateCampaign = async () => {
-    if (session?.token || accessToken) {
+    if (session?.accessToken || accessToken) {
       setLoading(true);
 
       try {
@@ -343,7 +343,7 @@ const CampaignIndex: React.FC<CampaignIndexProps> = ({
             <div className="flex-grow overflow-y-auto">
               <CampaignPayment
                 campaignId={showPaymentPopup?.id ?? 0} // Provide a default value for campaignId
-                token={session?.token ?? ""}
+                token={session?.accessToken ?? ""}
                 amountFunded={showPaymentPopup?.amountFunded || 0} // Correctly access amountFunded
                 onPaymentSuccess={handlePaymentSuccess}
               />

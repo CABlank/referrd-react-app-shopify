@@ -13,6 +13,8 @@ export interface Settings {
   notify_payment_confirmation: boolean | null;
   notify_payment_notifications: boolean | null;
   no_payment_notifications: boolean | null;
+  dateOfBirth: string; // Add the date of birth field
+  wiseEmail: string; // Add wiseEmail
 }
 
 // Helper function to make API requests

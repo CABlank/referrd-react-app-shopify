@@ -6,11 +6,13 @@ import { useRouter } from "next/router";
 interface CampaignHeaderProps {
   saving: boolean;
   handleSaveChanges: (e: React.FormEvent) => void;
+  isSaveDisabled: boolean; // New prop to control the save button
 }
 
 const CampaignHeader: React.FC<CampaignHeaderProps> = ({
   saving,
   handleSaveChanges,
+  isSaveDisabled,
 }) => {
   const router = useRouter();
   const { shop, host, id_token } = router.query; // Extract existing query parameters
@@ -60,7 +62,11 @@ const CampaignHeader: React.FC<CampaignHeaderProps> = ({
       </div>
 
       {/* Save button */}
-      <SaveButton saving={saving} handleSaveChanges={handleSaveChanges} />
+      <SaveButton
+        saving={saving}
+        handleSaveChanges={handleSaveChanges}
+        disabled={isSaveDisabled} // Pass the disabled status to SaveButton
+      />
     </div>
   );
 };

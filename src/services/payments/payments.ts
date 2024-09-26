@@ -180,7 +180,7 @@ export const createPayment = async (
 
 export const updatePaymentStatus = async (
   paymentId: number,
-  status: "Accepted" | "Declined",
+  status: "Approved" | "Declined",
   token: string
 ): Promise<Payment | null> => {
   try {

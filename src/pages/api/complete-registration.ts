@@ -1,7 +1,5 @@
-// /api/complete-registration.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import fetch from "node-fetch";
-import bcrypt from "bcryptjs";
 
 const DIRECTUS_API_URL = process.env.API_URL;
 const DIRECTUS_ADMIN_TOKEN = process.env.TOKEN || "";
@@ -10,9 +8,18 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { token, fullName, mobile, password } = req.body;
+  const { token, fullName, mobile, password, country } = req.body;
+
+  console.log("Received registration request with data:", {
+    token,
+    fullName,
+    mobile,
+    password,
+    country,
+  });
 
   if (!token || !password) {
+    console.error("Token or password is missing.");
     return res
       .status(400)
       .json({ success: false, message: "Token and password are required" });
@@ -20,6 +27,7 @@ export default async function handler(
 
   try {
     // Fetch the user by registration_token from Directus
+    console.log("Fetching user by registration token...");
     const response = await fetch(
       `${DIRECTUS_API_URL}/users?filter[registration_token][_eq]=${token}`,
       {
@@ -31,9 +39,10 @@ export default async function handler(
     );
 
     const data = (await response.json()) as { data: any[] };
+    console.log("Fetched user data:", data);
 
-    // If no user is found
     if (data?.data?.length === 0) {
+      console.error("No user found with the provided registration token.");
       return res
         .status(400)
         .json({ success: false, message: "Invalid or expired token" });
@@ -43,6 +52,7 @@ export default async function handler(
     const userId = user.id;
 
     // Update the user in Directus
+    console.log("Updating user in Directus with ID:", userId);
     const patchResponse = await fetch(`${DIRECTUS_API_URL}/users/${userId}`, {
       method: "PATCH",
       headers: {
@@ -52,22 +62,78 @@ export default async function handler(
       body: JSON.stringify({
         first_name: fullName,
         mobile: mobile,
-        password: password, // Set the password
-        status: "active", // Update the status to active
-        registration_token: null, // Clear the registration token
-        token_expiry: null, // Clear the token expiry
+        password: password,
+        status: "active",
+        registration_token: null,
+        token_expiry: null,
       }),
     });
 
     if (!patchResponse.ok) {
       const patchErrorText = await patchResponse.text();
+      console.error("Failed to update user:", patchErrorText);
       return res.status(500).json({
         success: false,
         message: `Failed to complete registration: ${patchErrorText}`,
       });
     }
 
-    return res.status(200).json({ success: true });
+    console.log("User updated successfully. Attempting to log in...");
+
+    // Login the user to get an access token
+    const loginResponse = await fetch(`${DIRECTUS_API_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: user.email,
+        password: password,
+      }),
+    });
+
+    if (!loginResponse.ok) {
+      const loginErrorText = await loginResponse.text();
+      console.error("Failed to log in:", loginErrorText);
+      return res.status(500).json({
+        success: false,
+        message: `Failed to log in: ${loginErrorText}`,
+      });
+    }
+
+    const loginData: any = await loginResponse.json();
+    const accessToken = loginData.data.access_token;
+    const refreshToken = loginData.data.refresh_token;
+    console.log("Login successful. Access token received.");
+
+    // Create or update the user's settings in Directus
+    console.log("Creating or updating user settings...");
+    const settingsResponse = await fetch(`${DIRECTUS_API_URL}/items/settings`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contactName: fullName,
+        mobile: mobile,
+        country: country,
+        email: user.email,
+      }),
+    });
+
+    if (!settingsResponse.ok) {
+      const settingsErrorText = await settingsResponse.text();
+      console.error("Failed to create settings:", settingsErrorText);
+      return res.status(500).json({
+        success: false,
+        message: `Failed to create settings: ${settingsErrorText}`,
+      });
+    }
+
+    console.log("User settings created successfully.");
+
+    return res.status(200).json({ success: true, accessToken, refreshToken });
   } catch (error) {
     console.error("Error completing registration:", error);
     return res.status(500).json({ success: false, message: "Server error" });

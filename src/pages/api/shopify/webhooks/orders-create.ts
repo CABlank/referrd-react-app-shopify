@@ -21,7 +21,7 @@ interface ImportantInfo {
   referralUUID: string | null;
   status: string;
   campaign_uuid?: string;
-  company_id?: string;
+  company_id?: string | string[] | null;
 }
 
 // Customer data type retrieved from the Directus API
@@ -64,6 +64,15 @@ export default async function handler(
           : null,
         status: "Pending",
       };
+
+      // Helper function to clean and extract the first UUID from an array if needed
+      const cleanUUID = (id: string | string[] | null | undefined): string | undefined => {
+        if (Array.isArray(id)) {
+          return id[0]; // If it's an array, return the first element
+        }
+        return id || undefined; // If it's already a string or undefined, return it as is, otherwise return undefined
+      };
+
 
       // Log the important information to the console
       console.log(
@@ -115,7 +124,7 @@ export default async function handler(
       const paymentInfo = {
         ...importantInfo,
         campaign_uuid: campaignUUID || "default-campaign-uuid", // Replace with a default or handle accordingly
-        company_id: companyID || "default-company-id", // Replace with a default or handle accordingly
+        company_id: cleanUUID(companyID) || "default-company-id", // Use helper to clean UUID
       };
 
       const payment = await createPayment(

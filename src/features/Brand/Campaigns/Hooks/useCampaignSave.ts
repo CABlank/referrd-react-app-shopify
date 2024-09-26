@@ -25,7 +25,7 @@ export const useCampaignSave = (
 
     if (campaignData) {
       try {
-        if (session?.token) {
+        if (session?.accessToken) {
           if (barBuilderRef.current) {
             const serializedTopbarState =
               barBuilderRef.current.serializeRealTopBar();

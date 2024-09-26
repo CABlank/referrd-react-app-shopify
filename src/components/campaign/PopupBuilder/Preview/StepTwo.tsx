@@ -242,16 +242,29 @@ const StepTwo: React.FC<StepTwoProps> = ({
 
   return (
     <div style={styles.container(view === "mobile" ? "1.5rem" : "1rem")}>
-      <p
-        style={{
-          color: "black",
-          margin: "0",
-          fontSize: "20px",
-          fontWeight: "bold",
-        }}
-      >
-        Thank you for signing up!
-      </p>
+      {elements.map((element, index) => (
+        <ElementWrapper
+          key={element.id}
+          index={index}
+          element={element}
+          moveElement={moveElement}
+          elementWidth={elementWidth}
+          hoverIndex={hoverIndex}
+          onRemove={onRemove}
+          showRemoveButton={false}
+          view={"desktop"}
+          expandedId={undefined}
+          onExpand={function (id: string): void {
+            throw new Error("Function not implemented.");
+          }}
+          handleChange={function (
+            setter: React.Dispatch<React.SetStateAction<string>>,
+            type: string
+          ): (e: React.ChangeEvent<HTMLInputElement>) => void {
+            throw new Error("Function not implemented.");
+          }}
+        />
+      ))}
       <div
         style={{
           display: "flex",
@@ -295,29 +308,6 @@ const StepTwo: React.FC<StepTwoProps> = ({
           boxShadow: "none",
         }}
       >
-        {elements.map((element, index) => (
-          <ElementWrapper
-            key={element.id}
-            index={index}
-            element={element}
-            moveElement={moveElement}
-            elementWidth={elementWidth}
-            hoverIndex={hoverIndex}
-            onRemove={onRemove}
-            showRemoveButton={false}
-            view={"desktop"}
-            expandedId={undefined}
-            onExpand={function (id: string): void {
-              throw new Error("Function not implemented.");
-            }}
-            handleChange={function (
-              setter: React.Dispatch<React.SetStateAction<string>>,
-              type: string
-            ): (e: React.ChangeEvent<HTMLInputElement>) => void {
-              throw new Error("Function not implemented.");
-            }}
-          />
-        ))}
         {hoverIndex === elements.length && (
           <div
             style={{

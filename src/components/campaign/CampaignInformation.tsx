@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import CampaignDetail from "./CampaignDetail";
 import ReferralDetail from "./ReferralDetail";
 import DiscountValue from "./DiscountValue";
@@ -13,6 +13,8 @@ interface CampaignInformationProps {
       HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
     >
   ) => void;
+  currentStep: number; // Add the current step prop
+  onValidationStatus: (isValid: boolean) => void;
 }
 
 const CampaignInformation: React.FC<CampaignInformationProps> = ({
@@ -20,46 +22,102 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
   handleToggle,
   campaignData,
   handleChange,
+  currentStep, // Track the current step
+  onValidationStatus,
 }) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  // Create refs for each section
+  const campaignDetailRef = useRef<HTMLDivElement>(null);
+  const referralDetailRef = useRef<HTMLDivElement>(null);
+  const discountDetailRef = useRef<HTMLDivElement>(null);
 
-  // Check if the click is inside the vertical scrollbar or within the scrollable container
-  const isClickInsideScrollbarOrScrollContainer = (event: MouseEvent) => {
-    const scrollContainer = document.getElementById("scroll");
-    if (scrollContainer) {
-      return (
-        event.target === scrollContainer ||
-        scrollContainer.contains(event.target as Node)
-      );
-    }
-    return false;
-  };
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
 
-  // Hook to detect clicks outside of the component
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node) &&
-        !isClickInsideScrollbarOrScrollContainer(event)
-      ) {
-        if (isOpen) {
-          handleToggle();
+  // Validation function to check if required fields are filled and meet the correct format
+  const validateCampaignData = () => {
+    const requiredFields = [
+      { field: "name", label: "Name" },
+      { field: "startDate", label: "Start Date" },
+      { field: "closeDate", label: "Close Date" },
+      { field: "company", label: "Company" },
+      { field: "commissionType", label: "Commission Type" },
+      { field: "commission", label: "Commission" },
+      { field: "url", label: "Campaign URL" },
+    ];
+
+    let newErrors: { [key: string]: string } = {};
+
+    requiredFields.forEach((item) => {
+      const value = campaignData[item.field];
+      const trimmedValue =
+        typeof value === "string" ? value.trim() : String(value || "");
+
+      if (!trimmedValue) {
+        newErrors[item.field] = `${item.label} is required.`;
+      } else {
+        switch (item.field) {
+          case "commission":
+            if (!/^\d+$/.test(trimmedValue)) {
+              newErrors[item.field] = `${item.label} must be a number.`;
+            }
+            break;
+          case "commissionType":
+            if (trimmedValue === "Select one" || trimmedValue === "") {
+              newErrors[item.field] = `Please select a valid ${item.label}.`;
+            }
+            break;
+          case "startDate":
+          case "closeDate":
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedValue)) {
+              newErrors[item.field] =
+                `${item.label} must be in YYYY-MM-DD format.`;
+            }
+            break;
+          default:
+            break;
         }
       }
-    }
+    });
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+    setErrors(newErrors);
+    onValidationStatus(Object.keys(newErrors).length === 0);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  useEffect(() => {
+    validateCampaignData();
+  }, [campaignData]);
+
+  // Function to scroll to a specific step when the step changes
+  useEffect(() => {
+    const scrollToStep = () => {
+      let element: HTMLElement | null = null;
+      switch (currentStep) {
+        case 1:
+          element = campaignDetailRef.current;
+          break;
+        case 2:
+          element = referralDetailRef.current;
+          break;
+        case 3:
+          element = discountDetailRef.current;
+          break;
+        default:
+          break;
+      }
+
+      // Ensure the element exists before scrolling
+      if (element) {
+        // Add top margin or padding to scroll smoothly and center the section
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     };
-  }, [isOpen, handleToggle]);
+
+    scrollToStep();
+  }, [currentStep]); // Trigger scrolling when the current step changes
 
   return (
-    <div
-      ref={wrapperRef}
-      className="bg-white shadow rounded-lg border border-gray-200 p-6"
-    >
+    <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
       <div
         className="flex justify-between items-center mb-6 cursor-pointer"
         onClick={handleToggle}
@@ -72,9 +130,19 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
         </button>
       </div>
       <hr className="border-gray-200 mb-6" />
+
+      {Object.keys(errors).length > 0 && (
+        <div className="mb-4 text-red-600">
+          {Object.values(errors).map((error, index) => (
+            <p key={index}>{error}</p>
+          ))}
+        </div>
+      )}
+
       {isOpen ? (
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+          {/* Campaign Detail (Step 1) */}
+          <div className="flex-1" ref={campaignDetailRef}>
             <CampaignDetail
               campaign={campaignData}
               handleChange={handleChange}
@@ -82,7 +150,8 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
             />
           </div>
           <div className="w-full md:w-[1px] bg-gray-200" />
-          <div className="flex-1">
+          {/* Referral Detail (Step 2) */}
+          <div className="flex-1" ref={referralDetailRef}>
             <ReferralDetail
               campaign={campaignData}
               handleChange={handleChange}
@@ -90,20 +159,22 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
             />
           </div>
           <div className="w-full md:w-[1px] bg-gray-200" />
-          <div className="flex-1">
+          {/* Discount Value (Step 3) */}
+          <div className="flex-1" ref={discountDetailRef}>
             <DiscountValue
               discount={{
                 type: campaignData.discountType,
                 value: campaignData.discountValue,
                 appliesTo: campaignData.appliesTo,
               }}
-              handleChange={handleChange}
               className="bg-white p-0 border-0 shadow-none"
+              handleChange={handleChange}
             />
           </div>
         </div>
       ) : (
         <div className="text-sm text-gray-500 flex flex-col md:flex-row gap-4">
+          {/* Summary when collapsed */}
           <div className="flex-1">
             <p className="mr-0 md:mr-10">
               <strong>Amount Available: </strong>${campaignData.amountFunded}
@@ -134,19 +205,6 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
             </p>
             <p className="mr-0 md:mr-10">
               <strong>Campaign URL:</strong> {campaignData.url}
-            </p>
-          </div>
-          <div className="w-full md:w-[1px] bg-gray-200 my-2 md:my-0 hidden" />
-
-          <div className="flex-1 hidden">
-            <p className="mr-0 md:mr-10">
-              <strong>Discount Type:</strong> {campaignData.discountType}
-            </p>
-            <p className="mr-0 md:mr-10">
-              <strong>Discount Value:</strong> {campaignData.discountValue}
-            </p>
-            <p className="mr-0 md:mr-10">
-              <strong>Applies To:</strong> {campaignData.appliesTo}
             </p>
           </div>
         </div>

@@ -4,7 +4,6 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
-  useCallback,
 } from "react";
 import { ElementProps, TopBarConfig } from "../../CommonComponents/Types";
 import DragAndDropSection from "../DragAndDropSection";
@@ -21,6 +20,10 @@ import SettingsPanel, {
   initialMobileConfigStep2,
 } from "./SettingsPanel";
 import { PopupConfig } from "../../CommonComponents/Types";
+import {
+  updateErrorMessage,
+  clearErrorMessage,
+} from "../../../campaign/CampaignCreativeSelector";
 
 // Conversion functions
 const convertToTopBarConfig = (config: PopupConfig): TopBarConfig => {
@@ -83,6 +86,55 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
     const [mobileConfigStep2, setMobileConfigStep2] = useState<TopBarConfig>(
       initialMobileConfigStep2
     );
+
+    useEffect(() => {
+      // Function to update view and step based on the current substep
+      const updateViewAndStep = () => {
+        const subStep = document.body.getAttribute("data-current-substep");
+        const subStepNumber = parseInt(subStep || "0", 10);
+
+        console.log("Updated substep:", subStepNumber);
+
+        // Handle substeps for TopBarBuilder
+        if (subStepNumber === 5) {
+          setView("desktop"); // Set view to desktop
+          setPreviewStep(1); // Set step to 1
+        } else if (subStepNumber === 6) {
+          setView("desktop"); // Set view to desktop
+          setPreviewStep(2); // Set step to 2
+        } else if (subStepNumber === 7) {
+          setView("mobile"); // Set view to mobile
+          setPreviewStep(1); // Set step to 1
+        } else if (subStepNumber === 8) {
+          setView("mobile"); // Set view to mobile
+          setPreviewStep(2); // Set step to 2
+        }
+      };
+
+      // Initial update when component mounts
+      updateViewAndStep();
+
+      // Use MutationObserver to monitor changes in "data-current-substep"
+      const observer = new MutationObserver(() => {
+        updateViewAndStep(); // Update when the attribute changes
+      });
+
+      // Observe "data-current-substep" on the body
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-current-substep"],
+      });
+
+      // Cleanup observer on component unmount
+      return () => observer.disconnect();
+    }, []);
+
+    const [checkboxStates, setCheckboxStates] = useState({
+      desktopStep1: false,
+      desktopStep2: false,
+      mobileStep1: false,
+      mobileStep2: false,
+    });
 
     const overflowRef = useRef<HTMLDivElement>(null);
     const [manualViewChange, setManualViewChange] = useState(false);
@@ -236,7 +288,6 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
         };
       },
       getCompiledHtml: () => {
-        // Get the compiled HTML from the TopBarPreview component
         if (topBarPreviewRef.current) {
           return topBarPreviewRef.current.getCompiledHtml();
         }
@@ -343,39 +394,75 @@ const BarBuilder = forwardRef<unknown, BarBuilderProps>(
           </div>
           <div className="w-3/4 p-4">
             <StepSelector step={previewStep} setStep={setPreviewStep} />
-            <div
-              ref={overflowRef}
-              className="mt-4 custom-scrollbar overflow-x-auto overflow-y-hidden max-w-[980px] relative"
-              style={{ height: `${currentHeight}` }}
-            >
-              <div ref={topBarPreviewRef}>
-                <TopBarPreview
-                  key={key}
-                  ref={topBarPreviewRef}
-                  desktopStepOneElements={desktopStepOneElements}
-                  setDesktopStepOneElements={setDesktopStepOneElements}
-                  mobileStepOneElements={mobileStepOneElements}
-                  setMobileStepOneElements={setMobileStepOneElements}
-                  desktopStepTwoElements={desktopStepTwoElements}
-                  setDesktopStepTwoElements={setDesktopStepTwoElements}
-                  mobileStepTwoElements={mobileStepTwoElements}
-                  setMobileStepTwoElements={setMobileStepTwoElements}
-                  view={view}
-                  desktopConfigStepOne={desktopConfigStep1}
-                  desktopConfigStepTwo={desktopConfigStep2}
-                  mobileConfigStepOne={mobileConfigStep1}
-                  mobileConfigStepTwo={mobileConfigStep2}
-                  step={previewStep}
-                  setUrl={setPreviewUrl}
-                  url={previewUrl}
-                  setStep={setPreviewStep}
-                  allowStepChange={true}
-                  isStepTwoAvailable={isStepTwoAvailable}
-                  enableDragAndDrop={true}
-                  forceMobileView={view === "mobile"}
-                />
+            {/* Mobile view section */}
+            {view === "mobile" && (
+              <div
+                ref={overflowRef}
+                className="mt-4 custom-scrollbar overflow-x-auto overflow-y-hidden max-w-[640px] mx-auto relative" // maxWidth and centering added here
+                style={{
+                  height: `${currentHeight}`, // Dynamic height
+                }}
+              >
+                <div ref={topBarPreviewRef}>
+                  <TopBarPreview
+                    key={key}
+                    ref={topBarPreviewRef}
+                    desktopStepOneElements={desktopStepOneElements}
+                    setDesktopStepOneElements={setDesktopStepOneElements}
+                    mobileStepOneElements={mobileStepOneElements}
+                    setMobileStepOneElements={setMobileStepOneElements}
+                    desktopStepTwoElements={desktopStepTwoElements}
+                    setDesktopStepTwoElements={setDesktopStepTwoElements}
+                    mobileStepTwoElements={mobileStepTwoElements}
+                    setMobileStepTwoElements={setMobileStepTwoElements}
+                    view={view}
+                    desktopConfigStepOne={desktopConfigStep1}
+                    desktopConfigStepTwo={desktopConfigStep2}
+                    mobileConfigStepOne={mobileConfigStep1}
+                    mobileConfigStepTwo={mobileConfigStep2}
+                    step={previewStep}
+                    setUrl={setPreviewUrl}
+                    url={previewUrl}
+                    setStep={setPreviewStep}
+                    allowStepChange={true}
+                    isStepTwoAvailable={isStepTwoAvailable}
+                    enableDragAndDrop={true}
+                    forceMobileView={view === "mobile"}
+                  />
+                </div>
               </div>
-            </div>
+            )}{" "}
+            {/* Desktop view section */}{" "}
+            {view === "desktop" && (
+              <div className="mt-4 custom-scrollbar overflow-x-auto overflow-y-hidden max-w-[100%] mx-auto relative">
+                <div ref={topBarPreviewRef}>
+                  <TopBarPreview
+                    key={key}
+                    ref={topBarPreviewRef}
+                    desktopStepOneElements={desktopStepOneElements}
+                    setDesktopStepOneElements={setDesktopStepOneElements}
+                    mobileStepOneElements={mobileStepOneElements}
+                    setMobileStepOneElements={setMobileStepOneElements}
+                    desktopStepTwoElements={desktopStepTwoElements}
+                    setDesktopStepTwoElements={setDesktopStepTwoElements}
+                    mobileStepTwoElements={mobileStepTwoElements}
+                    setMobileStepTwoElements={setMobileStepTwoElements}
+                    view={view}
+                    desktopConfigStepOne={desktopConfigStep1}
+                    desktopConfigStepTwo={desktopConfigStep2}
+                    mobileConfigStepOne={mobileConfigStep1}
+                    mobileConfigStepTwo={mobileConfigStep2}
+                    step={previewStep}
+                    setUrl={setPreviewUrl}
+                    url={previewUrl}
+                    setStep={setPreviewStep}
+                    allowStepChange={true}
+                    isStepTwoAvailable={isStepTwoAvailable}
+                    enableDragAndDrop={true}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DndProvider>
