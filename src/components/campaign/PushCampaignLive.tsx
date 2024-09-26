@@ -60,7 +60,7 @@ const CampaignStatusSelector: React.FC<CampaignStatusSelectorProps> = ({
       await handleSaveChanges(); // Save the entire campaign
       setSelectedStatus(pendingStatus);
       setIsModalOpen(false); // Close the modal
-      const router = useRouter();
+
       const { shop, host, id_token } = router.query; // Extract existing query parameters
 
       let campaignsUrl = "/brand/campaigns";
@@ -74,7 +74,7 @@ const CampaignStatusSelector: React.FC<CampaignStatusSelectorProps> = ({
 
         campaignsUrl = urlObj.toString().replace(window.location.origin, "");
       }
-      router.push("campaignsUrl"); // Redirect to the campaigns page
+      router.push(campaignsUrl); // Corrected push method
     } catch (error) {
       console.error("Failed to save campaign data", error);
     } finally {
