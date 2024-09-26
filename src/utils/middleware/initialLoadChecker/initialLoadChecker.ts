@@ -68,7 +68,7 @@ const getValidTokens = async (
   if (
     tokenRecord &&
     tokenRecord.expiresAt > currentTime &&
-    tokenRecord.sessionAccessTokenExpiresAt > currentTime
+    tokenRecord.sessionAccessTokenExpiresAt > currentTime && tokenRecord.accessToken && tokenRecord.refreshToken
   ) {
     console.log("Using existing valid tokens.");
     return {

@@ -21,14 +21,9 @@ const Modal: React.FC<{
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white p-6 rounded-lg shadow-md w-96">
         <h2 className="text-xl font-semibold mb-4">Confirm Status Change</h2>
-        <p className="mb-6">
-          Are you sure you want to change the status and save the campaign?
-        </p>
+        <p className="mb-6">Are you sure you want to change the status and save the campaign?</p>
         <div className="flex justify-end gap-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-          >
+          <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
             Cancel
           </button>
           <button
@@ -65,7 +60,21 @@ const CampaignStatusSelector: React.FC<CampaignStatusSelectorProps> = ({
       await handleSaveChanges(); // Save the entire campaign
       setSelectedStatus(pendingStatus);
       setIsModalOpen(false); // Close the modal
-      router.push("/brand/campaigns"); // Redirect to the campaigns page
+      const router = useRouter();
+      const { shop, host, id_token } = router.query; // Extract existing query parameters
+
+      let campaignsUrl = "/brand/campaigns";
+
+      // If the environment is a Shopify store, append the required query parameters
+      if (shop || host || id_token) {
+        const urlObj = new URL(window.location.origin + campaignsUrl);
+        if (shop) urlObj.searchParams.set("shop", shop as string);
+        if (host) urlObj.searchParams.set("host", host as string);
+        if (id_token) urlObj.searchParams.set("id_token", id_token as string);
+
+        campaignsUrl = urlObj.toString().replace(window.location.origin, "");
+      }
+      router.push("campaignsUrl"); // Redirect to the campaigns page
     } catch (error) {
       console.error("Failed to save campaign data", error);
     } finally {
@@ -83,9 +92,7 @@ const CampaignStatusSelector: React.FC<CampaignStatusSelectorProps> = ({
         6. Campaign Status
       </h2>
       <hr className="border-gray-200 mb-6" />
-      <p className="text-center text-gray-600 mb-6">
-        Select the current status of your campaign.
-      </p>
+      <p className="text-center text-gray-600 mb-6">Select the current status of your campaign.</p>
 
       {loading && (
         <div className="absolute inset-0 flex justify-center items-center bg-gray-300 bg-opacity-50 z-50">
@@ -93,15 +100,11 @@ const CampaignStatusSelector: React.FC<CampaignStatusSelectorProps> = ({
         </div>
       )}
 
-      <div
-        className={`${loading ? "blur-sm" : ""} relative flex flex-col items-center`}
-      >
+      <div className={`${loading ? "blur-sm" : ""} relative flex flex-col items-center`}>
         <div className="relative inline-block w-full max-w-md">
           <select
             value={pendingStatus}
-            onChange={(e) =>
-              setPendingStatus(e.target.value as "Live" | "Draft")
-            }
+            onChange={(e) => setPendingStatus(e.target.value as "Live" | "Draft")}
             onClick={handleDropdownToggle}
             className={`w-full px-4 py-2 pr-10 bg-white border rounded-lg shadow-sm appearance-none hover:border-gray-400 focus:outline-none`}
             disabled={loading}
@@ -122,18 +125,14 @@ const CampaignStatusSelector: React.FC<CampaignStatusSelectorProps> = ({
               ? "bg-gray-300"
               : "bg-blue-500 hover:bg-blue-600"
           } text-white rounded-lg transition-colors duration-300`}
-          disabled={
-            isSaveDisabled || pendingStatus === selectedStatus || loading
-          }
+          disabled={isSaveDisabled || pendingStatus === selectedStatus || loading}
         >
           Confirm Status Change
         </button>
 
         {/* Show a message if saving is disabled */}
         {isSaveDisabled && (
-          <p className="text-red-500 mt-4">
-            Please complete all steps before changing the status.
-          </p>
+          <p className="text-red-500 mt-4">Please complete all steps before changing the status.</p>
         )}
       </div>
 
