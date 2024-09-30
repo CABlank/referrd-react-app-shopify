@@ -73,11 +73,12 @@ export const fetchCompany = async (
 };
 
 // Create a new company
-export const createCompany = (company: Company, token: string): Promise<void> =>
-  fetchFromAPI<void>("/items/company", token, {
+export const createCompany = (company: Company, token: string): Promise<Company> =>
+  fetchFromAPI<Company>("/items/company", token, {
     method: "POST",
     body: JSON.stringify(company),
   });
+
 
 // Update an existing company
 export const updateCompany = (company: Company, token: string): Promise<void> =>
