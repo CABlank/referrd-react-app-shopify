@@ -14,6 +14,7 @@ import { createCompany, fetchCompanies } from "@/services/company/company";
 import shopify from "../../shopify/shopifyClient";
 import { RequestedTokenType } from "@shopify/shopify-api";
 import { updateUserData, fetchUserData } from "@/services/auth/auth";
+import { getSessionExpirationTime } from "@/utils/sessionTimeUtils";
 
 interface User {
   id: number;
@@ -72,14 +73,12 @@ const getValidTokens = async (
     tokenRecord.expiresAt > currentTime &&
     tokenRecord.sessionAccessTokenExpiresAt > currentTime && tokenRecord.accessToken && tokenRecord.refreshToken
   ) {
-    console.log("Using existing valid tokens.");
     return {
       accessToken: tokenRecord.accessToken,
       refreshToken: tokenRecord.refreshToken,
       sessionAccessTokenExpiresAt: null,
     };
   } else {
-    console.log("Tokens are invalid or expired, refreshing tokens.");
 
     // Fetch the user record from the database to retrieve the latest password
     const userRecord = await prisma.user.findUnique({
@@ -91,7 +90,6 @@ const getValidTokens = async (
       throw new Error("Failed to retrieve user password from the database.");
     }
 
-    console.log("Retrieved password from database:", userRecord.password);
 
     // Use the retrieved password for the token refresh process
     return await handleTokenRefresh(email, userRecord.password, userId);
@@ -103,15 +101,16 @@ const handleTokenRefresh = async (
   password: string,
   userId: number
 ) => {
-  console.log("email to use login directus", email);
 
   const directusTokens = await loginDirectusUser(email, password);
   const accessToken = directusTokens.accessToken;
   const refreshToken = directusTokens.refreshToken;
-  console.log("directusTokens", directusTokens);
 
 
-  const sessionAccessTokenExpiresAt = new Date(Date.now() + 1.5 * 3600 * 1000);
+
+  const sessionAccessTokenExpiresAt = getSessionExpirationTime();
+  console.log(sessionAccessTokenExpiresAt);
+
   await storeTokensInDatabase(
     userId,
     accessToken,
@@ -125,7 +124,6 @@ const handleTokenRefresh = async (
 
 const ensureCompanyExists = async (shop: string, accessToken: string) => {
   const existingCompanies = await fetchCompanies(accessToken);
-  console.log("Existing companies:", existingCompanies);
 
   // Find the existing company that matches the domain (shop)
   const existingCompany = existingCompanies.find(
@@ -133,7 +131,6 @@ const ensureCompanyExists = async (shop: string, accessToken: string) => {
   );
 
   if (existingCompany) {
-    console.log(`Company already exists: ${shop}`);
     return existingCompany.UUID; // Return the UUID of the existing company
   } else {
     // Create a new company if it doesn't exist
@@ -147,7 +144,6 @@ const ensureCompanyExists = async (shop: string, accessToken: string) => {
       },
       accessToken
     );
-    console.log(`Company created: ${shop}`);
     return newCompany.UUID; // Return the UUID of the newly created company
   }
 };
@@ -172,9 +168,7 @@ const ensureShopifyTokenExists = async (
       userData.id, // Assuming userData has an ID property for the Directus user ID
       { ShopifyToken: shopifyOfflineToken } // Object containing the new Shopify token to be updated
     );
-    console.log(`Shopify Token created for user ID: ${userData}`);
   } else {
-    console.log(`Shopify Token already exists for user ID: ${userData}`);
   }
 };
 
@@ -185,8 +179,7 @@ const processExistingUser = async (
 ) => {
   // Ensure we are using the correct shop identifier (choose shop or normalizedShopDomain)
 
-  console.log("shop", shop);
-  console.log("normalizedShopDomain", normalizedShopDomain);
+
   const shopDomain = shop; // Use normalizedShopDomain if available, fallback to shop
 
   // Find the user by shopDomain and get the email
@@ -202,7 +195,6 @@ const processExistingUser = async (
 
   const email = userFromDb.email; // Extract the email
 
-  console.log("Existing user found with email:", email);
 
   // Pass the email along with the other necessary fields
   return await getValidTokens(
@@ -224,7 +216,6 @@ const processNewUser = async (
   let existingUser = await findExistingUser(emailToUse, shop);
 
   if (existingUser) {
-    console.log("User already exists. Using existing user.");
     return {
       user: existingUser,
     };
@@ -241,12 +232,7 @@ const processNewUser = async (
     throw new Error("Failed to create the user.");
   }
 
-  // Log the password before creating the user in Directus
-  console.log(`Creating Directus user with the following details:
-    Email: ${emailToUse}
-    First Name: ${ownerFirstName}
-    Last Name: ${ownerLastName}
-    Hashed Password: ${newUser.hashedPassword}`);
+
 
   // Create the user in Directus with the hashed password
   await createDirectusUser(
@@ -277,7 +263,6 @@ const obtainShopifyOfflineToken = async (idToken: string, shop: string) => {
     requestedTokenType: RequestedTokenType.OfflineAccessToken,
   });
 
-  console.log("New offline session obtained:", offlineSession);
 
   return offlineSession.accessToken as string;
 };
@@ -323,19 +308,8 @@ const initialLoadChecker = async (
 
     const normalizedShopDomain = normalizeShopDomain(shop);
 
-    console.log("normalizedShopDomain:", shop);
     user = await findExistingUserByShop(shop);
 
-    console.log("User found by shop:", user);
-
-    console.log(
-      "User already exists with email:",
-      user?.email,
-      " for shop domain: ",
-      shop,
-      " . No need to create a new user."
-    );
-    console.log("User ID:", user?.id);
 
     if (user && user.shopDomain === shop) {
       // Process existing user without attempting to refetch unnecessarily
@@ -355,17 +329,14 @@ const initialLoadChecker = async (
         await processExistingUser(user, shop, normalizedShopDomain));
     }
 
-    console.log("accestoken", accessToken);
 
 
     const shopifyOfflineToken = await obtainShopifyOfflineToken(idToken, shop);
 
 
-    console.log("shopifyOfflineToken", shopifyOfflineToken);
 
     // Ensure the company exists and capture the UUID
     const companyUUID = await ensureCompanyExists(shop, accessToken);
-    console.log("Company UUID:", companyUUID);
 
 
 
@@ -389,11 +360,9 @@ const initialLoadChecker = async (
               expires = "; expires=" + date.toUTCString();
           }
           document.cookie = \`\${name}=\${value || ""}\${expires}; path=/\`;
-          console.log(\`Cookie set: \${name}=\${value}; Expires in \${days} days\`);
       }
 
       function removeCartNote(callback, retryCount = 3) {
-          console.log('Attempting to remove cart note...');
           fetch('/cart/update.js', {
               method: 'POST',
               headers: {
@@ -413,14 +382,12 @@ const initialLoadChecker = async (
           })
           .then(data => {
               if (data && data.note === "") {
-                  console.log('Cart note removed successfully:', data);
                   if (callback) {
                       setTimeout(() => callback(true), 500); // Delay before callback
                   }
               } else {
                   console.error('Failed to verify cart note removal:', data);
                   if (retryCount > 0) {
-                      console.log(\`Retrying... (\${3 - retryCount + 1}/3)\`);
                       removeCartNote(callback, retryCount - 1);
                   } else {
                       if (callback) callback(false);
@@ -430,7 +397,6 @@ const initialLoadChecker = async (
           .catch(error => {
               console.error('Error removing cart note:', error);
               if (retryCount > 0) {
-                  console.log(\`Retrying... (\${3 - retryCount + 1}/3)\`);
                   removeCartNote(callback, retryCount - 1);
               } else {
                   if (callback) callback(false);
@@ -439,16 +405,10 @@ const initialLoadChecker = async (
       }
 
       function addReferralUUIDToCartNote(referralUUID, callback, retryCount = 3) {
-          console.log('Attempting to add Referral UUID to cart note...');
-
           fetch('/cart/update.js', {
               method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  note: \`Referral UUID: \${referralUUID}\`
-              })
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ note: \`Referral UUID: \${referralUUID}\` })
           })
           .then(response => {
               if (!response.ok) {
@@ -459,41 +419,30 @@ const initialLoadChecker = async (
               return response.json();
           })
           .then(data => {
-              if (data && data.note === \`Referral UUID: \${referralUUID}\`) {
-                  console.log('Cart note updated successfully:', data);
-                  if (callback) {
-                      setTimeout(() => callback(true), 500); // Delay before callback
-                  }
+              if (data.note === \`Referral UUID: \${referralUUID}\`) {
+                  if (callback) setTimeout(() => callback(true), 500); // Delay before callback
               } else {
                   console.error('Failed to verify cart note update:', data);
                   if (retryCount > 0) {
-                      console.log(\`Retrying... (\${3 - retryCount + 1}/3)\`);
                       addReferralUUIDToCartNote(referralUUID, callback, retryCount - 1);
-                  } else {
-                      if (callback) callback(false);
-                  }
+                  } else if (callback) callback(false);
               }
           })
           .catch(error => {
               console.error('Error updating cart note:', error);
               if (retryCount > 0) {
-                  console.log(\`Retrying... (\${3 - retryCount + 1}/3)\`);
                   addReferralUUIDToCartNote(referralUUID, callback, retryCount - 1);
-              } else {
-                  if (callback) callback(false);
-              }
+              } else if (callback) callback(false);
           });
       }
 
       function handleCheckoutButtonClick(event) {
           event.preventDefault(); // Prevent the default checkout action
           const referralUuid = localStorage.getItem('referral_uuid') || getCookie('referral_uuid');
-          console.log('Checkout button clicked, attempting to add UUID to cart note...');
 
           if (referralUuid) {
               addReferralUUIDToCartNote(referralUuid, function(success) {
                   if (success) {
-                      console.log('Referral UUID added successfully to cart note. Proceeding to checkout...');
                       const checkoutLink = event.target.closest('a, button, form');
                       if (checkoutLink) {
                           window.location.href = checkoutLink.action || checkoutLink.href;
@@ -504,7 +453,6 @@ const initialLoadChecker = async (
                   }
               });
           } else {
-              console.log('No referral UUID found. Proceeding without adding to cart note.');
               const checkoutLink = event.target.closest('a, button, form');
               if (checkoutLink) {
                   window.location.href = checkoutLink.action || checkoutLink.href;
@@ -516,7 +464,6 @@ const initialLoadChecker = async (
           const observer = new MutationObserver((mutationsList) => {
               mutationsList.forEach((mutation) => {
                   if (mutation.type === 'childList') {
-                      // Identify checkout-related buttons or links
                       const buttons = document.querySelectorAll('a[href*="/checkout"], button[data-testid*="Checkout"], .shopify-payment-button__button');
                       buttons.forEach(button => {
                           if (!button.dataset.uuidListenerAdded) {
@@ -528,78 +475,57 @@ const initialLoadChecker = async (
               });
           });
 
-          // Start observing the document body for child elements being added or changed
           observer.observe(document.body, { childList: true, subtree: true });
       }
 
-      // Function to extract the UUID based on the unconventional URL format
       function extractReferralUuidFromCustomUrl() {
           const url = window.location.href;
-          if (url.includes('?referrd?-')) {
-              const urlParts = url.split('?referrd?-');
-              if (urlParts.length > 1) {
-                  return urlParts[1].split('&')[0];  // Get UUID from '?referrd?-UUID' part
-              }
-          }
-          return null;
+          const regex = /referrd-([a-fA-F0-9-]+)/; // Match UUID after 'referrd-'
+          const match = url.match(regex);
+          return match ? match[1] : null; // Return UUID if found
       }
 
-      // Capture and store the UUID if the URL contains '?referrd?-UUID' or '?referrd=UUID'
       const urlParams = new URLSearchParams(window.location.search);
       let referralUuid = localStorage.getItem('referral_uuid') || getCookie('referral_uuid');
 
       if (urlParams.has('referrd')) {
           referralUuid = urlParams.get('referrd');
-          console.log(\`New UUID found in query parameter: \${referralUuid}\`);
       } else {
-          // Handle unconventional ?referrd?-UUID format
           const extractedUuid = extractReferralUuidFromCustomUrl();
           if (extractedUuid) {
               referralUuid = extractedUuid;
-              console.log(\`New UUID found in unconventional URL format: \${referralUuid}\`);
           }
       }
 
-      // If referral UUID is found in the URL, localStorage, or cookies, save it
       if (referralUuid) {
           localStorage.setItem('referral_uuid', referralUuid);
           setCookie('referral_uuid', referralUuid, 365);
-          console.log(\`Referral UUID saved: \${referralUuid}\`);
 
-          // Immediately update the cart note after saving the UUID
           addReferralUUIDToCartNote(referralUuid, function(success) {
               if (success) {
-                  console.log('Referral UUID added to cart note immediately after being saved.');
               } else {
                   console.error('Failed to add Referral UUID to cart note.');
               }
           });
       }
 
-      // Check if referral UUID cookie exists and remove cart note if it doesn't
       const referralCookie = getCookie('referral_uuid');
       if (!referralCookie) {
-          console.log('Referral UUID cookie not found, removing cart note...');
           removeCartNote(function(success) {
               if (success) {
-                  console.log('Cart note removed successfully due to missing referral UUID cookie.');
               } else {
                   console.error('Failed to remove cart note due to missing referral UUID cookie.');
               }
           });
       }
 
-      // Start observing the DOM for checkout buttons
       observeCheckoutButtons();
 
-      // Ensure UUID is added before page unload (as a fallback)
       window.addEventListener('beforeunload', function(event) {
-          console.log('Page is unloading, attempting to add UUID to cart note before checkout...');
           const referralUuid = localStorage.getItem('referral_uuid') || getCookie('referral_uuid');
           if (referralUuid) {
               addReferralUUIDToCartNote(referralUuid, function(success) {
                   if (success) {
-                      console.log('Referral UUID added successfully to cart note before page unload.');
                   } else {
                       console.error('Failed to add Referral UUID to cart note before page unload.');
                   }
@@ -607,7 +533,6 @@ const initialLoadChecker = async (
           }
       });
 
-      // Dynamically load the campaign script based on the current URL
       var fullUrl = window.location.href;
       var script = document.createElement('script');
       script.src = 'https://app.referrd.com.au/api/campaign-content/get-campaign-content?companyId=${companyUUID}&fullUrl=' + encodeURIComponent(fullUrl);
@@ -619,6 +544,7 @@ const initialLoadChecker = async (
   <!-- Referrd Campaign Script End -->
   `;
     };
+
 
 
 
@@ -694,7 +620,6 @@ const initialLoadChecker = async (
 
         // Step 3: Check if the content already includes the Referrd campaign script
         if (currentLiquidContent.includes('<!-- Referrd Campaign Script -->')) {
-          console.log("Referrd campaign script already exists in theme.liquid. No update necessary.");
           return;
         }
 
@@ -711,7 +636,6 @@ const initialLoadChecker = async (
 
         // Step 5: Update theme.liquid with the new content
         const updateResponse = await updateThemeLiquid(shopifyAccessToken, shop, themeId, currentLiquidContent);
-        console.log("Updated theme.liquid with Referrd campaign script.");
         return updateResponse;
       } catch (error) {
         console.error("Error ensuring Referrd script in liquid file:", error);

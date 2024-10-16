@@ -1,11 +1,11 @@
 import React from "react";
 
 // Import icons for use
-import MouseClickIcon from "../Icons/IconsSummarySection/MouseClickIcon";
-import ConversionRate from "../Icons/IconsSummarySection/ConversionRate";
-import Conversions from "../Icons/IconsSummarySection/Conversions";
-import MouseClickedIcon from "../Icons/IconsSummarySection/MouseClickedIcon";
-import TotalSpends from "../Icons/IconsSummarySection/TotalSpends";
+import MouseClickIcon from "../icons/icons-summary-section/MouseClickIcon";
+import ConversionRate from "../icons/icons-summary-section/ConversionRate";
+import Conversions from "../icons/icons-summary-section/Conversions";
+import MouseClickedIcon from "../icons/icons-summary-section/MouseClickedIcon";
+import TotalSpends from "../icons/icons-summary-section/TotalSpends";
 
 // Define the icon mapping
 const iconMapping: { [key: string]: React.FC } = {
@@ -23,11 +23,7 @@ interface PerformanceSummaryProps {
   iconName: keyof typeof iconMapping;
 }
 
-const PerformanceSummary: React.FC<PerformanceSummaryProps> = ({
-  metricName,
-  value,
-  iconName,
-}) => {
+const PerformanceSummary: React.FC<PerformanceSummaryProps> = ({ metricName, value, iconName }) => {
   const IconComponent = iconMapping[iconName];
 
   return (
@@ -35,7 +31,7 @@ const PerformanceSummary: React.FC<PerformanceSummaryProps> = ({
       <div className="flex items-center gap-2 ">
         {IconComponent && <IconComponent />}
         <p
-          className="text-[1rem] font-bold text-center items-center self-center"
+          className="text-[0.9rem] font-bold text-center items-center self-center"
           style={{ color: "#10ad1b" }}
         >
           {metricName}

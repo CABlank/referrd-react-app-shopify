@@ -37,7 +37,6 @@ export default async function handler(
     }
 
     const data = await response.json();
-    console.log("Shopify page created successfully", response);
     return res.status(200).json(data);
   } catch (error) {
     console.error("Error creating Shopify page:", error);

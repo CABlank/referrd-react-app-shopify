@@ -33,19 +33,17 @@ export const usePayments = (
         loadExecutedRef.current = true;
 
         try {
-          // First, use withTokenRefresh to fetch the customer UUID securely
+          // First, fetch the customer UUID securely
           const customerUUID = await withTokenRefresh(
             async (token) => {
-              // Fetch the customer data using the current or refreshed token
               const userData = await fetchUserData(token);
               return userData;
             },
-            refreshToken, // If needed, provide a refresh token here
-            userId // User ID to help identify which token to refresh, if required
+            refreshToken,
+            userId
           );
 
-          console.log("customerUUID", customerUUID);
-          console.log("customerUUID.uuid", customerUUID?.uuid);
+
 
           if (customerUUID?.uuid) {
             const paymentsData = await withTokenRefresh(
@@ -64,14 +62,16 @@ export const usePayments = (
                     date_created: string | number | Date;
                     order_number: any;
                   }) => {
+                    // Fetch referrer details if referral_uuid exists
                     const referrer = payment.referral_uuid
                       ? await withTokenRefresh(
-                        (token) =>
-                          fetchReferrer(payment.referral_uuid, token),
+                        (token) => fetchReferrer(payment.referral_uuid, token),
                         refreshToken,
                         userId
                       )
                       : null;
+
+                    // Fetch campaign metadata if campaign_uuid exists
                     const campaign = payment.campaign_uuid
                       ? await withTokenRefresh(
                         (token) =>
@@ -80,6 +80,8 @@ export const usePayments = (
                         userId
                       )
                       : null;
+
+
 
                     const referrerName =
                       referrer?.name || referrer?.email || "N/A";
@@ -93,9 +95,6 @@ export const usePayments = (
                         campaign.commissionType
                       )
                       : 0;
-
-                    console.log("referralFee", referralFee);
-                    console.log(" campaign.commission", campaign.commission);
 
                     return {
                       ...payment,
@@ -130,11 +129,6 @@ export const usePayments = (
     commission: number,
     commissionType: string
   ): number => {
-    console.log("Calculating referral fee with values:");
-    console.log("Total Price:", totalPrice);
-    console.log("Commission:", commission);
-    console.log("Commission Type:", commissionType);
-
     const parsedTotalPrice = parseFloat(totalPrice);
 
     if (isNaN(parsedTotalPrice)) {

@@ -35,7 +35,6 @@ const updateTokens = async ({
       },
     });
 
-    console.log("Updated tokens in Prisma for user:", userId);
   } catch (error) {
     console.error(`Error updating tokens for userId: ${userId}`, error);
     throw error;

@@ -1,5 +1,5 @@
 import React from "react";
-import CompanyIndex from "../../../features/Brand/Company/CompanyIndex";
+import CompanyIndex from "../../../features/brand/company/CompanyIndex";
 
 const CompanyIndexPage: React.FC = () => {
   return <CompanyIndex />;

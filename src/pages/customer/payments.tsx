@@ -1,12 +1,8 @@
 // src/pages/brand/payments.tsx
 
 import React from "react";
-import PaymentIndex from "@/features/Customer/Payments/PaymentIndex";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import PaymentIndex from "@/features/customer/payments/PaymentIndex";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import CustomerLayout from "@/pages/layouts/CustomerLayout/CustomerLayout";
 
 interface PaymentsProps {
@@ -16,18 +12,10 @@ interface PaymentsProps {
   title: string;
 }
 
-const PaymentsPage: React.FC<PaymentsProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const PaymentsPage: React.FC<PaymentsProps> = ({ accessToken, refreshToken, userId }) => {
   return (
     <CustomerLayout>
-      <PaymentIndex
-        accessToken={accessToken}
-        refreshToken={refreshToken}
-        userId={userId}
-      />
+      <PaymentIndex accessToken={accessToken} refreshToken={refreshToken} userId={userId} />
     </CustomerLayout>
   );
 };

@@ -1,9 +1,9 @@
 // components/CompanyCard.tsx
 import React from "react";
-import CalendarIcon from "../../../../components/Icons/CalendarIcon";
-import EditIcon from "../../../../components/Icons/EditIcon";
-import LinkIcon from "../../../../components/Icons/LinkIcon";
-import FallbackLogo from "../../../../components/Icons/FallbackLogo";
+import CalendarIcon from "../../../../components/icons/CalendarIcon";
+import EditIcon from "../../../../components/icons/EditIcon";
+import LinkIcon from "../../../../components/icons/LinkIcon";
+import FallbackLogo from "../../../../components/icons/FallbackLogo";
 import Image from "next/image";
 import { Company } from "../../../../services/company/company";
 import { useRouter } from "next/router";
@@ -52,9 +52,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
       </div>
       <div className="flex flex-col gap-2 mt-4">
         <button
-          onClick={() =>
-            router.push(`/brand/company/edit?companyId=${company.id}`)
-          }
+          onClick={() => router.push(`/brand/company/edit?companyId=${company.id}`)}
           className="flex items-center gap-1 cursor-pointer"
         >
           <EditIcon />

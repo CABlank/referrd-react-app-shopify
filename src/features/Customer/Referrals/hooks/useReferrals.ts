@@ -65,7 +65,6 @@ const useCustomers = ({
             refreshToken, // If needed, provide a refresh token here
             userId // User ID to help identify which token to refresh, if required
           );
-          console.log("Fetched customerUUID:", customerUUID?.uuid);
 
           if (customerUUID?.uuid) {
             const [customersData, mainCustomerResponse] = await Promise.all([
@@ -85,7 +84,6 @@ const useCustomers = ({
 
             const mainCustomerData = mainCustomerResponse || null; // Extract the first customer object
 
-            console.log("Fetched customersData:", mainCustomerData);
             setState({
               customers: customersData || [],
               mainCustomerData, // Set main customer object

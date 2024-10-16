@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { initialize } from "./initialize/initialize";
-import { handleCors } from "./handlers/handleCors";
-import { fetchCampaign } from "./services/fetchCampaign";
-import { extractReferralUuid } from "./handlers/extractReferralUuid";
-import { handleReferral } from "./handlers/handleReferral";
-import { generateScriptContent } from "./handlers/generateScriptContent";
+import { handleCors } from "./handlers/handle-cors";
+import { fetchCampaign } from "./services/fetch-campaign";
+import { extractReferralUuid } from "./handlers/extract-referral-uuid";
+import { handleReferral } from "./handlers/handle-referral";
+import { generateScriptContent } from "./handlers/generate-script-content";
 
 export type ApiResponse = {
   success: boolean;
@@ -19,7 +19,6 @@ export default async function handler(
   // Early exit if the request is from a Shopify admin page
   const fullUrl = req.query.fullUrl as string;
   if (fullUrl.startsWith("https://admin.shopify.com/store/")) {
-    console.log("Request from Shopify admin page detected. Skipping API call.");
     return res
       .status(200)
       .json({ success: false, message: "No action taken for admin page." });
@@ -29,7 +28,6 @@ export default async function handler(
   if (handleCors(req, res)) return;
 
   try {
-    console.log("Full URL:", fullUrl);
 
     // 2. Check if the URL includes the path `/pages/referrd`.
     const isReferrdPage = fullUrl.includes("/pages/referrd");
@@ -39,12 +37,9 @@ export default async function handler(
       ? fullUrl.split("/pages/referrd-")[1]
       : null;
 
-    console.log("Extracted UUID:", referralUuidFromUrl);
 
     // 4. Initialize request by extracting company ID and BOT_TOKEN.
-    console.log("Initializing request...");
     const { companyId, BOT_TOKEN } = initialize(req);
-    console.log("Company ID:", companyId);
 
     // 5. Fetch and validate campaign data based on the company ID.
     const campaignDetails = await fetchCampaign(companyId, BOT_TOKEN);
@@ -59,9 +54,10 @@ export default async function handler(
     // 6. Handle referral logic (if applicable).
     const referralUuid = extractReferralUuid(fullUrl);
 
-    if (!(await handleReferral(referralUuid, req, res, BOT_TOKEN))) {
-      return;
-    }
+    const discountCode = await handleReferral(referralUuid, req, res, BOT_TOKEN, campaign, fullUrl);
+
+
+
 
     // 7. Generate script content based on the campaign format and whether it's a referrd page.
     const scriptContent = generateScriptContent(
@@ -69,7 +65,8 @@ export default async function handler(
       campaignData,
       isReferrdPage,
       referralUuidFromUrl,
-      referralUuid
+      referralUuid,
+      discountCode
     );
     res.setHeader("Content-Type", "application/javascript");
     res.status(200).send(scriptContent);

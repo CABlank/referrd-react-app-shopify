@@ -1,10 +1,6 @@
 import React from "react";
-import SettingsIndex from "../../features/Brand/Settings/SettingsIndex";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import SettingsIndex from "../../features/settings/SettingsIndex";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 interface SettingsProps {
@@ -14,18 +10,8 @@ interface SettingsProps {
   title: string;
 }
 
-const SettingsPage: React.FC<SettingsProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
-  return (
-    <SettingsIndex
-      accessToken={accessToken}
-      refreshToken={refreshToken}
-      userId={userId}
-    />
-  );
+const SettingsPage: React.FC<SettingsProps> = ({ accessToken, refreshToken, userId }) => {
+  return <SettingsIndex accessToken={accessToken} refreshToken={refreshToken} userId={userId} />;
 };
 
 export const getServerSideProps: GetServerSideProps<SettingsProps> = async (

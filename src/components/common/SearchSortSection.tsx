@@ -1,5 +1,5 @@
-import SearchIcon from "../Icons/SearchIcon";
-import SortIcon from "../Icons/SortIcon";
+import SearchIcon from "../icons/SearchIcon";
+import SortIcon from "../icons/SortIcon";
 import React from "react";
 
 type SearchSortSectionProps = {

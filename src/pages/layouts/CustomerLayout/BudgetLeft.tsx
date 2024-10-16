@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSession } from "../../../context/SessionContext";
-import { usePayments } from "@/features/Customer/Payments/hooks/usePayments";
+import { usePayments } from "@/features/customer/payments/hooks/usePayments";
 import { useRouter } from "next/router";
 import Spinner from "@/components/common/Spinner";
 
@@ -53,9 +53,7 @@ const BudgetLeft: React.FC = () => {
           {/* Non-circle (pill-shaped) */}
           <p className="text-base font-bold">${totalPaid.toFixed(2)}</p>
         </div>
-        <p className="text-sm md:text-base font-medium text-green-600 whitespace-nowrap">
-          Paid Payments
-        </p>
+        <p className="text-sm md:text-base font-medium text-green-600 whitespace-nowrap">Paid</p>
       </div>
 
       {/* Pending Total (Clickable) */}
@@ -65,7 +63,7 @@ const BudgetLeft: React.FC = () => {
           <p className="text-base font-bold">${totalPending.toFixed(2)}</p>
         </div>
         <p className="text-sm md:text-base font-medium text-yellow-600 whitespace-nowrap">
-          Pending Payments
+          Pending
         </p>
       </div>
     </div>

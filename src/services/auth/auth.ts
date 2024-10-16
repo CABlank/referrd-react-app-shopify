@@ -130,7 +130,6 @@ export const updateUserData = async (
     }
 
     const data = await response.json();
-    console.log("Updated user data:", data.data);
     return data.data; // Assuming the updated user data is under a "data" key
   } catch (error) {
     console.error("Error updating user data:", error);

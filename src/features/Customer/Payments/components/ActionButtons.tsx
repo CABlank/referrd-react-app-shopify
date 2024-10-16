@@ -1,23 +1,17 @@
 // src/features/Brand/Payments/components/ActionButtons.tsx
 
 import React from "react";
-import DeclineIcon from "../../../../components/Icons/DeclineIcon";
-import AcceptIcon from "../../../../components/Icons/AcceptIcon";
-import SeparatorIcon from "../../../../components/Icons/SeparatorIcon";
+import DeclineIcon from "../../../../components/icons/DeclineIcon";
+import AcceptIcon from "../../../../components/icons/AcceptIcon";
+import SeparatorIcon from "../../../../components/icons/SeparatorIcon";
 import { MappedPayment } from "../types";
 
 interface ActionButtonsProps {
   payment: MappedPayment;
-  handlePaymentAction: (
-    paymentId: number,
-    action: "Approved" | "Declined"
-  ) => void;
+  handlePaymentAction: (paymentId: number, action: "Approved" | "Declined") => void;
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({
-  payment,
-  handlePaymentAction,
-}) => {
+const ActionButtons: React.FC<ActionButtonsProps> = ({ payment, handlePaymentAction }) => {
   const statusStyles = {
     Approved: {
       container: "text-[#10ad1b] bg-[#d6f5d6]/5 border-[#10ad1b]",
@@ -60,9 +54,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       <div
         className={`flex items-center gap-2 ${statusStyles[status].container} rounded-[40px] px-4 py-0.5 border`}
       >
-        <p className={`text-base ${statusStyles[status].text}`}>
-          {payment.status}
-        </p>
+        <p className={`text-base ${statusStyles[status].text}`}>{payment.status}</p>
       </div>
     );
   }

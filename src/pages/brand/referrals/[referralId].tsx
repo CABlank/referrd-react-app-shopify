@@ -1,12 +1,8 @@
 // src/pages/brand/referrals/[referralId].tsx
 
 import React from "react";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
-import ReferralDetails from "@/features/Brand/Referrals/ReferralDetails";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
+import ReferralDetails from "@/features/brand/referrals/ReferralDetails";
 import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 interface ReferralPageProps {

@@ -6,11 +6,11 @@ import EmailInput from "../common/EmailInput";
 import MobileInput from "../common/MobileInput";
 import PasswordInput from "../common/PasswordInput";
 
-import GoogleIcon from "../Icons/GoogleIcon";
-import ArrowLoginIcon from "../Icons/ArrowLoginIcon";
-import ShopifyPurpleIcon from "../Icons/ShopifyPurpleIcon";
-import ShopifyGreenIcon from "../Icons/ShopifyGreenIcon";
-import WorkEmailPurpleIcon from "../Icons/WorkEmailPurpleIcon";
+import GoogleIcon from "../icons/GoogleIcon";
+import ArrowLoginIcon from "../icons/ArrowLoginIcon";
+import ShopifyPurpleIcon from "../icons/ShopifyPurpleIcon";
+import ShopifyGreenIcon from "../icons/ShopifyGreenIcon";
+import WorkEmailPurpleIcon from "../icons/WorkEmailPurpleIcon";
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -26,9 +26,7 @@ const RegisterForm = () => {
     specialChar: false,
     noWhitespace: true,
   });
-  const [registerMethod, setRegisterMethod] = useState<"email" | "shopify">(
-    "email"
-  );
+  const [registerMethod, setRegisterMethod] = useState<"email" | "shopify">("email");
 
   const router = useRouter();
 
@@ -91,9 +89,7 @@ const RegisterForm = () => {
             className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5 hidden"
           >
             <GoogleIcon />
-            <p className="text-base font-medium text-left text-[#851087]">
-              Sign Up with Google
-            </p>
+            <p className="text-base font-medium text-left text-[#851087]">Sign Up with Google</p>
           </button>
           <button
             type="button"
@@ -101,9 +97,7 @@ const RegisterForm = () => {
             className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
           >
             <ShopifyPurpleIcon />
-            <p className="text-base font-medium text-left text-[#851087]">
-              Sign Up with Shopify
-            </p>
+            <p className="text-base font-medium text-left text-[#851087]">Sign Up with Shopify</p>
           </button>
 
           <div className="hidden">
@@ -111,10 +105,7 @@ const RegisterForm = () => {
               fullName={formData.fullName}
               setFullName={(value) => handleChange("fullName", value)}
             />
-            <EmailInput
-              email={formData.email}
-              setEmail={(value) => handleChange("email", value)}
-            />
+            <EmailInput email={formData.email} setEmail={(value) => handleChange("email", value)} />
             <MobileInput
               mobile={formData.mobile}
               setMobile={(value) => handleChange("mobile", value)}
@@ -129,32 +120,24 @@ const RegisterForm = () => {
             type="submit"
             className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
           >
-            <p className="text-base font-semibold text-left text-white">
-              Sign Up With Email
-            </p>
+            <p className="text-base font-semibold text-left text-white">Sign Up With Email</p>
             <ArrowLoginIcon />
           </button>
         </>
       ) : (
         <>
           <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
-            <p className="text-base font-medium text-left text-black/80">
-              Shopify Store Name
-            </p>
+            <p className="text-base font-medium text-left text-black/80">Shopify Store Name</p>
             <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
               <ShopifyGreenIcon />
               <input
                 type="text"
                 value={formData.shopifyStoreName}
-                onChange={(e) =>
-                  handleChange("shopifyStoreName", e.target.value)
-                }
+                onChange={(e) => handleChange("shopifyStoreName", e.target.value)}
                 placeholder="your-store-name"
                 className="flex-grow-1 flex-shrink-0 text-base text-left text-[#7f7f7f]"
               />
-              <p className="text-base text-left text-[#7f7f7f]">
-                .myshopify.com
-              </p>
+              <p className="text-base text-left text-[#7f7f7f]">.myshopify.com</p>
             </div>
           </div>
 
@@ -163,9 +146,7 @@ const RegisterForm = () => {
             onClick={handleShopifyRegister}
             className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
           >
-            <p className="text-base font-semibold text-left text-white">
-              Sign Up With Shopify
-            </p>
+            <p className="text-base font-semibold text-left text-white">Sign Up With Shopify</p>
             <ArrowLoginIcon />
           </button>
 
@@ -176,9 +157,7 @@ const RegisterForm = () => {
               className="flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#851087]/5"
             >
               <WorkEmailPurpleIcon />
-              <p className="text-base font-medium text-left text-[#851087]">
-                Work Email Address
-              </p>
+              <p className="text-base font-medium text-left text-[#851087]">Work Email Address</p>
             </button>
           </div>
         </>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import DeclineIcon from "../../../../components/Icons/DeclineIcon";
-import AcceptIcon from "../../../../components/Icons/AcceptIcon";
-import SeparatorIcon from "../../../../components/Icons/SeparatorIcon";
+import DeclineIcon from "../../../../components/icons/DeclineIcon";
+import AcceptIcon from "../../../../components/icons/AcceptIcon";
+import SeparatorIcon from "../../../../components/icons/SeparatorIcon";
 import { MappedPayment } from "../types";
-import EditIcon from "../../../../components/Icons/EditIcon";
+import EditIcon from "../../../../components/icons/EditIcon";
 
 // Define valid status types
 type PaymentStatus = "Approved" | "Declined" | "Pending";
@@ -13,17 +13,11 @@ interface ActionButtonsProps {
   handlePaymentAction: (paymentId: number, action: PaymentStatus) => void;
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({
-  payment,
-  handlePaymentAction,
-}) => {
+const ActionButtons: React.FC<ActionButtonsProps> = ({ payment, handlePaymentAction }) => {
   const [showOverride, setShowOverride] = useState(false);
 
   // Define the status styles
-  const statusStyles: Record<
-    PaymentStatus,
-    { container: string; text: string }
-  > = {
+  const statusStyles: Record<PaymentStatus, { container: string; text: string }> = {
     Approved: {
       container: "text-[#10ad1b] bg-[#d6f5d6]/5 border-[#10ad1b]",
       text: "text-[#10ad1b]",

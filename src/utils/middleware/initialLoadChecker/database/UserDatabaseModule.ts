@@ -105,7 +105,6 @@ export const storeTokensInDatabase = async (
           updatedAt: new Date(),
         },
       });
-      console.log("Tokens updated successfully in the database");
     } else {
       // Create a new token entry
       await prisma.token.create({
@@ -117,7 +116,6 @@ export const storeTokensInDatabase = async (
           sessionAccessTokenExpiresAt,
         },
       });
-      console.log("Tokens stored successfully in the database");
     }
   } catch (error) {
     console.error("Failed to store tokens in the database:", error);

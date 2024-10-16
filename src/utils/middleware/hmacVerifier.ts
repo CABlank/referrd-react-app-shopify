@@ -58,10 +58,7 @@ const hmacVerifier = async (
     }
   } catch (e) {
     // Handle and log errors during HMAC verification
-    console.log(
-      `---> An error occurred while verifying HMAC`,
-      (e as Error).message
-    );
+
     return new NextResponse(
       JSON.stringify({ success: false, message: "HMAC verification failed" }),
       {

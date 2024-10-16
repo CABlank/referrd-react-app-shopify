@@ -35,7 +35,6 @@ export default async function handler(
     case "payment_intent.succeeded":
       break;
     default:
-      console.log(`Unhandled event type ${event.type}`);
   }
 
   res.json({ received: true });

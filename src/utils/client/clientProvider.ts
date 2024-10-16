@@ -41,9 +41,7 @@ interface FetchOnlineSessionParams {
  * @throws Will throw an error if no session is found for the shop.
  */
 const fetchOfflineSession = async (shop: string): Promise<Session> => {
-  console.log(`Fetching offline session for shop: ${shop}`);
   const sessionID = shopify.session.getOfflineId(shop); // Get the offline session ID for the shop
-  console.log(`Offline session ID for shop ${shop}: ${sessionID}`);
 
   const session = await sessionHandler.loadSession(Number(sessionID!)); // Load the session using the session handler
   if (!session) {
@@ -51,7 +49,6 @@ const fetchOfflineSession = async (shop: string): Promise<Session> => {
     throw new Error(`No session found for shop ${shop}`); // Throw an error if no session is found
   }
 
-  console.log(`Offline session fetched for shop ${shop}:`, session);
   return session; // Return the session
 };
 
@@ -69,11 +66,9 @@ const offline = {
    * @returns {Promise<{ client: any; shop: string; session: Session }>} The GraphQL client, shop, and session.
    */
   graphqlClient: async ({ shop }: GraphqlClientParams) => {
-    console.log(`Creating offline GraphQL client for shop: ${shop}`);
     const session = await fetchOfflineSession(shop); // Fetch the offline session for the shop
     const client = new shopify.clients.Graphql({ session }); // Create a GraphQL client with the session
 
-    console.log(`Offline GraphQL client created for shop ${shop}`);
     return { client, shop, session }; // Return the client, shop, and session
   },
   /**
@@ -85,14 +80,12 @@ const offline = {
    * @returns {Promise<{ client: any; shop: string; session: Session }>} The REST client, shop, and session.
    */
   restClient: async ({ shop }: RestClientParams) => {
-    console.log(`Creating offline REST client for shop: ${shop}`);
     const session = await fetchOfflineSession(shop); // Fetch the offline session for the shop
     const client = new shopify.clients.Rest({
       session,
       apiVersion: process.env.SHOPIFY_API_VERSION as ApiVersion | undefined,
     }); // Create a REST client with the session and API version
 
-    console.log(`Offline REST client created for shop ${shop}`);
     return { client, shop, session }; // Return the client, shop, and session
   },
 };
@@ -110,14 +103,12 @@ const fetchOnlineSession = async ({
   req,
   res,
 }: FetchOnlineSessionParams): Promise<Session> => {
-  console.log(`Fetching online session for request`);
   const sessionID = await shopify.session.getCurrentId({
     isOnline: true,
     rawRequest: req,
     rawResponse: res,
   }); // Get the current online session ID
 
-  console.log(`Online session ID: ${sessionID}`);
   if (!sessionID) {
     console.error(`Invalid session ID`);
     throw new Error(`Invalid session ID`); // Throw an error if no session ID is found
@@ -129,7 +120,6 @@ const fetchOnlineSession = async ({
     throw new Error(`No session found for request`); // Throw an error if no session is found
   }
 
-  console.log(`Online session fetched:`, session);
   return session; // Return the session
 };
 
@@ -147,12 +137,10 @@ const online = {
    * @returns {Promise<{ client: any; shop: string; session: Session }>} The GraphQL client, shop, and session.
    */
   graphqlClient: async ({ req, res }: FetchOnlineSessionParams) => {
-    console.log(`Creating online GraphQL client`);
     const session = await fetchOnlineSession({ req, res }); // Fetch the online session for the request
     const client = new shopify.clients.Graphql({ session }); // Create a GraphQL client with the session
     const { shop } = session; // Extract the shop from the session
 
-    console.log(`Online GraphQL client created for shop ${shop}`);
     return { client, shop, session }; // Return the client, shop, and session
   },
   /**
@@ -164,7 +152,6 @@ const online = {
    * @returns {Promise<{ client: any; shop: string; session: Session }>} The REST client, shop, and session.
    */
   restClient: async ({ req, res }: FetchOnlineSessionParams) => {
-    console.log(`Creating online REST client`);
     const session = await fetchOnlineSession({ req, res }); // Fetch the online session for the request
     const { shop } = session; // Extract the shop from the session
     const client = new shopify.clients.Rest({
@@ -172,7 +159,6 @@ const online = {
       apiVersion: process.env.SHOPIFY_API_VERSION as ApiVersion | undefined,
     }); // Create a REST client with the session and API version
 
-    console.log(`Online REST client created for shop ${shop}`);
     return { client, shop, session }; // Return the client, shop, and session
   },
 };

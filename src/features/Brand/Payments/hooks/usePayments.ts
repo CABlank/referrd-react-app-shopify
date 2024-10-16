@@ -87,8 +87,7 @@ export const usePayments = (
                       )
                       : 0;
 
-                    console.log("referralFee", referralFee);
-                    console.log(" campaign.commission", campaign.commission);
+
 
                     return {
                       ...payment,
@@ -123,10 +122,6 @@ export const usePayments = (
     commission: number,
     commissionType: string
   ): number => {
-    console.log("Calculating referral fee with values:");
-    console.log("Total Price:", totalPrice);
-    console.log("Commission:", commission);
-    console.log("Commission Type:", commissionType);
 
     const parsedTotalPrice = parseFloat(totalPrice);
 

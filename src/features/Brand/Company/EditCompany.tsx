@@ -2,7 +2,7 @@ import React from "react";
 import NextImage from "next/image";
 import { useEditCompany } from "./hooks/useEditCompany"; // Correct hook import
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
-import FallbackLogo from "../../../components/Icons/FallbackLogo";
+import FallbackLogo from "../../../components/icons/FallbackLogo";
 
 const EditCompany: React.FC = () => {
   const {
@@ -27,10 +27,7 @@ const EditCompany: React.FC = () => {
           {error && <p className="text-red-600">{error}</p>}
           {logoError && <p className="text-red-600">{logoError}</p>}
           <div className="flex flex-col gap-4 w-full">
-            <label
-              htmlFor="company-name"
-              className="text-xl font-medium text-black/80"
-            >
+            <label htmlFor="company-name" className="text-xl font-medium text-black/80">
               Company Name
             </label>
             <input
@@ -41,10 +38,7 @@ const EditCompany: React.FC = () => {
               className="h-14 px-4 py-2 rounded-lg bg-gray-50 border border-gray-300 w-full text-base text-black/80"
               placeholder="Company Name"
             />
-            <label
-              htmlFor="company-domain"
-              className="text-xl font-medium text-black/80"
-            >
+            <label htmlFor="company-domain" className="text-xl font-medium text-black/80">
               Domain
             </label>
             <input
@@ -56,10 +50,7 @@ const EditCompany: React.FC = () => {
               placeholder="Domain"
               disabled
             />
-            <label
-              htmlFor="company-logo"
-              className="text-xl font-medium text-black/80"
-            >
+            <label htmlFor="company-logo" className="text-xl font-medium text-black/80">
               Logo
             </label>
             {logoPreview ? (

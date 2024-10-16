@@ -6,6 +6,22 @@ import {
 } from "../../../../services/referrals/referrals";
 import { useSession } from "../../../../context/SessionContext";
 
+export interface Campaign {
+  uuid: any;
+  id: number;
+  name: string;
+}
+
+interface CustomerCampaignTracker {
+  companies: Array<{
+    company_id: string;
+    campaigns: Array<{
+      campaign_id: string;
+      discount_code: string | null;
+    }>;
+  }>;
+}
+
 export interface Customer {
   id: number;
   date_created: string;
@@ -18,14 +34,7 @@ export interface Customer {
   signup_count: number;
   location: string;
   click_count: number;
-  company_id: string;
-  campaign_uuid: string;
-}
-
-export interface Campaign {
-  uuid: any;
-  id: number;
-  name: string;
+  company_campaign_tracker: CustomerCampaignTracker;
 }
 
 interface ReferralDetailsState {
@@ -78,11 +87,24 @@ const useReferralDetails = (referralId: string | string[] | undefined) => {
             (customer: Customer) => customer.uuid === referralId
           );
 
+          const conversion_count = selectedCustomer.conversion_count;
+
           if (selectedCustomer) {
-            const relatedCampaign = campaignsData.find(
-              (campaign: Campaign) =>
-                campaign.uuid === selectedCustomer.campaign_uuid
-            );
+            // Find the relevant company and campaign from the company_campaign_tracker
+            let relatedCampaign: Campaign | null = null;
+            for (const company of selectedCustomer.company_campaign_tracker.companies) {
+              // Search for a matching campaign for the selected customer
+              const matchingCampaign = company.campaigns.find(
+                (campaign: { campaign_id: any; }) => campaign.campaign_id === selectedCustomer.uuid
+              );
+
+              if (matchingCampaign) {
+                relatedCampaign = campaignsData.find(
+                  (campaign: Campaign) => campaign.uuid === matchingCampaign.campaign_id
+                );
+                break; // Stop once we've found the campaign
+              }
+            }
 
             // Separate the customers into conversions and shares
             const referredCustomers = customersData.filter(
@@ -103,7 +125,7 @@ const useReferralDetails = (referralId: string | string[] | undefined) => {
             setState({
               customer: selectedCustomer,
               campaign: relatedCampaign || null,
-              conversions,
+              conversions: conversion_count,
               shares,
               loading: false,
               error: null,

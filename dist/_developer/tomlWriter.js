@@ -30,8 +30,7 @@ try {
 
   // Step 5: Define API scopes necessary for theme modification and page creation
   config.access_scopes = {
-    scopes:
-      process.env.SHOPIFY_API_SCOPES || "write_pages,read_themes,write_themes",
+    scopes: process.env.SHOPIFY_API_SCOPES || "write_pages,read_themes,write_themes",
     use_legacy_install_flow: false,
   };
 
@@ -53,8 +52,7 @@ try {
 
   // Step 7: Write the configuration to the TOML file
   let str = toml.stringify(config);
-  str =
-    "# Avoid writing to toml directly. Use your .env file instead\n\n" + str;
+  str = "# Avoid writing to toml directly. Use your .env file instead\n\n" + str;
   fs.writeFileSync(path.join(process.cwd(), "shopify.app.toml"), str);
 
   // Optional: Manage extension directories if needed
@@ -62,17 +60,10 @@ try {
   if (fs.existsSync(extensionsDir)) {
     const extensionStr = toml.stringify(config);
     const globalStr =
-      "# Avoid writing to toml directly. Use your .env file instead\n\n" +
-      extensionStr;
+      "# Avoid writing to toml directly. Use your .env file instead\n\n" + extensionStr;
 
-    fs.writeFileSync(
-      path.join(process.cwd(), "..", "shopify.app.toml"),
-      globalStr
-    );
-    fs.writeFileSync(
-      path.join(extensionsDir, "shopify.app.toml"),
-      extensionStr
-    );
+    fs.writeFileSync(path.join(process.cwd(), "..", "shopify.app.toml"), globalStr);
+    fs.writeFileSync(path.join(extensionsDir, "shopify.app.toml"), extensionStr);
   }
 } catch (e) {
   console.error("---> An error occurred while writing TOML files");

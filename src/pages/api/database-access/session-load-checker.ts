@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
+import { getSessionExpirationTime } from "@/utils/sessionTimeUtils";
 
 // Update tokens for a specific user in the database
 const updateTokens = async ({
@@ -16,12 +17,9 @@ const updateTokens = async ({
   sessionAccessTokenExpiration: number;
 }) => {
   const expiresAt = new Date(Date.now() + expires * 1000); // Calculate the expiration time
-  const sessionAccessTokenExpiresAt = new Date(
-    Date.now() + 1.5 * 60 * 60 * 1000
-  );
+  const sessionAccessTokenExpiresAt = getSessionExpirationTime();
 
   try {
-    console.log(`Updating tokens for userId: ${apiRequestUserId}`);
 
     const result = await prisma.token.updateMany({
       where: { userId: apiRequestUserId },
@@ -34,8 +32,7 @@ const updateTokens = async ({
       },
     });
 
-    console.log("Tokens update result:", result);
-    console.log(`Tokens successfully updated for userId: ${apiRequestUserId}`);
+
 
     return { accessToken, refreshToken, sessionAccessTokenExpiresAt }; // Return updated tokens and expiration date
   } catch (error) {
@@ -50,7 +47,6 @@ const updateTokens = async ({
 // Retrieve all token information from the database for a specific user
 const getTokenData = async (apiRequestUserId: number) => {
   try {
-    console.log(`Fetching tokens for userId: ${apiRequestUserId}`);
 
     const tokenRecord = await prisma.token.findFirst({
       where: { userId: apiRequestUserId },
@@ -60,7 +56,6 @@ const getTokenData = async (apiRequestUserId: number) => {
       throw new Error(`No token found for userId: ${apiRequestUserId}`);
     }
 
-    console.log("Found token data:", tokenRecord);
     return {
       accessToken: tokenRecord.accessToken,
       refreshToken: tokenRecord.refreshToken,
@@ -90,7 +85,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       sessionAccessTokenExpiration,
     } = req.body;
 
-    console.log("Request body:", req.body);
 
     if (!apiRequestUserId || isNaN(apiRequestUserId)) {
       console.error("Invalid or missing userId:", apiRequestUserId);

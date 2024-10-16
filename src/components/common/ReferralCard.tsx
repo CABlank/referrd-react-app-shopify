@@ -1,8 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/router"; // Import useRouter for query params
-import ArrowSeeMoreIcon from "../Icons/ArrowSeeMoreIcon";
-import MoneyIconReferrals from "../Icons/MoneyIconReferrals";
+import ArrowSeeMoreIcon from "../icons/ArrowSeeMoreIcon";
+import MoneyIconReferrals from "../icons/MoneyIconReferrals";
 
 interface ReferralItemProps {
   name: string;
@@ -23,9 +23,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ data }) => {
         {data.map((item, index) => (
           <React.Fragment key={index}>
             <ReferralItem {...item} />
-            {index < data.length - 1 && (
-              <hr className="w-full border-t border-black/15 my-4" />
-            )}
+            {index < data.length - 1 && <hr className="w-full border-t border-black/15 my-4" />}
           </React.Fragment>
         ))}
       </div>
@@ -49,9 +47,7 @@ const Header: React.FC = () => {
         {!isShopifyStore && (
           <Link href="/brand/referrals" passHref>
             <div className="flex items-center gap-1 cursor-pointer">
-              <p className="text-base font-medium text-[#851087]/80">
-                See More
-              </p>
+              <p className="text-base font-medium text-[#851087]/80">See More</p>
               <ArrowSeeMoreIcon />
             </div>
           </Link>
@@ -62,12 +58,7 @@ const Header: React.FC = () => {
   );
 };
 
-const ReferralItem: React.FC<ReferralItemProps> = ({
-  name,
-  location,
-  email,
-  date,
-}) => (
+const ReferralItem: React.FC<ReferralItemProps> = ({ name, location, email, date }) => (
   <div className="flex justify-between items-start w-full">
     <div className="flex items-center gap-4">
       <Avatar />

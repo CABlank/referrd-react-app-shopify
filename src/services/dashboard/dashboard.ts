@@ -73,7 +73,7 @@ export interface Campaign {
   settingsTopbarState?: string;
   settingsPopupState?: string;
   commission: React.ReactNode;
-  commissionType: "FixedAmount" | "Percentage";
+  commissionType: "Fix" | "Percentage";
   id?: number;
   status?: string;
   user_created?: string;

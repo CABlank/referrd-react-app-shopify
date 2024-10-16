@@ -2,14 +2,14 @@ import React, { useState } from "react";
 import QRCode from "qrcode.react";
 import { saveAs } from "file-saver";
 import useCustomers from "./hooks/useShares";
-import WhatsappIcon from "@/components/Icons/IconsSocialMedia/WhatsappIcon";
-import EmailIcon from "@/components/Icons/IconsSocialMedia/EmailIcon";
-import FacebookIcon from "@/components/Icons/IconsSocialMedia/FacebookIcon";
-import MessengerIcon from "@/components/Icons/IconsSocialMedia/MessengerIcon";
-import SmsIcon from "@/components/Icons/IconsSocialMedia/SmsIcon";
-import XIcon from "@/components/Icons/IconsSocialMedia/XIcon";
-import LinkedinIcon from "@/components/Icons/IconsSocialMedia/LinkedinIcon";
-import RedditIcon from "@/components/Icons/IconsSocialMedia/RedditIcon";
+import WhatsappIcon from "@/components/icons/icons-social-media/WhatsappIcon";
+import EmailIcon from "@/components/icons/icons-social-media/EmailIcon";
+import FacebookIcon from "@/components/icons/icons-social-media/FacebookIcon";
+import MessengerIcon from "@/components/icons/icons-social-media/MessengerIcon";
+import SmsIcon from "@/components/icons/icons-social-media/SmsIcon";
+import XIcon from "@/components/icons/icons-social-media/XIcon";
+import LinkedinIcon from "@/components/icons/icons-social-media/LinkedinIcon";
+import RedditIcon from "@/components/icons/icons-social-media/RedditIcon";
 
 interface SharesIndexProps {
   accessToken?: string;
@@ -17,11 +17,7 @@ interface SharesIndexProps {
   userId?: number;
 }
 
-const SharesIndex: React.FC<SharesIndexProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const SharesIndex: React.FC<SharesIndexProps> = ({ accessToken, refreshToken, userId }) => {
   const { customers, companies, loading } = useCustomers({
     accessToken,
     refreshToken,
@@ -33,26 +29,13 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
   }>({});
 
   // Array of background colors for the initials placeholder
-  const bgColors = [
-    "#851087",
-    "#D32F2F",
-    "#1976D2",
-    "#388E3C",
-    "#FBC02D",
-    "#8E24AA",
-    "#FF5722",
-  ];
+  const bgColors = ["#851087", "#D32F2F", "#1976D2", "#388E3C", "#FBC02D", "#8E24AA", "#FF5722"];
 
   // Function to get a random color from the array
-  const getRandomColor = () =>
-    bgColors[Math.floor(Math.random() * bgColors.length)];
+  const getRandomColor = () => bgColors[Math.floor(Math.random() * bgColors.length)];
 
   // Function to download the QR code as an image
-  const downloadQRCode = (
-    customerUUID: string,
-    companyUUID: string,
-    companyDomain: string
-  ) => {
+  const downloadQRCode = (customerUUID: string, companyUUID: string, companyDomain: string) => {
     const canvas = document.getElementById(
       `qrCode-${customerUUID}-${companyUUID}`
     ) as HTMLCanvasElement;
@@ -167,9 +150,7 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
             ? customer.company_id
             : [customer.company_id];
           const customerCompanies = companyIds
-            .map((companyId) =>
-              companies.find((comp) => comp.UUID === companyId)
-            )
+            .map((companyId) => companies.find((comp) => comp.UUID === companyId))
             .filter((company) => company !== undefined);
 
           return customerCompanies.map((company) => {
@@ -207,19 +188,17 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
                     <p className="text-sm text-gray-500">Share Instantly</p>
                     {/* Social Media Sharing */}
                     <div className="grid grid-cols-4 gap-2 mt-1 lg:flex lg:flex-wrap lg:gap-4">
-                      {socialMediaButtons(referralUrl, company.domain).map(
-                        (button) => (
-                          <a
-                            key={button.id}
-                            href={button.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"
-                          >
-                            {button.icon}
-                          </a>
-                        )
-                      )}
+                      {socialMediaButtons(referralUrl, company.domain).map((button) => (
+                        <a
+                          key={button.id}
+                          href={button.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"
+                        >
+                          {button.icon}
+                        </a>
+                      ))}
                     </div>
                     <p className="text-base lg:text-lg font-semibold text-center lg:text-left truncate w-full">
                       {company.name}
@@ -233,9 +212,7 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
                         {copyButtonTexts[key] || "Copy"}
                       </button>
                       <div className="flex-grow h-10 px-4 py-2 bg-white border border-gray-300 rounded-r-lg overflow-hidden max-w-[450px]">
-                        <p className="text-sm text-gray-600 truncate">
-                          {referralUrl}
-                        </p>
+                        <p className="text-sm text-gray-600 truncate">{referralUrl}</p>
                       </div>
                     </div>
                   </div>
@@ -251,13 +228,7 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
                     includeMargin={true}
                   />
                   <button
-                    onClick={() =>
-                      downloadQRCode(
-                        customer.uuid,
-                        company.UUID,
-                        company.domain
-                      )
-                    }
+                    onClick={() => downloadQRCode(customer.uuid, company.UUID, company.domain)}
                     className="mt-2 h-10 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500"
                   >
                     Download QR

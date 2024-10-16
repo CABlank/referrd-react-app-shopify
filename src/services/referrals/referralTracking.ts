@@ -1,5 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Interfaces for the data structures
 export interface Customer {
   id?: number;
   uuid?: string;
@@ -10,11 +11,20 @@ export interface Customer {
   conversion_count: number;
   click_count: number;
   signup_count: number;
-  company_id: object;
   location?: {
     country?: string;
     city?: string;
   } | null;
+
+  company_campaign_tracker: {
+    companies: {
+      company_id: string;
+      campaigns: {
+        campaign_id: string;
+        discount_code: string | null;
+      }[];
+    }[];
+  };
 }
 
 // Helper function to make API requests
@@ -38,7 +48,6 @@ const fetchFromAPI = async <T>(
   });
 
   if (response.status === 204) {
-    console.log(`No content from ${endpoint}`);
     return null; // Return null explicitly for 204 No Content
   }
 
@@ -70,19 +79,19 @@ export const fetchCustomerByUUID = async (
   );
 
   if (!customers || customers.length === 0) {
-    console.log(`Customer with UUID ${uuid} not found`);
     return null; // Return null if no customer is found
   }
 
   return customers[0];
 };
 
-// Create a new customer
-// Create a new customer or update the company_id if the customer exists
+// Create a new customer or update the company_campaign_tracker if the customer exists
 export const createCustomer = async (
   customer: Customer,
   token: string,
-  newCompanyId?: string // Renamed parameter for clarity
+  newCompanyId?: string,   // New company ID to add
+  newCampaignId?: string,  // New campaign ID to add
+  discountCode?: string    // New discount code for the campaign
 ): Promise<Customer> => {
   try {
     // Check if the customer exists using their email
@@ -94,61 +103,120 @@ export const createCustomer = async (
     if (customers && customers.length > 0) {
       // Customer exists
       const existingCustomer = customers[0];
-      console.log(`Customer with email ${customer.email} already exists`);
+      console.log("Customer already exists:", existingCustomer);
 
-      // Check if the new company_id is different and not already present
-      const existingCompanyIds = Array.isArray(existingCustomer.company_id)
-        ? existingCustomer.company_id
-        : [existingCustomer.company_id];
+      // Retrieve or initialize the company_campaign_tracker
+      let tracker = existingCustomer.company_campaign_tracker || { companies: [] };
 
-      if (!existingCompanyIds.includes(newCompanyId)) {
-        // Add the new company_id to the array
-        const updatedCompanyIds = [...existingCompanyIds, newCompanyId];
+      // Check if the company already exists in the tracker
+      let companyIndex = tracker.companies.findIndex(
+        (company) => company.company_id === newCompanyId
+      );
 
-        // Update the customer with the new list of company IDs
-        const updatedCustomer = await fetchFromAPI<Customer | null>(
-          `/items/customers/${existingCustomer.id}`,
-          token,
-          {
-            method: "PATCH",
-            body: JSON.stringify({ company_id: updatedCompanyIds }),
-          }
+      if (companyIndex === -1 && newCompanyId) {
+        // Company doesn't exist, and newCompanyId is valid, add it with the new campaign
+        console.log(`Adding new company ${newCompanyId} with campaign ${newCampaignId}`);
+        if (newCampaignId) {
+          tracker.companies.push({
+            company_id: newCompanyId,
+            campaigns: [
+              {
+                campaign_id: newCampaignId,
+                discount_code: discountCode ?? null,
+              },
+            ],
+          });
+        } else {
+          console.error("Cannot add campaign, newCampaignId is undefined or invalid.");
+        }
+      } else if (companyIndex !== -1) {
+        // Company exists, check if the campaign exists
+        console.log(`Company ${newCompanyId} exists, checking campaigns...`);
+        let campaignIndex = tracker.companies[companyIndex].campaigns.findIndex(
+          (campaign) => campaign.campaign_id === newCampaignId
         );
 
-        if (!updatedCustomer) {
-          throw new Error("Failed to update customer with new company ID.");
+        if (campaignIndex === -1 && newCampaignId) {
+          // Campaign doesn't exist, and newCampaignId is valid, add it
+          console.log(`Adding new campaign ${newCampaignId} to company ${newCompanyId}`);
+          tracker.companies[companyIndex].campaigns.push({
+            campaign_id: newCampaignId,
+            discount_code: discountCode ?? null,
+          });
+        } else if (campaignIndex !== -1) {
+          // Campaign already exists
+          console.log(`Campaign ${newCampaignId} already exists for company ${newCompanyId}`);
+        } else {
+          console.error("Cannot add campaign, newCampaignId is undefined or invalid.");
         }
-
-        console.log("Updated existing customer with new company ID:", updatedCustomer);
-        return updatedCustomer;
+      } else {
+        console.error("Cannot add company, newCompanyId is undefined or invalid.");
       }
 
-      // If the company_id already exists, return the existing customer
-      return existingCustomer;
+      // Update the customer with the modified company_campaign_tracker
+      const updatedCustomer = await fetchFromAPI<Customer | null>(
+        `/items/customers/${existingCustomer.id}`,
+        token,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            company_campaign_tracker: tracker,
+          }),
+        }
+      );
+
+      if (!updatedCustomer) {
+        throw new Error("Failed to update customer with new company and campaign.");
+      }
+
+      console.log("Customer updated successfully:", updatedCustomer);
+      return updatedCustomer;
     }
 
     // Customer does not exist, create a new one
-    const createdCustomer = await fetchFromAPI<Customer | null>(
-      "/items/customers",
-      token,
-      {
-        method: "POST",
-        body: JSON.stringify({ ...customer, company_id: [newCompanyId] }), // Create new customer with the new company_id as an array
+    console.log("Creating a new customer...");
+    if (newCompanyId && newCampaignId) {
+      const createdCustomer = await fetchFromAPI<Customer | null>(
+        "/items/customers",
+        token,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            ...customer,
+            company_campaign_tracker: {
+              companies: [
+                {
+                  company_id: newCompanyId,
+                  campaigns: [
+                    {
+                      campaign_id: newCampaignId,
+                      discount_code: discountCode ?? null,
+                    },
+                  ],
+                },
+              ],
+            },
+          }),
+        }
+      );
+
+      if (!createdCustomer) {
+        throw new Error("Customer creation failed, no data returned.");
       }
-    );
 
-    if (!createdCustomer) {
-      throw new Error("Customer creation failed, no data returned.");
+      console.log("Customer created successfully:", createdCustomer);
+      return createdCustomer;
+    } else {
+      throw new Error("Cannot create customer without a valid company and campaign ID.");
     }
-
-    console.log("Created new customer:", createdCustomer);
-    return createdCustomer;
 
   } catch (error) {
     console.error("Error creating or updating customer:", error);
     throw error;
   }
 };
+
+
 
 
 // Manually increment a customer field value
@@ -166,9 +234,7 @@ export const incrementCustomerField = async (
         [fieldName]: newValue,
       }),
     });
-    console.log(
-      `Incremented field ${fieldName} for customer ID ${customerId} to ${newValue}`
-    );
+
   } catch (error) {
     console.error(
       `Error incrementing field ${fieldName} for customer ID ${customerId}:`,
@@ -193,7 +259,6 @@ export const registerClick = async (
         token
       );
     }
-    console.log(`Registered click for referral UUID ${referralUuid}`);
   } catch (error) {
     console.error("Error registering click:", error);
   }
@@ -223,7 +288,6 @@ export const registerSignup = async (
         token
       );
     }
-    console.log(`Registered signup for referrer UUID ${referralUuid}`);
   } catch (error) {
     console.error("Error registering signup:", error);
   }
@@ -247,9 +311,7 @@ export const registerConversion = async (
           token
         );
       }
-      console.log(
-        `Registered conversion for referrer UUID ${customer.referred_by}`
-      );
+
     }
   } catch (error) {
     console.error("Error registering conversion:", error);
@@ -269,10 +331,7 @@ export const fetchReferralsForCustomer = async (
     if (!referrals) {
       throw new Error(`No referrals found for customer UUID ${customerUuid}`);
     }
-    console.log(
-      `Fetched referrals for customer UUID ${customerUuid}:`,
-      referrals
-    );
+
     return referrals;
   } catch (error) {
     console.error("Error fetching referrals:", error);
@@ -287,7 +346,6 @@ export const fetchReferralStats = async (
 ): Promise<{ clicks: number; signups: number; conversions: number }> => {
   try {
     const customer = await fetchCustomerByUUID(customerUuid, token);
-    console.log(`Fetched stats for customer UUID ${customerUuid}`);
     return {
       clicks: customer ? customer.click_count : 0,
       signups: customer?.signup_count ?? 0,
@@ -295,6 +353,66 @@ export const fetchReferralStats = async (
     };
   } catch (error) {
     console.error("Error fetching referral stats:", error);
+    throw error;
+  }
+};
+
+
+// Update the referral record with the new discount code for a specific campaign
+export const updateReferralDiscountCode = async (
+  referralUUID: string,
+  campaignId: string,
+  discountCode: string,
+  token: string
+): Promise<void> => {
+  try {
+    const customers = await fetchFromAPI<Customer[] | null>(
+      `/items/customers?filter[uuid][_eq]=${referralUUID}`,  // Fetch customer by UUID
+      token
+    );
+
+    if (!customers || customers.length === 0) {
+      throw new Error(`Customer with UUID ${referralUUID} not found.`);
+    }
+
+    const customer = customers[0];
+
+    // Find the campaign and update the discount code in company_campaign_tracker
+    let tracker = customer.company_campaign_tracker;
+
+    let companyIndex = tracker?.companies.findIndex((company) =>
+      company.campaigns.some((campaign) => campaign.campaign_id === campaignId)
+    );
+
+    if (companyIndex === -1 || !tracker) {
+      throw new Error(`Campaign with ID ${campaignId} not found for customer.`);
+    }
+
+    let campaignIndex = tracker.companies[companyIndex].campaigns.findIndex(
+      (campaign) => campaign.campaign_id === campaignId
+    );
+
+    if (campaignIndex === -1) {
+      throw new Error(`Campaign not found in company tracker for UUID ${referralUUID}`);
+    }
+
+    // Update the discount code for the specific campaign
+    tracker.companies[companyIndex].campaigns[campaignIndex].discount_code = discountCode;
+
+    // Send the PATCH request to update the customer's company_campaign_tracker
+    await fetchFromAPI<void>(
+      `/items/customers/${customer.id}`,
+      token,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          company_campaign_tracker: tracker,  // Update the entire tracker with new discount code
+        }),
+      }
+    );
+
+  } catch (error) {
+    console.error(`Error updating referral record for UUID ${referralUUID}:`, error);
     throw error;
   }
 };

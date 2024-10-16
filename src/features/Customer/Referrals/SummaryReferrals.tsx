@@ -80,8 +80,6 @@ const SummaryReferrals: React.FC<ReferralsIndexProps> = ({ accessToken, refreshT
   );
 
   const computePerformanceMetrics = () => {
-    console.log("Main customer data:", mainCustomerData);
-
     // Access the first element of the mainCustomerData array
     const customer = mainCustomerData && mainCustomerData.length > 0 ? mainCustomerData[0] : null;
 

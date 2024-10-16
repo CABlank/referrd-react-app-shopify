@@ -1,10 +1,6 @@
 import React from "react";
-import DashboardIndex from "../features/Brand/Dashboard/DashboardIndex";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import DashboardIndex from "../features/brand/dashboard/DashboardIndex";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 type DashboardPageProps = {
@@ -18,9 +14,7 @@ const DashboardPage: React.FC<DashboardPageProps> = (props) => {
   return <DashboardIndex {...props} />;
 };
 
-export const getServerSideProps: GetServerSideProps<
-  DashboardPageProps
-> = async (
+export const getServerSideProps: GetServerSideProps<DashboardPageProps> = async (
   context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<DashboardPageProps>> => {
   const result = await initialLoadChecker(context);

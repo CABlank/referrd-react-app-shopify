@@ -44,14 +44,12 @@ const fetchFromAPI = async (
   }
 
   const result = await response.json();
-  console.log("Fetched settings: ", result.data); // Logging the fetched settings
   return result.data;
 };
 
 // Function to fetch settings using the helper function
 export const fetchSettings = (token: string): Promise<Settings> =>
   fetchFromAPI("/items/settings", "GET", token).then((data) => {
-    console.log("data: ", data);
     return data[0];
   });
 

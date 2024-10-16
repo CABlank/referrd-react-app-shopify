@@ -2,20 +2,20 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession } from "../../../context/SessionContext"; // Import the useSession hook
-import { usePayments } from "@/features/Brand/Payments/hooks/usePayments"; // Use the usePayments hook
+import { usePayments } from "@/features/brand/payments/hooks/usePayments"; // Use the usePayments hook
 
-import MenuIcon from "../../../components/Icons/MenuIcon";
-import CloseMenuIcon from "../../../components/Icons/CloseMenuIcon";
-import DashboardIcon from "../../../components/Icons/DashboardIcon";
-import CampaignIcon from "../../../components/Icons/CampaignIcon";
-import CompanyIcon from "../../../components/Icons/CompanyIcon";
-import FaqsIcon from "../../../components/Icons/FaqsIcon";
-import LogoutIcon from "../../../components/Icons/LogoutIcon";
-import PaymentsIcon from "../../../components/Icons/PaymentsIcon";
-import ReferralsIcon from "../../../components/Icons/ReferralsIcon";
-import SettingsIcon from "../../../components/Icons/SettingsIcon";
-import SupportIcon from "../../../components/Icons/SupportIcon";
-import WiseIcon from "../../../components/Icons/WiseIcon";
+import MenuIcon from "../../../components/icons/MenuIcon";
+import CloseMenuIcon from "../../../components/icons/CloseMenuIcon";
+import DashboardIcon from "../../../components/icons/DashboardIcon";
+import CampaignIcon from "../../../components/icons/CampaignIcon";
+import CompanyIcon from "../../../components/icons/CompanyIcon";
+import FaqsIcon from "../../../components/icons/FaqsIcon";
+import LogoutIcon from "../../../components/icons/LogoutIcon";
+import PaymentsIcon from "../../../components/icons/PaymentsIcon";
+import ReferralsIcon from "../../../components/icons/ReferralsIcon";
+import SettingsIcon from "../../../components/icons/SettingsIcon";
+import SupportIcon from "../../../components/icons/SupportIcon";
+import WiseIcon from "../../../components/icons/WiseIcon";
 
 interface MenuItem {
   name: string;
@@ -33,8 +33,7 @@ const Sidebar: React.FC = () => {
 
   // Calculate pending payments
   useEffect(() => {
-    const pendingCount =
-      payments?.filter((payment) => payment.status === "Pending").length || 0;
+    const pendingCount = payments?.filter((payment) => payment.status === "Pending").length || 0;
     setPendingPayments(pendingCount);
   }, [payments]);
 
@@ -50,7 +49,6 @@ const Sidebar: React.FC = () => {
     { name: "Referrals", icon: ReferralsIcon, route: "/brand/referrals" },
     { name: "Settings", icon: SettingsIcon, route: "/brand/settings" },
     { name: "Support", icon: SupportIcon, route: "/brand/support" },
-    { name: "Data Security", icon: WiseIcon, route: "/brand/datasecurity" },
   ];
 
   const bottomMenuItems: MenuItem[] = [
@@ -126,10 +124,7 @@ const Sidebar: React.FC = () => {
       {/* Mobile Sidebar Button */}
       {!isSidebarOpen && (
         <div className="lg:hidden absolute top-[30px] left-8 z-20">
-          <button
-            onClick={toggleSidebar}
-            className="bg-white p-2 rounded-full shadow-lg"
-          >
+          <button onClick={toggleSidebar} className="bg-white p-2 rounded-full shadow-lg">
             <MenuIcon />
           </button>
         </div>
@@ -152,13 +147,7 @@ const Sidebar: React.FC = () => {
 
         {/* Sidebar Content */}
         <div className="text-center flex justify-center !mt-[0px]">
-          <Image
-            src="/images/logo.png"
-            alt="Logo"
-            width={150}
-            height={90}
-            priority
-          />
+          <Image src="/images/logo.png" alt="Logo" width={150} height={90} priority />
         </div>
         <div
           className="flex flex-col items-start self-stretch gap-4"
@@ -183,16 +172,11 @@ const Sidebar: React.FC = () => {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex flex-col items-start w-[240px] h-full px-5 py-10 pb-20 bg-white inset-y-0 desktop-sidebar max-h-max overflow-auto">
-        <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 max-h-max relative gap-14">
+      <div className="hidden lg:flex flex-col items-start w-[240px] h-full px-5 py-10 pb-20 bg-white inset-y-0 desktop-sidebar  overflow-auto">
+        <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0  relative gap-14">
           <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 gap-4">
             <div className="flex justify-start w-full h-[58px] object-cover mb-[50px] ml-[10px]">
-              <Image
-                src="/images/logo.png"
-                alt="Logo"
-                width={150}
-                height={90}
-              />
+              <Image src="/images/logo.png" alt="Logo" width={150} height={90} />
             </div>
             {SidebarContent(menuItems)}
           </div>

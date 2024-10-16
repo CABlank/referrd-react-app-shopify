@@ -80,8 +80,6 @@ const ContentWrapper: React.FC<{
   // Log whenever the session is updated
   useEffect(() => {
     if (session) {
-      console.log("Session has been defined with new information:", session);
-
       // Redirect to the Referrd app if the session is defined
       // setting the cookies
       // Set cookies with SameSite=None and Secure=true for cross-site requests
@@ -99,8 +97,6 @@ const ContentWrapper: React.FC<{
         sameSite: "None",
         secure: true,
       });
-
-      console.log("Cookies set:", cookies.get("accessToken"));
     }
   }, [session]);
 
@@ -149,7 +145,6 @@ const ContentWrapper: React.FC<{
       url.searchParams.set("expires", session.expires.toString());
     }
 
-    console.log("Final URL with session data:", url.toString());
     return url.toString();
   };
 

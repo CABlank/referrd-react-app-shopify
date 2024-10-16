@@ -2,20 +2,31 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Interfaces for the data structures
 export interface Customer {
-  id: number;
-  date_created: string;
-  date_updated: string | null;
-  uuid: string;
+  id?: number;
+  uuid?: string;
   name: string;
   email: string;
-  mobile: string;
-  referred_by: string;
+  mobile?: string;
+  referred_by?: string;
   conversion_count: number;
-  signup_count: number;
-  location: string;
   click_count: number;
-  company_id: string;
+  signup_count: number;
+  location?: {
+    country?: string;
+    city?: string;
+  } | null;
+  company_id: object;
   campaign_uuid: string;
+  discountCode?: string;
+  company_campaign_tracker: {
+    companies: {
+      company_id: string;
+      campaigns: {
+        campaign_id: string;
+        discount_code: string | null;
+      }[];
+    }[];
+  };
 }
 
 export interface Company {
@@ -68,16 +79,22 @@ const fetchFromAPI = async <T>(
   return data.data;
 };
 
-// Fetch all customers (ignoring companyUUID filtering for now)
+// Fetch all customers (filtering based on companyUUID within company_campaign_tracker)
 export const fetchCustomers = async (token: string, companyUUID: string) => {
   try {
     // Fetch all customers
     const allCustomers = await fetchFromAPI<Customer[]>('/items/customers', token);
 
-    // Perform filtering based on companyUUID
+    // Perform filtering based on companyUUID within the nested company_campaign_tracker structure
     const filteredCustomers = allCustomers.filter((customer) => {
-      // Use optional chaining and nullish coalescing to handle null or undefined values
-      return Array.isArray(customer.company_id) && customer.company_id?.includes(companyUUID);
+      const tracker = customer.company_campaign_tracker;
+
+      // Check if the tracker exists and contains the given companyUUID
+      if (tracker?.companies && Array.isArray(tracker.companies)) {
+        return tracker.companies.some((company) => company.company_id === companyUUID);
+      }
+
+      return false;
     });
 
     // Return the filtered list
@@ -88,9 +105,6 @@ export const fetchCustomers = async (token: string, companyUUID: string) => {
     throw error;
   }
 };
-
-
-
 
 // Fetch all customers for a specific referral
 export const fetchCustomersByUuidReferral = (

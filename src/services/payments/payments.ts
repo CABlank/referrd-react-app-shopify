@@ -62,7 +62,7 @@ const fetchFromAPI = async <T>(
   });
 
   if (response.status === 204) {
-    console.log(`No content from ${endpoint}`);
+
     return null; // Return null explicitly for 204 No Content
   }
 
@@ -116,7 +116,6 @@ export const fetchPaymentsByCompanyId = async (
     if (payments) {
       return payments;
     } else {
-      console.log("No payments found for this company ID.");
       return null;
     }
   } catch (error) {
@@ -138,7 +137,6 @@ export const fetchPaymentsByReferralUUID = async (
     if (payments) {
       return payments;
     } else {
-      console.log("No payments found for this referral UUID.");
       return null;
     }
   } catch (error) {
@@ -153,8 +151,7 @@ export const createPayment = async (
   token: string
 ): Promise<Payment | null> => {
   try {
-    console.log("Creating payment with data:", payment);
-    console.log("Using token:", token);
+
 
     const createdPayment = await fetchFromAPI<Payment | null>(
       "/items/payments",
@@ -166,11 +163,9 @@ export const createPayment = async (
     );
 
     if (!createdPayment) {
-      console.log("Payment creation failed, no data was returned.");
       return null; // Explicitly return null if no data is returned
     }
 
-    console.log("Created new payment:", createdPayment);
     return createdPayment; // Return the created payment object
   } catch (error) {
     console.error("Error creating payment:", error);

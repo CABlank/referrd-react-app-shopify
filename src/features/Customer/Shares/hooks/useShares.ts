@@ -74,7 +74,6 @@ const useCustomers = ({
             refreshToken, // If needed, provide a refresh token here
             userId // User ID to help identify which token to refresh, if required
           );
-          console.log("customerUUID", customerUUID?.uuid);
 
           if (customerUUID?.uuid) {
             // Fetch customers by referral UUID
@@ -85,7 +84,6 @@ const useCustomers = ({
               userId
             );
 
-            console.log("customersData", customersData);
 
             // Fetch company data for each customer's company_id array
             let companyFetchPromises: Promise<Company>[] = [];
@@ -112,7 +110,6 @@ const useCustomers = ({
             // Flatten the nested arrays in companiesData
             const flattenedCompanies = companiesData.flat();
 
-            console.log("flattenedCompanies", flattenedCompanies);
 
             // Set the state with customers and companies data
             setState({

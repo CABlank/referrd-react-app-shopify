@@ -1,12 +1,8 @@
 // pages/brand/[supportId].tsx
 
 import React from "react";
-import SupportDetail from "@/features/Brand/Support/SupportDetail";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import SupportDetail from "@/features/brand/support/SupportDetail";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import CustomerLayout from "@/pages/layouts/CustomerLayout/CustomerLayout";
 
 const SupportDetailPage: React.FC = () => {

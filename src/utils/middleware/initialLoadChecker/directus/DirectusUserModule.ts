@@ -25,7 +25,6 @@ export const loginDirectusUser = async (
       throw new Error("Login response is undefined or missing data.");
     }
 
-    console.log("User logged in successfully to Directus:", loginData.data);
 
     return {
       accessToken: loginData.data.access_token,

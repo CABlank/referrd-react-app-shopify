@@ -1,5 +1,5 @@
 import React from "react";
-import SettingsIndex from "../../features/Brand/Settings/SettingsIndex";
+import SettingsIndex from "../../features/settings/SettingsIndex";
 import { GetServerSideProps, GetServerSidePropsResult } from "next";
 import CustomerLayout from "../layouts/CustomerLayout/CustomerLayout";
 
@@ -10,25 +10,17 @@ interface SettingsProps {
   title: string;
 }
 
-const SettingsPage: React.FC<SettingsProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const SettingsPage: React.FC<SettingsProps> = ({ accessToken, refreshToken, userId }) => {
   return (
     <CustomerLayout>
-      <SettingsIndex
-        accessToken={accessToken}
-        refreshToken={refreshToken}
-        userId={userId}
-      />
+      <SettingsIndex accessToken={accessToken} refreshToken={refreshToken} userId={userId} />
     </CustomerLayout>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<
-  SettingsProps
-> = async (): Promise<GetServerSidePropsResult<SettingsProps>> => {
+export const getServerSideProps: GetServerSideProps<SettingsProps> = async (): Promise<
+  GetServerSidePropsResult<SettingsProps>
+> => {
   return {
     props: {
       title: "Settings",

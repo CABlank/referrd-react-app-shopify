@@ -36,9 +36,7 @@ const CustomerLayout: React.FC<CustomerLayoutProps> = ({ children, title }) => {
           {/* Header with Budget Information, Avatar, and Page Title */}
           <div className="py-[40px]  z-[15] sticky lg:static top-0">
             <div className="flex items-center justify-between">
-              <p className="text-[40px] font-semibold text-[#10ad1b]">
-                {title}
-              </p>
+              <p className="font-semibold text-[#10ad1b] text-[5px] lg:text-[40px] ">{title}</p>
               <div className="flex items-center gap-4">
                 <BudgetLeft />
                 <Avatar />

@@ -1,8 +1,8 @@
 import React from "react";
-import SuitcaseIcon from "../Icons/SuitcaseIcon";
-import MoneyIcon from "../Icons/MoneyIcon";
-import CalendarIcon from "../Icons/CalendarIcon";
-import CampaignItemIcon from "../Icons/CampaignItemIcon";
+import SuitcaseIcon from "../icons/SuitcaseIcon";
+import MoneyIcon from "../icons/MoneyIcon";
+import CalendarIcon from "../icons/CalendarIcon";
+import CampaignItemIcon from "../icons/CampaignItemIcon";
 
 interface CampaignItemProps {
   imageSrc: string;

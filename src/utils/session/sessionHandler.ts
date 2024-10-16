@@ -28,7 +28,6 @@ const getShopOwnerEmail = async (
   shop: string,
   accessToken: string
 ): Promise<string> => {
-  console.log(`Fetching shop owner email for shop: ${shop}`);
 
   const response = await fetch(`https://${shop}/admin/api/2023-07/shop.json`, {
     method: "GET",
@@ -44,7 +43,6 @@ const getShopOwnerEmail = async (
   }
 
   const shopData: any = await response.json();
-  console.log(`Shop owner email fetched: ${shopData.shop.email}`);
   return shopData.shop.email;
 };
 
@@ -53,17 +51,13 @@ const storeSession = async (
   authCode: string // Accepting authCode as a parameter to use it in getTokensFromShopify
 ): Promise<number | null> => {
   try {
-    console.log(`Storing session for shop: ${session.shop}`);
 
     // Retrieve the access token using the auth code
     const tokens = await getTokensFromShopify(session.shop, authCode);
-    console.log(`Access tokens retrieved: ${JSON.stringify(tokens)}`);
 
     const email = await getShopOwnerEmail(session.shop, tokens.accessToken); // Fetch the shop owner's email
-    console.log(`Shop owner email: ${email}`);
 
     const encryptedContent = encrypt(JSON.stringify(session));
-    console.log(`Encrypted session content: ${encryptedContent}`);
 
     const response = await fetch(`${DIRECTUS_URL}/items/sessions`, {
       method: "POST",
@@ -86,7 +80,6 @@ const storeSession = async (
 
     const responseData: any = await response.json();
     const sessionId = responseData.data.id;
-    console.log(`Session stored successfully with ID: ${sessionId}`);
     return sessionId;
   } catch (error) {
     console.error(`Error storing session: ${error}`);
@@ -96,7 +89,6 @@ const storeSession = async (
 
 const loadSession = async (id: number): Promise<Session | undefined> => {
   try {
-    console.log(`Loading session for session ID: ${id}`);
 
     const response = await fetch(`${DIRECTUS_URL}/items/sessions/${id}`, {
       method: "GET",
@@ -112,23 +104,18 @@ const loadSession = async (id: number): Promise<Session | undefined> => {
     }
 
     const sessionResult: any = await response.json();
-    console.log(`Session data fetched: ${JSON.stringify(sessionResult)}`);
 
     if (!sessionResult.data.content) {
-      console.log(`No session found for session ID: ${id}`);
       return undefined;
     }
 
     const decryptedContent = decrypt(sessionResult.data.content);
-    console.log(`Decrypted session content: ${decryptedContent}`);
 
     if (decryptedContent) {
       const sessionObj = JSON.parse(decryptedContent);
-      console.log(`Session loaded successfully for session ID: ${id}`);
       return new Session(sessionObj);
     }
 
-    console.log(`Failed to decrypt session content for session ID: ${id}`);
     return undefined;
   } catch (error) {
     console.error(`Error loading session: ${error}`);
@@ -138,7 +125,6 @@ const loadSession = async (id: number): Promise<Session | undefined> => {
 
 const deleteSession = async (id: number): Promise<boolean> => {
   try {
-    console.log(`Deleting session for session ID: ${id}`);
 
     const response = await fetch(`${DIRECTUS_URL}/items/sessions/${id}`, {
       method: "DELETE",
@@ -155,7 +141,6 @@ const deleteSession = async (id: number): Promise<boolean> => {
       );
     }
 
-    console.log(`Session deleted successfully for session ID: ${id}`);
     return true;
   } catch (error) {
     console.error(`Error deleting session: ${error}`);

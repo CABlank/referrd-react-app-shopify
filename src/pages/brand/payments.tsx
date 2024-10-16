@@ -1,12 +1,8 @@
 // src/pages/brand/payments.tsx
 
 import React from "react";
-import PaymentIndex from "@/features/Brand/Payments/PaymentIndex";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import PaymentIndex from "@/features/brand/payments/PaymentIndex";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 interface PaymentsProps {
@@ -16,18 +12,8 @@ interface PaymentsProps {
   title: string;
 }
 
-const PaymentsPage: React.FC<PaymentsProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
-  return (
-    <PaymentIndex
-      accessToken={accessToken}
-      refreshToken={refreshToken}
-      userId={userId}
-    />
-  );
+const PaymentsPage: React.FC<PaymentsProps> = ({ accessToken, refreshToken, userId }) => {
+  return <PaymentIndex accessToken={accessToken} refreshToken={refreshToken} userId={userId} />;
 };
 
 export const getServerSideProps: GetServerSideProps<PaymentsProps> = async (

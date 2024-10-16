@@ -2,14 +2,14 @@ import React from "react";
 import QRCode from "qrcode.react"; // Importing the QRCode component
 import { saveAs } from "file-saver"; // We'll use this to download the QR as an image
 import useCustomers from "./hooks/useShares"; // Updated hook path
-import WhatsappIcon from "@/components/Icons/IconsSocialMedia/WhatsappIcon";
-import EmailIcon from "@/components/Icons/IconsSocialMedia/EmailIcon";
-import FacebookIcon from "@/components/Icons/IconsSocialMedia/FacebookIcon";
-import MessengerIcon from "@/components/Icons/IconsSocialMedia/MessengerIcon";
-import SmsIcon from "@/components/Icons/IconsSocialMedia/SmsIcon";
-import XIcon from "@/components/Icons/IconsSocialMedia/XIcon";
-import LinkedinIcon from "@/components/Icons/IconsSocialMedia/LinkedinIcon";
-import RedditIcon from "@/components/Icons/IconsSocialMedia/RedditIcon";
+import WhatsappIcon from "@/components/icons/icons-social-media/WhatsappIcon";
+import EmailIcon from "@/components/icons/icons-social-media/EmailIcon";
+import FacebookIcon from "@/components/icons/icons-social-media/FacebookIcon";
+import MessengerIcon from "@/components/icons/icons-social-media/MessengerIcon";
+import SmsIcon from "@/components/icons/icons-social-media/SmsIcon";
+import XIcon from "@/components/icons/icons-social-media/XIcon";
+import LinkedinIcon from "@/components/icons/icons-social-media/LinkedinIcon";
+import RedditIcon from "@/components/icons/icons-social-media/RedditIcon";
 
 interface SharesIndexProps {
   accessToken?: string;
@@ -17,11 +17,7 @@ interface SharesIndexProps {
   userId?: number;
 }
 
-const SharesIndex: React.FC<SharesIndexProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const SharesIndex: React.FC<SharesIndexProps> = ({ accessToken, refreshToken, userId }) => {
   const { customers, companies, loading } = useCustomers({
     accessToken,
     refreshToken,
@@ -29,14 +25,8 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
   });
 
   // Function to download the QR code as an image
-  const downloadQRCode = (
-    customerUUID: string,
-    companyUUID: string,
-    companyDomain: string
-  ) => {
-    const canvas = document.getElementById(
-      `qrCode-${customerUUID}`
-    ) as HTMLCanvasElement;
+  const downloadQRCode = (customerUUID: string, companyUUID: string, companyDomain: string) => {
+    const canvas = document.getElementById(`qrCode-${customerUUID}`) as HTMLCanvasElement;
     if (canvas) {
       canvas.toBlob((blob) => {
         if (blob) {
@@ -101,9 +91,7 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
         <p>Loading...</p>
       ) : (
         customers.map((customer) => {
-          const company = companies.find((comp) =>
-            customer.company_id.includes(comp.UUID)
-          );
+          const company = companies.find((comp) => customer.company_id.includes(comp.UUID));
 
           if (!company) return null; // Skip if no matching company is found
 
@@ -146,9 +134,7 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
                       </a>
                     ))}
                   </div>
-                  <p className="text-lg font-semibold text-black">
-                    {company.name}
-                  </p>
+                  <p className="text-lg font-semibold text-black">{company.name}</p>
 
                   <div className="flex items-center w-full max-w-[350px] mt-2">
                     <button className="flex items-center justify-center h-10 px-4 rounded-l-lg bg-purple-700 text-white">
@@ -174,9 +160,7 @@ const SharesIndex: React.FC<SharesIndexProps> = ({
                   includeMargin={true}
                 />
                 <button
-                  onClick={() =>
-                    downloadQRCode(customer.uuid, company.UUID, company.domain)
-                  }
+                  onClick={() => downloadQRCode(customer.uuid, company.UUID, company.domain)}
                   className="mt-2 h-10 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500"
                 >
                   Download QR

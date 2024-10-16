@@ -3,7 +3,7 @@
 client_id = "5c8e8b211dab8be3d06c888e36df66a0"
 name = "Staging Referrd App"
 handle = "staging-referrd-app"
-application_url = "https://app.referrd.com.au"
+application_url = "https://staging.referrd.ngrok.app"
 embedded = true
 
 [build]
@@ -11,22 +11,22 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_content,read_orders,read_themes,write_content,write_themes"
+scopes = "read_content,read_discounts,read_orders,read_products,read_themes,write_content,write_discounts,write_themes"
 use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://app.referrd.com.au/api/auth/tokens",
-  "https://app.referrd.com.au/api/auth/callback"
+  "https://staging.referrd.ngrok.app/api/auth/tokens",
+  "https://staging.referrd.ngrok.app/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-01"
 
   [webhooks.privacy_compliance]
-  customer_deletion_url = "https://app.referrd.com.au/api/shopify/compliance/customerRedact"
-  customer_data_request_url = "https://app.referrd.com.au/api/shopify/compliance/customerDataRequest"
-  shop_deletion_url = "https://app.referrd.com.au/api/shopify/compliance/shopRedact"
+  customer_deletion_url = "https://staging.referrd.ngrok.app/api/shopify/compliance/customerRedact"
+  customer_data_request_url = "https://staging.referrd.ngrok.app/api/shopify/compliance/customerDataRequest"
+  shop_deletion_url = "https://staging.referrd.ngrok.app/api/shopify/compliance/shopRedact"
 
   [[webhooks.subscriptions]]
   topics = [ "orders/create" ]

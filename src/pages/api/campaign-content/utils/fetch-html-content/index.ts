@@ -16,16 +16,13 @@ export { generateTopbarScriptContent } from "./generate-topbar-script-content";
 export function createSendFormDataFunction() {
   return `
     function sendFormData(url, formData, htmlContentStepTwo, stepTwoWrapper, spinner, onSuccess) {
-      console.log('Sending form data to:', url);
       const xhr = new XMLHttpRequest();
       xhr.open('POST', url, true);
       xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
-          console.log('Server response:', response);
           if (response.success && response.generatedUrl) {
-            console.log('Generated URL:', response.generatedUrl);
 
             // Truncate the URL if it's too long
             const truncatedUrl = response.generatedUrl.length > 15 
@@ -98,7 +95,6 @@ export function createSpinnerFunction() {
       \`;
       spinner.style.display = 'none'; // Hidden initially
 
-      console.log("Inside createSpinner function. Spinner HTML: ", spinner.innerHTML);
 
       // Spinner CSS Styles
       const style = document.createElement('style');
@@ -138,7 +134,6 @@ export function createSpinnerFunction() {
         }
       \`;
       document.head.appendChild(style);
-      console.log("Spinner CSS added to document head");
 
       return spinner;
     }

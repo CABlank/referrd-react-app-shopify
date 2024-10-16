@@ -7,7 +7,7 @@ import DataTableRows from "../../../components/common/DataTableRows";
 import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import ScrollableContainer from "../../../components/common/ScrollableContainer";
 import Link from "next/link";
-import ArrowSeeMoreIcon from "../../../components/Icons/ArrowSeeMoreIcon";
+import ArrowSeeMoreIcon from "../../../components/icons/ArrowSeeMoreIcon";
 import { useRouter } from "next/router"; // Import useRouter to access query parameters
 import { useDashboard } from "./hooks/useDashboard";
 import { Customer } from "../../../services/dashboard/dashboard"; // Import the Customer type
@@ -18,11 +18,7 @@ type DashboardProps = {
   userId?: number;
 };
 
-const DashboardIndex: React.FC<DashboardProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const DashboardIndex: React.FC<DashboardProps> = ({ accessToken, refreshToken, userId }) => {
   const {
     dataLoading,
     error,
@@ -58,9 +54,7 @@ const DashboardIndex: React.FC<DashboardProps> = ({
           <LoadingOverlay />
         </div>
       )}
-      <div
-        className={`relative w-full ${sessionLoading || dataLoading ? "blur-sm" : ""}`}
-      >
+      <div className={`relative w-full ${sessionLoading || dataLoading ? "blur-sm" : ""}`}>
         <div className="relative w-full flex justify-center">
           <div className="flex overflow-hidden scroll-smooth scrollbar-hide gap-4 pb-4">
             <ScrollableContainer>
@@ -105,9 +99,7 @@ const DashboardIndex: React.FC<DashboardProps> = ({
                       data-testid="campaigns-see-more"
                       className="flex items-center gap-1 cursor-pointer"
                     >
-                      <p className="text-base font-medium text-[#851087]/80">
-                        See More
-                      </p>
+                      <p className="text-base font-medium text-[#851087]/80">See More</p>
                       <ArrowSeeMoreIcon />
                     </div>
                   </Link>
@@ -125,9 +117,7 @@ const DashboardIndex: React.FC<DashboardProps> = ({
                       status={campaign.status || "Unknown"}
                       endDate={
                         campaign.closeDate
-                          ? `Until ${new Date(
-                              campaign.closeDate
-                            ).toLocaleDateString()}`
+                          ? `Until ${new Date(campaign.closeDate).toLocaleDateString()}`
                           : "No End Date"
                       }
                       openTo={"All"}
@@ -164,9 +154,7 @@ const DashboardIndex: React.FC<DashboardProps> = ({
                   data-testid="payments-see-more"
                   className="flex items-center gap-1 cursor-pointer"
                 >
-                  <p className="text-base font-medium text-[#851087]/80">
-                    See More
-                  </p>
+                  <p className="text-base font-medium text-[#851087]/80">See More</p>
                   <ArrowSeeMoreIcon />
                 </div>
               </Link>
@@ -182,10 +170,7 @@ const DashboardIndex: React.FC<DashboardProps> = ({
               ],
             }}
           />
-          <DataTableRows
-            rowData={latestConversions}
-            columns={latestConversionColumns}
-          />
+          <DataTableRows rowData={latestConversions} columns={latestConversionColumns} />
         </div>
       </div>
     </div>

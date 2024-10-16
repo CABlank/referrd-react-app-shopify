@@ -1,12 +1,8 @@
 // pages/support/index.tsx
 
 import React from "react";
-import SupportIndex from "../../../features/Brand/Support/SupportIndex";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import SupportIndex from "../../../features/brand/support/SupportIndex";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
 
 interface SupportProps {

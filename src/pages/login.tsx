@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import LoginForm from "../components/Auth/LoginForm";
-import RegisterForm from "../components/Auth/RegisterForm";
-import AuthLayout from "../components/AuthLayout/AuthLayout";
+import LoginForm from "../components/auth/LoginForm";
+import RegisterForm from "../components/auth/RegisterForm";
+import AuthLayout from "../components/auth-layout/AuthLayout";
 import { useSession } from "../context/SessionContext";
 
 const Login = () => {
@@ -15,10 +15,8 @@ const Login = () => {
     // If session is present, redirect to the dashboard
     if (session && session.accessToken) {
       if (session.user.role === "Brand") {
-        console.log("Session found, redirecting to the dashboard");
         router.push("/brand/dashboard");
       } else if (session.user.role === "Customer") {
-        console.log("Session found, redirecting to the dashboard");
         router.push("/customer/shares");
       }
     }
@@ -51,8 +49,7 @@ const Login = () => {
             onClick={() => setIsLoginActive(true)}
             style={{ transition: "background-color 200ms" }}
             onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "rgba(71, 183, 117, 0.2)")
+              (e.currentTarget.style.backgroundColor = "rgba(71, 183, 117, 0.2)")
             }
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
           >
@@ -73,8 +70,7 @@ const Login = () => {
             onClick={() => setIsLoginActive(false)}
             style={{ transition: "background-color 200ms" }}
             onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "rgba(71, 183, 117, 0.2)")
+              (e.currentTarget.style.backgroundColor = "rgba(71, 183, 117, 0.2)")
             }
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
           >
@@ -87,11 +83,7 @@ const Login = () => {
             </p>
           </div>
         </div>
-        {isLoginActive ? (
-          <LoginForm onLogin={handleLogin} loading={loading} />
-        ) : (
-          <RegisterForm />
-        )}
+        {isLoginActive ? <LoginForm onLogin={handleLogin} loading={loading} /> : <RegisterForm />}
       </div>
     </AuthLayout>
   );

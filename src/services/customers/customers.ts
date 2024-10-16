@@ -239,7 +239,7 @@ body {font-family: 'Montserrat', sans-serif;}
               <tbody>
                 <tr>
                 <td align="center" bgcolor="#000000" class="inner-td" style="border-radius:6px; font-size:16px; text-align:center; background-color:inherit;">
-                                            <a href="${registrationLink}" style="background-color:#000000; border:1px solid #000000; border-radius:0px; color:#ffffff; font-size:14px; padding:12px 40px; text-align:center; text-decoration:none;">Activate Account</a>                </td>
+                    <a href="${registrationLink}" style="background-color:#000000; border:1px solid #000000; border-radius:0px; color:#ffffff; font-size:14px; padding:12px 40px; text-align:center; text-decoration:none;">Activate Account</a>                </td>
                 </tr>
               </tbody>
             </table>
@@ -350,7 +350,6 @@ body {font-family: 'Montserrat', sans-serif;}
   try {
     // Send the email using SendGrid
     await sgMail.send(msg);
-    console.log(`Registration email sent to ${email}`);
   } catch (error) {
     console.error("Error sending email via SendGrid:", error);
     if ((error as any).response) {
@@ -398,17 +397,11 @@ export async function createDirectusCustomer({
     const existingUser = await findDirectusCustomerByEmail(email);
 
     if (existingUser) {
-      console.log(`User with email ${email} already exists. Returning null...`);
       // Return null to indicate user already exists
       return null;
     }
 
-    // If the user doesn't exist, create a new one
-    console.log("Creating new customer with data:", {
-      name,
-      email,
-      updatedData,
-    });
+
 
     const response = await fetch(`${DIRECTUS_API_URL}/users`, {
       method: "POST",
@@ -429,9 +422,7 @@ export async function createDirectusCustomer({
 
       // Handle RECORD_NOT_UNIQUE error and return null instead
       if (responseBody.includes('"code":"RECORD_NOT_UNIQUE"')) {
-        console.log(
-          `User with email ${email} already exists (detected by RECORD_NOT_UNIQUE), returning null...`
-        );
+
         return null; // User already exists
       }
 
@@ -442,7 +433,6 @@ export async function createDirectusCustomer({
     }
 
     const createdUser: any = await response.json();
-    console.log("New customer created in Directus:", createdUser);
 
     // Extract the user ID from the response
     const userId = createdUser.data?.id;
@@ -451,8 +441,7 @@ export async function createDirectusCustomer({
       throw new Error("Failed to retrieve user ID from Directus response");
     }
 
-    console.log("User ID:", userId);
-    console.log("Updated data (uuid):", updatedData);
+
 
     // Generate a secure token for registration
     const registrationToken = crypto.randomBytes(32).toString("hex");
@@ -483,7 +472,6 @@ export async function createDirectusCustomer({
       );
     }
 
-    console.log("UUID and token successfully updated for the new user.");
 
     // Send registration email with the secure token in the registration link
     const registrationLink = `${SHOPIFY_APP_URL}/register?token=${registrationToken}`;

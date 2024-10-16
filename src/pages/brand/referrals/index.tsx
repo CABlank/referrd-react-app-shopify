@@ -1,13 +1,9 @@
 // src/pages/referrals/index.tsx
 
 import React from "react";
-import ReferralsIndex from "@/features/Brand/Referrals/ReferralsIndex";
+import ReferralsIndex from "@/features/brand/referrals/ReferralsIndex";
 import initialLoadChecker from "@/utils/middleware/initialLoadChecker/initialLoadChecker";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 
 interface ReferralsPageProps {
   accessToken?: string;
@@ -16,23 +12,11 @@ interface ReferralsPageProps {
   title: string;
 }
 
-const ReferralsPage: React.FC<ReferralsPageProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
-  return (
-    <ReferralsIndex
-      accessToken={accessToken}
-      refreshToken={refreshToken}
-      userId={userId}
-    />
-  );
+const ReferralsPage: React.FC<ReferralsPageProps> = ({ accessToken, refreshToken, userId }) => {
+  return <ReferralsIndex accessToken={accessToken} refreshToken={refreshToken} userId={userId} />;
 };
 
-export const getServerSideProps: GetServerSideProps<
-  ReferralsPageProps
-> = async (
+export const getServerSideProps: GetServerSideProps<ReferralsPageProps> = async (
   context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<ReferralsPageProps>> => {
   const result = await initialLoadChecker(context);

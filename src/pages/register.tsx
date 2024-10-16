@@ -3,8 +3,8 @@ import { useRouter } from "next/router";
 import FullNameInput from "../components/common/FullNameInput";
 import MobileInput from "../components/common/MobileInput";
 import PasswordInput from "../components/common/PasswordInput";
-import ArrowLoginIcon from "../components/Icons/ArrowLoginIcon";
-import AuthLayout from "../components/AuthLayout/AuthLayout";
+import ArrowLoginIcon from "../components/icons/ArrowLoginIcon";
+import AuthLayout from "../components/auth-layout/AuthLayout";
 import Select from "react-select";
 import countryList from "react-select-country-list";
 import { useSession } from "../context/SessionContext";
@@ -76,10 +76,6 @@ const RegisterForm = () => {
 
       const data = await response.json();
 
-      console.log("Registration data:", data);
-
-      console.log("Registration successful. Logging in...");
-
       // Attempt to log in the user
       await login({ email: formData.email, password: formData.password });
 
@@ -123,9 +119,7 @@ const RegisterForm = () => {
           className="mt-8 flex flex-col justify-start self-stretch flex-grow-0 flex-shrink-0 gap-4 px-8"
           onSubmit={handleRegister}
         >
-          {errorMessage && (
-            <p className="text-red-500 text-center">{errorMessage}</p>
-          )}
+          {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
           <FullNameInput
             fullName={formData.fullName}
             setFullName={(value) => handleChange("fullName", value)}
@@ -133,17 +127,11 @@ const RegisterForm = () => {
 
           {/* Country Selector */}
           <div className="flex flex-col gap-2 w-full">
-            <label className="text-base font-medium text-left text-black/80">
-              Country
-            </label>
+            <label className="text-base font-medium text-left text-black/80">Country</label>
             <Select
               options={countryOptions}
-              value={countryOptions.find(
-                (option) => option.label === formData.country
-              )}
-              onChange={(option) =>
-                handleChange("country", option ? option.label : "")
-              }
+              value={countryOptions.find((option) => option.label === formData.country)}
+              onChange={(option) => handleChange("country", option ? option.label : "")}
               className="h-14"
               placeholder="Select Country"
             />
@@ -163,9 +151,7 @@ const RegisterForm = () => {
             className="mt-5 flex justify-center items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative gap-2 px-4 py-2 rounded-lg bg-[#47b775]"
             disabled={loading}
           >
-            <p className="text-base font-semibold text-left text-white">
-              Complete Registration
-            </p>
+            <p className="text-base font-semibold text-left text-white">Complete Registration</p>
             <ArrowLoginIcon />
           </button>
         </form>

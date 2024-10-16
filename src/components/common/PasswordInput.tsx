@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import EyeIcon from "../Icons/EyeIcon";
-import EyeOffIcon from "../Icons/EyeOffIcon";
-import CheckIcon from "../Icons/CheckIcon";
-import UncheckedIcon from "../Icons/UncheckedIcon";
+import EyeIcon from "../icons/EyeIcon";
+import EyeOffIcon from "../icons/EyeOffIcon";
+import CheckIcon from "../icons/CheckIcon";
+import UncheckedIcon from "../icons/UncheckedIcon";
 
 interface PasswordInputProps {
   password: string;
@@ -52,10 +52,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
 
   return (
     <div className="w-full">
-      <label
-        htmlFor="password"
-        className="text-base font-medium text-left text-black/80"
-      >
+      <label htmlFor="password" className="text-base font-medium text-left text-black/80">
         Password
       </label>
       <div className="flex items-center relative">
@@ -102,15 +99,9 @@ const PasswordRequirements = ({
 }) => {
   return (
     <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-3 p-4 rounded-sm border border-[#c2c8d0]">
-      <p className="text-sm text-left text-[#2d333a]">
-        Your password must contain:
-      </p>
-      <RequirementItem isValid={requirements.length}>
-        At least 8 Characters
-      </RequirementItem>
-      <RequirementItem isValid={requirements.number}>
-        At least one number
-      </RequirementItem>
+      <p className="text-sm text-left text-[#2d333a]">Your password must contain:</p>
+      <RequirementItem isValid={requirements.length}>At least 8 Characters</RequirementItem>
+      <RequirementItem isValid={requirements.number}>At least one number</RequirementItem>
       <RequirementItem isValid={requirements.specialChar}>
         At least one special character (e.g., $, !, @, %, &)
       </RequirementItem>
@@ -131,11 +122,7 @@ const RequirementItem = ({
   return (
     <div className="flex justify-start items-center self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
       {isValid ? <CheckIcon /> : <UncheckedIcon />}
-      <p
-        className={`text-sm text-left ${
-          isValid ? "text-[#06B317]" : "text-[#686868]"
-        }`}
-      >
+      <p className={`text-sm text-left ${isValid ? "text-[#06B317]" : "text-[#686868]"}`}>
         {children}
       </p>
     </div>

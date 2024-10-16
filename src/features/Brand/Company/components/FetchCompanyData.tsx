@@ -1,6 +1,6 @@
 // components/FetchCompanyData.tsx
 import React, { useState } from "react";
-import EditIcon from "../../../../components/Icons/EditIcon";
+import EditIcon from "../../../../components/icons/EditIcon";
 import { useCompanyList } from "../hooks/useCompanyList";
 
 const FetchCompanyData: React.FC = () => {
@@ -111,10 +111,7 @@ const FetchCompanyData: React.FC = () => {
             )}
           </div>
           {logoError && <p className="text-red-600 mt-2">{logoError}</p>}
-          <button
-            onClick={handleSave}
-            className="bg-green-500 text-white p-2 rounded mt-4"
-          >
+          <button onClick={handleSave} className="bg-green-500 text-white p-2 rounded mt-4">
             Save
           </button>
         </div>

@@ -1,12 +1,8 @@
 // src/pages/referrals/index.tsx
 
 import React from "react";
-import SharesIndex from "../../features/Customer/Shares/SharesIndex";
-import {
-  GetServerSideProps,
-  GetServerSidePropsContext,
-  GetServerSidePropsResult,
-} from "next";
+import SharesIndex from "../../features/customer/shares/SharesIndex";
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import CustomerLayout from "@/pages/layouts/CustomerLayout/CustomerLayout";
 
 interface ReferralsPageProps {
@@ -16,25 +12,15 @@ interface ReferralsPageProps {
   title: string;
 }
 
-const ReferralsPage: React.FC<ReferralsPageProps> = ({
-  accessToken,
-  refreshToken,
-  userId,
-}) => {
+const ReferralsPage: React.FC<ReferralsPageProps> = ({ accessToken, refreshToken, userId }) => {
   return (
     <CustomerLayout>
-      <SharesIndex
-        accessToken={accessToken}
-        refreshToken={refreshToken}
-        userId={userId}
-      />
+      <SharesIndex accessToken={accessToken} refreshToken={refreshToken} userId={userId} />
     </CustomerLayout>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<
-  ReferralsPageProps
-> = async (
+export const getServerSideProps: GetServerSideProps<ReferralsPageProps> = async (
   context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<ReferralsPageProps>> => {
   return {

@@ -1,13 +1,13 @@
 import React, { useState, FormEvent } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import ArrowLoginIcon from "../Icons/ArrowLoginIcon";
+import ArrowLoginIcon from "../icons/ArrowLoginIcon";
 import EmailInput from "../common/EmailInput";
 import PasswordInput from "../common/PasswordInput";
-import GoogleIcon from "../Icons/GoogleIcon";
-import ShopifyPurpleIcon from "../Icons/ShopifyPurpleIcon";
-import ShopifyGreenIcon from "../Icons/ShopifyGreenIcon";
-import WorkEmailPurpleIcon from "../Icons/WorkEmailPurpleIcon";
+import GoogleIcon from "../icons/GoogleIcon";
+import ShopifyPurpleIcon from "../icons/ShopifyPurpleIcon";
+import ShopifyGreenIcon from "../icons/ShopifyGreenIcon";
+import WorkEmailPurpleIcon from "../icons/WorkEmailPurpleIcon";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -73,9 +73,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
       await onLogin(email, password);
       router.push("/brand/dashboard"); // Redirect to the dashboard or relevant page after successful login
     } catch (err) {
-      setError(
-        "Failed to log in. Please check your credentials and try again."
-      );
+      setError("Failed to log in. Please check your credentials and try again.");
     }
   };
 
@@ -88,11 +86,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
       {loginMethod === "email" ? (
         <>
           <EmailInput email={email} setEmail={setEmail} />
-          <PasswordInput
-            password={password}
-            setPassword={setPassword}
-            showRequirements={false}
-          />
+          <PasswordInput password={password} setPassword={setPassword} showRequirements={false} />
           <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
             <p className="text-sm text-left">
               <span className="text-black/80">I may need to </span>
@@ -112,9 +106,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
             <ArrowLoginIcon />
           </button>
           <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
-            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">
-              or
-            </p>
+            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">or</p>
           </div>
           <button
             type="button"
@@ -130,9 +122,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
       ) : (
         <>
           <div className="flex flex-col items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-2">
-            <p className="text-base font-medium text-left text-black/80">
-              Shopify Store Name
-            </p>
+            <p className="text-base font-medium text-left text-black/80">Shopify Store Name</p>
             <div className="flex justify-between items-center self-stretch flex-grow-0 flex-shrink-0 h-12 relative px-8 py-2 rounded-lg bg-white border-[0.5px] border-black/30">
               <ShopifyGreenIcon />
               <input
@@ -159,9 +149,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
             <ArrowLoginIcon />
           </button>
           <div className="flex justify-start items-start flex-grow-0 flex-shrink-0 relative">
-            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">
-              or
-            </p>
+            <p className="flex-grow-0 flex-shrink-0 text-sm text-left text-black/80">or</p>
           </div>
           <button
             type="button"

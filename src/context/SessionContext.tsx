@@ -1,22 +1,12 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useRef,
-} from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
 
-import { initializeSession } from "./session/initializeSession";
+import { initializeSession } from "./session/initialize-session";
 import {
   refreshAccessToken as importedRefreshAccessToken,
   withTokenRefresh as importedWithTokenRefresh,
-} from "./session/tokenManager";
-import {
-  login as importedLogin,
-  logout as importedLogout,
-} from "./session/sessionUtils";
-import { Session, SessionContextType } from "./sessionTypes";
+} from "./session/token-manager";
+import { login as importedLogin, logout as importedLogout } from "./session/session-utils";
+import { Session, SessionContextType } from "./session-types";
 
 // Creating the session context
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -39,7 +29,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       await importedLogin(credentials, setLoading, setSession, setName);
 
       // Log the session state after login to check if the role and session data are set correctly
-      console.log("Session after login:", session);
     } catch (error) {
       console.error("Login failed:", error);
     } finally {
@@ -84,7 +73,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 // Provide a hook for using the session context
 export const useSession = () => {
   const context = useContext(SessionContext);
-  if (!context)
-    throw new Error("useSession must be used within a SessionProvider");
+  if (!context) throw new Error("useSession must be used within a SessionProvider");
   return context;
 };

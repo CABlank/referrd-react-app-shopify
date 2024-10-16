@@ -1,9 +1,10 @@
+
 // interfaces for the data structures
 export interface Campaign {
   settingsTopbarState?: string;
   settingsPopupState?: string;
   commission: React.ReactNode;
-  commissionType: "FixedAmount" | "Percentage";
+  commissionType: "Fix" | "Percentage";
   id?: number;
   status?: string;
   user_created?: string;
@@ -15,6 +16,7 @@ export interface Campaign {
   closeDate: string | null;
   company: string | null;
   terms: string | null;
+  allowDiscounts: boolean;
   discountType: "FixedAmount" | "Percentage";
   discountValue: string | null;
   appliesTo: string | null;
@@ -27,6 +29,8 @@ export interface Campaign {
   compiledHtmlTopBar?: string;
   company_id?: string;
   uuid?: string;
+  campaign_uuid?: string;
+
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -91,6 +95,9 @@ const duplicateCampaignToPublicPage = async (
     compiledHtmlTopBar: campaign.compiledHtmlTopBar,
     company_id: campaign.company_id,
     campaign_uuid: campaign.uuid,
+    allowDiscounts: campaign.allowDiscounts,
+    appliesTo: campaign.appliesTo,
+
   };
 
   const method = isUpdate ? "PATCH" : "POST";
@@ -130,6 +137,8 @@ const duplicateCampaignToMetaData = async (
     commissionType: campaign.commissionType,
     company_id: campaign.company_id,
     campaign_uuid: campaign.uuid,
+    allowDiscounts: campaign.allowDiscounts,
+    appliesTo: campaign.appliesTo,
   };
 
   const method = isUpdate ? "PATCH" : "POST";
@@ -153,6 +162,10 @@ const duplicateCampaignToMetaData = async (
 // Fetch all campaigns
 export const fetchCampaigns = (token: string): Promise<Campaign[]> =>
   fetchFromAPI<Campaign[]>("/items/campaigns", token);
+
+// Fetch all campaigns metadata
+export const fetchCampaignMetadata = (token: string): Promise<Campaign[]> =>
+  fetchFromAPI<Campaign[]>("/items/campaign_metadata", token);
 
 // Fetch a specific campaign by ID
 export const fetchCampaign = (id: number, token: string): Promise<Campaign> =>
