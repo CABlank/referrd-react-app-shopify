@@ -6,6 +6,7 @@ import {
 import { useSession } from "../../../../context/SessionContext";
 import { fetchUserData } from "../../../../services/auth/auth";
 
+// Update Customer interface to reflect the new structure
 interface Customer {
   id: number;
   date_created: string;
@@ -16,10 +17,17 @@ interface Customer {
   referred_by: string;
   conversion_count: number;
   signup_count: number;
-  location: string;
+  location: string | null;
   click_count: number;
-  company_id: string[]; // Change this to an array to handle multiple company IDs
-  campaign_uuid: string;
+  company_campaign_tracker: {
+    companies: Array<{
+      company_id: string;
+      campaigns: Array<{
+        campaign_id: string;
+        discount_code: string | null;
+      }>;
+    }>;
+  };
 }
 
 interface Company {
@@ -64,11 +72,14 @@ const useCustomers = ({
         loadExecutedRef.current = true;
 
         try {
+          console.log("Fetching customer UUID...");
+
           // First, use withTokenRefresh to fetch the customer UUID securely
           const customerUUID = await withTokenRefresh(
             async (token) => {
               // Fetch the customer data using the current or refreshed token
               const userData = await fetchUserData(token);
+              console.log("Fetched user data:", userData);
               return userData;
             },
             refreshToken, // If needed, provide a refresh token here
@@ -76,6 +87,8 @@ const useCustomers = ({
           );
 
           if (customerUUID?.uuid) {
+            console.log("Customer UUID fetched:", customerUUID.uuid);
+
             // Fetch customers by referral UUID
             const customersData = await withTokenRefresh(
               (token) =>
@@ -84,19 +97,22 @@ const useCustomers = ({
               userId
             );
 
+            console.log("Fetched customers data:", customersData);
 
-            // Fetch company data for each customer's company_id array
+            // Now handle company fetching based on the new company_campaign_tracker structure
             let companyFetchPromises: Promise<Company>[] = [];
-            for (const customer of customersData) {
-              const companyIds = Array.isArray(customer.company_id)
-                ? customer.company_id
-                : [customer.company_id]; // Ensure it's treated as an array
 
-              // Sequentially add fetch promises for each company ID
-              for (const companyId of companyIds) {
+            for (const customer of customersData) {
+              console.log(`Processing customer with UUID: ${customer.uuid}`);
+
+              const { companies } = customer.company_campaign_tracker;
+
+              // Loop through companies in the company_campaign_tracker
+              for (const company of companies) {
+                console.log(`Fetching company details for company ID: ${company.company_id}`);
                 companyFetchPromises.push(
                   withTokenRefresh(
-                    (token) => fetchCompanyByUUID(token, companyId),
+                    (token) => fetchCompanyByUUID(token, company.company_id),
                     refreshToken,
                     userId
                   )
@@ -104,20 +120,22 @@ const useCustomers = ({
               }
             }
 
-            // Execute all fetch promises sequentially
+            // Execute all company fetch promises concurrently
             const companiesData = await Promise.all(companyFetchPromises);
 
-            // Flatten the nested arrays in companiesData
-            const flattenedCompanies = companiesData.flat();
+            console.log("Fetched companies data:", companiesData);
 
-
-            // Set the state with customers and companies data
+            // Set the state with the customers and companies data
             setState({
               customers: customersData,
-              companies: flattenedCompanies,
+              companies: companiesData,
               loading: false,
               error: null,
             });
+
+            console.log("State updated with fetched customers and companies.");
+          } else {
+            console.warn("No customer UUID found.");
           }
         } catch (err) {
           console.error("Error fetching data:", err);
