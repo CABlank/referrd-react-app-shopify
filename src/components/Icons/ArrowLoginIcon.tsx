@@ -9,6 +9,7 @@ const ArrowLoginIcon = () => {
       xmlns="http://www.w3.org/2000/svg"
       className="flex-grow-0 flex-shrink-0 w-6 h-6 relative"
       preserveAspectRatio="none"
+      display={"block"}
     >
       <path
         d="M4.5 12L20.5 12M20.5 12L14.5 18M20.5 12L14.5 6"
