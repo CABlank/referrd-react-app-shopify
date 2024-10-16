@@ -1,4 +1,4 @@
-import React from "react";
+/*import React from "react";
 import QRCode from "qrcode.react"; // Importing the QRCode component
 import { saveAs } from "file-saver"; // We'll use this to download the QR as an image
 import useCustomers from "./hooks/useShares"; // Updated hook path
@@ -102,10 +102,10 @@ const SharesIndex: React.FC<SharesIndexProps> = ({ accessToken, refreshToken, us
               key={customer.id}
               className="flex flex-col lg:flex-row items-start lg:items-center w-full max-w-5xl gap-6 p-6 rounded-2xl bg-white shadow-md"
             >
-              {/* Left Section: Company Image & Info */}
+              {/* Left Section: Company Image & Info */ /*}
               <div className="flex items-center gap-4 lg:w-2/3">
                 <div className="flex-shrink-0 w-[100px] h-[130px] md:w-[130px] md:h-[160px] bg-gray-200 rounded-lg overflow-hidden">
-                  {/* Placeholder for company image */}
+
                   {company.logoUrl ? (
                     <img
                       src={company.logoUrl}
@@ -120,7 +120,6 @@ const SharesIndex: React.FC<SharesIndexProps> = ({ accessToken, refreshToken, us
                 </div>
                 <div className="flex flex-col gap-2">
                   <p className="text-sm text-gray-500">Share Instantly</p>
-                  {/* Social Media Sharing */}
                   <div className="flex gap-4 mt-1">
                     {socialMediaButtons(referralUrl).map((button) => (
                       <a
@@ -149,7 +148,6 @@ const SharesIndex: React.FC<SharesIndexProps> = ({ accessToken, refreshToken, us
                 </div>
               </div>
 
-              {/* Right Section: QR and Action */}
               <div className="flex flex-col items-center lg:w-1/3 gap-2">
                 <p>Scan this QR code and you will be redirected to this url</p>
                 <QRCode
@@ -175,3 +173,4 @@ const SharesIndex: React.FC<SharesIndexProps> = ({ accessToken, refreshToken, us
 };
 
 export default SharesIndex;
+*/
