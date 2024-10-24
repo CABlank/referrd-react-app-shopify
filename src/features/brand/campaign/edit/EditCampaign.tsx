@@ -11,6 +11,7 @@ import BottomNavigationBar from "./bottom-navigation-bar/BottomNavigationBar";
 import CampaignCreativeSelector from "./step-4/CampaignCreativeSelector";
 import CampaignHeader from "./components/CampaignHeader";
 import CampaignInformation from "./components/CampaignInformation";
+import DiscountInformation from "./step-3/DiscountInformation";
 import CampaignPayment from "./step-5/CampaignPayment";
 import DesktopCreativeHide from "./step-4/DesktopCreativeHide";
 import LoadingOverlay from "../../../../components/common/LoadingOverlay";
@@ -64,6 +65,7 @@ const EditCampaign: React.FC<CampaignEditProps> = ({ accessToken, refreshToken, 
 
   // Refs for scrolling to the correct section
   const campaignInformationRef = useRef<HTMLDivElement>(null);
+  const campaignDiscountRef = useRef<HTMLDivElement>(null);
   const campaignCreativeRef = useRef<HTMLDivElement>(null);
   const pushCampaignLiveRef = useRef<HTMLDivElement>(null); // Ref for PushCampaignLive section
   const pushCampaignPaymentRef = useRef<HTMLDivElement>(null);
@@ -376,13 +378,21 @@ const EditCampaign: React.FC<CampaignEditProps> = ({ accessToken, refreshToken, 
           {error && <div className="text-red-600">{error}</div>}
           <div ref={campaignInformationRef}>
             <CampaignInformation
-              accessToken={session?.accessToken ?? ""}
               isOpen={isOpen}
               handleToggle={handleToggle}
               campaignData={campaignDataWithNonNullableUrl}
               handleChange={handleChange}
               onValidationStatus={handleValidationStatus} // Pass validation status callback
               currentStep={currentStep}
+            />
+          </div>
+
+          <div ref={campaignDiscountRef}>
+            <DiscountInformation
+              campaignData={campaignDataWithNonNullableUrl}
+              handleChange={handleChange}
+              accessToken={session?.accessToken ?? accessToken ?? ""}
+              onValidationStatus={handleValidationStatus} // Pass validation status callback
             />
           </div>
         </div>

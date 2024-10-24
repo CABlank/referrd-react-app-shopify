@@ -67,6 +67,27 @@ const BrandInformationForm: React.FC<BrandInformationFormProps> = ({
 }) => {
   const isCustomer = role === "Customer";
 
+  const openWiseAuthorization = () => {
+    const wiseAuthUrl = `https://sandbox.transferwise.tech/oauth/authorize/?client_id=yourapp&redirect_uri=https://app.referrd.com.au`;
+
+    // Open the Wise authorization page in a pop-up window
+    const popup = window.open(wiseAuthUrl, "authPopup", "width=600,height=600");
+
+    window.addEventListener("message", function (event) {
+      if (event.origin === "https://app.referrd.com.au") {
+        const { code, profileId } = event.data;
+        // Handle the authorization code and profileId here
+        // You can then store these in the state and use them for further API requests
+        console.log(`Authorization code: ${code}, Profile ID: ${profileId}`);
+      }
+    });
+
+    if (popup) {
+      popup.onbeforeunload = function () {
+        console.log("Popup closed");
+      };
+    }
+  };
   return (
     <div className="flex flex-col justify-start items-start flex-grow gap-8 p-8 rounded-2xl bg-white shadow-lg w-full lg:w-1/2">
       <div className="flex flex-col justify-center items-start self-stretch flex-grow-0 flex-shrink-0 relative gap-3">
@@ -120,13 +141,22 @@ const BrandInformationForm: React.FC<BrandInformationFormProps> = ({
 
       {/* Add "Wise Email" for Customer */}
       {isCustomer && (
-        <InputField
-          label="Wise Email"
-          value={settings?.wiseEmail || ""}
-          onChange={(e) => handleChange("wiseEmail", e.target.value)}
-          placeholder="Wise Email"
-          type="email"
-        />
+        <>
+          <InputField
+            label="Wise Email"
+            value={settings?.wiseEmail || ""}
+            onChange={(e) => handleChange("wiseEmail", e.target.value)}
+            placeholder="Wise Email"
+            type="email"
+          />
+          {/* Button to trigger Wise Authorization */}
+          <button
+            className="bg-[#10ad1b] text-white px-4 py-2 rounded-md"
+            onClick={openWiseAuthorization}
+          >
+            Authorize with Wise
+          </button>
+        </>
       )}
 
       <div className="flex flex-col gap-4 w-full">

@@ -172,7 +172,10 @@ const Sidebar: React.FC = () => {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex flex-col items-start w-[240px] h-full px-5 py-10 pb-20 bg-white inset-y-0 desktop-sidebar  overflow-auto">
+      <div
+        id="sidebar-desktop"
+        className="hidden lg:flex flex-col items-start w-[240px] h-full px-5 py-10 pb-20 bg-white inset-y-0 desktop-sidebar  overflow-auto"
+      >
         <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0  relative gap-14">
           <div className="flex flex-col justify-start items-start self-stretch flex-grow-0 flex-shrink-0 gap-4">
             <div className="flex justify-start w-full h-[58px] object-cover mb-[50px] ml-[10px]">

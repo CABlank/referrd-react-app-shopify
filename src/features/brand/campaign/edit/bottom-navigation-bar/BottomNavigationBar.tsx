@@ -28,6 +28,13 @@ const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
   const [isVisible, setIsVisible] = useState(true); // Control visibility of the bottom bar
   const [currentSubStep, setCurrentSubStep] = useState(1);
   const [subStepMode, setSubStepMode] = useState<"basic" | "advanced">("basic");
+  const [hasSidebar, setHasSidebar] = useState(false);
+
+  useEffect(() => {
+    // Check if the sidebar exists in the DOM
+    const sidebarExists = document.getElementById("sidebar-desktop") !== null;
+    setHasSidebar(sidebarExists);
+  }, []);
 
   // Function to update the subStepMode based on the selected format
   const updateSubStepMode = () => {
@@ -120,7 +127,13 @@ const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
   }
 
   return (
-    <div style={styles.fixedBar}>
+    <div
+      style={{
+        ...styles.fixedBar,
+        left: hasSidebar ? "240px" : "0",
+        width: hasSidebar ? "calc(100% - 240px)" : "100%",
+      }}
+    >
       <div style={styles.container}>
         {/* Left Side: Close Button */}
         <button onClick={handleClose} style={styles.closeButton}>
@@ -209,13 +222,12 @@ const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
   );
 };
 
-// Inline styles object
+// Dynamically adjust styles based on the presence of the sidebar
 const styles: { [key: string]: React.CSSProperties } = {
   fixedBar: {
     position: "fixed",
     bottom: 0,
-    left: 0,
-    width: "100%",
+
     backgroundColor: "#1a1a1a", // Dark background
     borderTop: "1px solid #4a4a4a", // Border at the top
     boxShadow: "0 -4px 10px rgba(0, 0, 0, 0.1)", // Shadow to give elevation

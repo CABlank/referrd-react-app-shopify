@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import CampaignDetail from "../step-1/CampaignDetail";
 import ReferralDetail from "../step-2/ReferralDetail";
-import DiscountValue from "../step-3/DiscountValue";
 import ArrowDropdownIcon from "../../../../../components/icons/ArrowDropdownIcon";
 
 interface CampaignInformationProps {
@@ -15,7 +14,6 @@ interface CampaignInformationProps {
   ) => void; // Allow custom event type along with regular ChangeEvent
   currentStep: number;
   onValidationStatus: (isValid: boolean) => void;
-  accessToken: string;
 }
 
 const CampaignInformation: React.FC<CampaignInformationProps> = ({
@@ -25,12 +23,10 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
   handleChange,
   currentStep, // Track the current step
   onValidationStatus,
-  accessToken,
 }) => {
   // Create refs for each section
   const campaignDetailRef = useRef<HTMLDivElement>(null);
   const referralDetailRef = useRef<HTMLDivElement>(null);
-  const discountDetailRef = useRef<HTMLDivElement>(null);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -98,9 +94,6 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
         case 2:
           element = referralDetailRef.current;
           break;
-        case 3:
-          element = discountDetailRef.current;
-          break;
         default:
           break;
       }
@@ -152,21 +145,6 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
               className="bg-white p-0 border-0 shadow-none"
             />
           </div>
-          <div className="w-full md:w-[1px] bg-gray-200" />
-          {/* Discount Value (Step 3) */}
-          <div className="flex-1" ref={discountDetailRef}>
-            <DiscountValue
-              discount={{
-                allow: campaignData.allowDiscounts,
-                type: campaignData.discountType,
-                value: campaignData.discountValue,
-                appliesTo: campaignData.appliesTo,
-              }}
-              accessToken={accessToken}
-              className="bg-white p-0 border-0 shadow-none"
-              handleChange={handleChange}
-            />
-          </div>
         </div>
       ) : (
         <div className="text-sm text-gray-500 flex flex-col md:flex-row gap-4">
@@ -201,18 +179,6 @@ const CampaignInformation: React.FC<CampaignInformationProps> = ({
             </p>
             <p className="mr-0 md:mr-10">
               <strong>Campaign URL:</strong> {campaignData.url}
-            </p>
-          </div>
-          <div className="w-full md:w-[1px] bg-gray-200 my-2 md:my-0" />
-          <div className="flex-1">
-            <p className="mr-0 md:mr-10">
-              <strong>Allow Discounts:</strong> {campaignData.allowDiscounts ? "Yes" : "No"}
-            </p>
-            <p className="mr-0 md:mr-10">
-              <strong>Discount Type:</strong> {campaignData.discountType}
-            </p>
-            <p className="mr-0 md:mr-10">
-              <strong>Discount Value:</strong> {campaignData.discountValue}
             </p>
           </div>
         </div>

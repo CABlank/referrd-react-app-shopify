@@ -30,7 +30,6 @@ export interface Campaign {
   company_id?: string;
   uuid?: string;
   campaign_uuid?: string;
-
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

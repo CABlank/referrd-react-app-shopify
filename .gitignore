@@ -41,3 +41,6 @@ package-lock.json
 shopify.app.toml
 
 /.vscode
+/dist
+
+shopify_app.dump
